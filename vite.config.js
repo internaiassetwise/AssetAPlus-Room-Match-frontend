@@ -15,7 +15,7 @@ export default defineConfig(({ mode }) => {
 
   return {
     plugins: [react()],
-    base: './',                         // safe for subpath deploys (Netlify, GH Pages)
+    base: '/',                          // absolute paths so deep-link hard refreshes work
     server: {
       port: 5173,
       // Only proxy in dev. When VITE_API_BASE is set we assume prod deploy.
