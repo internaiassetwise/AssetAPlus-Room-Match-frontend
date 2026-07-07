@@ -4,6 +4,8 @@ import Footer from './Footer.jsx'
 import { MapPin, Bed, Bath, Ruler, Phone, LineChat, ArrowRight, Sparkles, Home, ChevronRight, Shield } from './icons.jsx'
 import { useApi } from '../hooks/useApi.js'
 import { api } from '../api/client.js'
+import ViewingPicker from './ViewingPicker.jsx'
+import InquiryForm from './InquiryForm.jsx'
 
 const FALLBACK_IMAGES = [
   '/images/room-navy.jpg',
@@ -134,31 +136,39 @@ export default function RoomDetail() {
 
             {/* Right: sticky CTA card */}
             <aside className="lg:sticky lg:top-28">
-              <div className="card p-7 shadow-lift">
-                <div className="font-bold text-navy-700 text-3xl sm:text-4xl tabular-nums">
-                  ฿{Number(room.price).toLocaleString()}
-                  <span className="text-base font-medium text-muted"> / เดือน</span>
+              <div className="card p-7 shadow-lift space-y-5">
+                <div>
+                  <div className="font-bold text-navy-700 text-3xl sm:text-4xl tabular-nums">
+                    ฿{Number(room.price).toLocaleString()}
+                    <span className="text-base font-medium text-muted"> / เดือน</span>
+                  </div>
+                  <div className="mt-1 text-sm text-muted">ค่าเช่ารายเดือน ไม่รวมค่าน้ำค่าไฟ</div>
                 </div>
-                <div className="mt-1 text-sm text-muted">ค่าเช่ารายเดือน ไม่รวมค่าน้ำค่าไฟ</div>
 
-                <div className="mt-6 space-y-3">
-                  <a href="tel:021680000" className="btn btn-primary btn-lg w-full">
-                    <Phone size={18} /> โทร 02-168-0000
+                {/* Tenant actions — viewing picker + inquiry form */}
+                <div className="space-y-3">
+                  <ViewingPicker roomId={room.id} />
+                  <InquiryForm roomId={room.id} />
+                </div>
+
+                <div className="border-t border-line pt-4 space-y-3">
+                  <a href="tel:021680000" className="btn btn-outline w-full">
+                    <Phone size={16} /> โทร 02-168-0000
                   </a>
                   <a
                     href="https://line.me/R/ti/p/@assetaplus"
                     target="_blank"
                     rel="noreferrer noopener"
-                    className="btn w-full bg-[#06C755] text-white hover:bg-[#05b34c] btn-lg"
+                    className="btn w-full bg-[#06C755] text-white hover:bg-[#05b34c]"
                   >
-                    <LineChat size={18} /> แชท Line @assetaplus
+                    <LineChat size={16} /> แชท Line @assetaplus
                   </a>
-                  <button onClick={() => navigate('/#cta')} className="btn btn-outline btn-lg w-full">
-                    ฝากห้องของคุณ <ArrowRight size={18} />
+                  <button onClick={() => navigate('/#cta')} className="btn btn-ghost w-full">
+                    ฝากห้องของคุณ <ArrowRight size={16} />
                   </button>
                 </div>
 
-                <div className="mt-6 pt-6 border-t border-line space-y-2 text-sm text-muted">
+                <div className="pt-4 border-t border-line space-y-2 text-sm text-muted">
                   <div className="flex items-center gap-2">
                     <Shield size={14} className="text-navy-600" /> ไม่มีค่าลงทะเบียน
                   </div>

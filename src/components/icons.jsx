@@ -223,3 +223,82 @@ export const Eye = (p) => (
     <circle cx="12" cy="12" r="3" />
   </Icon>
 )
+
+// Single-color "G" — uses currentColor so it picks up the surrounding text
+// color and stays consistent with the rest of the icon set. Brand-accurate
+// colors would need an inline <svg> with multiple paths.
+export const Google = (p) => (
+  <svg
+    width={p.size ?? 24}
+    height={p.size ?? 24}
+    viewBox="0 0 24 24"
+    className={p.className ?? ''}
+    fill="currentColor"
+    aria-hidden="true"
+    {...p}
+  >
+    <path d="M21.6 12.227c0-.79-.07-1.55-.2-2.28H12v4.32h5.39a4.6 4.6 0 0 1-2 3.02v2.5h3.23c1.89-1.74 2.98-4.3 2.98-7.56z" />
+    <path d="M12 22c2.7 0 4.96-.9 6.62-2.43l-3.23-2.5c-.9.6-2.04.96-3.39.96-2.6 0-4.81-1.76-5.6-4.12H3.07v2.59A9.99 9.99 0 0 0 12 22z" />
+    <path d="M6.4 13.91a6 6 0 0 1 0-3.82V7.5H3.07a10 10 0 0 0 0 9z" />
+    <path d="M12 5.98c1.47 0 2.79.5 3.83 1.5l2.87-2.87C16.96 2.99 14.7 2 12 2 8.13 2 4.78 4.28 3.07 7.5l3.33 2.59c.79-2.36 3-4.11 5.6-4.11z" />
+  </svg>
+)
+
+export const ShieldCheck = (p) => (
+  <Icon {...p}>
+    <path d="M12 22s8-4 8-10V5l-8-3-8 3v7c0 6 8 10 8 10z" />
+    <polyline points="9 12 11 14 15 10" />
+  </Icon>
+)
+
+export const Calendar = (p) => (
+  <Icon {...p}>
+    <rect x="3" y="4" width="18" height="18" rx="2" ry="2" />
+    <line x1="16" y1="2" x2="16" y2="6" />
+    <line x1="8" y1="2" x2="8" y2="6" />
+    <line x1="3" y1="10" x2="21" y2="10" />
+  </Icon>
+)
+
+export const Map = (p) => (
+  <Icon {...p}>
+    <polygon points="1 6 8 3 16 6 23 3 23 18 16 21 8 18 1 21 1 6" />
+    <line x1="8" y1="3" x2="8" y2="18" />
+    <line x1="16" y1="6" x2="16" y2="21" />
+  </Icon>
+)
+
+export const Compass = (p) => (
+  <Icon {...p}>
+    <circle cx="12" cy="12" r="10" />
+    <polygon points="16.24 7.76 14.12 14.12 7.76 16.24 9.88 9.88 16.24 7.76" />
+  </Icon>
+)
+
+export const Chart = (p) => (
+  <Icon {...p}>
+    <line x1="18" y1="20" x2="18" y2="10" />
+    <line x1="12" y1="20" x2="12" y2="4" />
+    <line x1="6" y1="20" x2="6" y2="14" />
+  </Icon>
+)
+
+export const MessageSquare = (p) => (
+  <Icon {...p}>
+    <path d="M21 15a2 2 0 0 1-2 2H7l-4 4V5a2 2 0 0 1 2-2h14a2 2 0 0 1 2 2z" />
+  </Icon>
+)
+
+export const Inbox = (p) => (
+  <Icon {...p}>
+    <polyline points="22 12 16 12 14 15 10 15 8 12 2 12" />
+    <path d="M5.45 5.11L2 12v6a2 2 0 0 0 2 2h16a2 2 0 0 0 2-2v-6l-3.45-6.89A2 2 0 0 0 16.76 4H7.24a2 2 0 0 0-1.79 1.11z" />
+  </Icon>
+)
+
+export const X = (p) => (
+  <Icon {...p}>
+    <line x1="18" y1="6" x2="6" y2="18" />
+    <line x1="6" y1="6" x2="18" y2="18" />
+  </Icon>
+)

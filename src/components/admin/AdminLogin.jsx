@@ -1,9 +1,18 @@
 // src/components/admin/AdminLogin.jsx — Staff sign-in.
+//
+// Two paths to the same admin session:
+//   1. Local username/password (`POST /auth/login`) — kept live per project
+//      decision, drop in a later phase.
+//   2. Microsoft / Azure AD SSO (`GET /auth/azure/start`) — when configured.
+//
+// Both end up at `admin` populated in AuthContext, so the rest of the admin
+// UI doesn't care which path got you here.
+
 import { useState } from 'react'
 import { useNavigate, useLocation, Navigate, Link } from 'react-router-dom'
 import { Key, ArrowRight } from '../icons.jsx'
 import { useAuth } from '../../contexts/AuthContext.jsx'
-import { ApiError } from '../../api/client.js'
+import { api, ApiError } from '../../api/client.js'
 
 export default function AdminLogin() {
   const { admin, login } = useAuth()
@@ -95,6 +104,22 @@ export default function AdminLogin() {
             <ArrowRight size={18} />
           </button>
         </form>
+
+        <div className="my-6 flex items-center gap-3 text-xs text-muted">
+          <div className="flex-1 h-px bg-line" />
+          หรือ
+          <div className="flex-1 h-px bg-line" />
+        </div>
+
+        <a
+          href={api.azureStartUrl('/admin')}
+          className="btn btn-dark btn-lg w-full"
+        >
+          <Key size={18} /> Sign in with Microsoft (Azure AD)
+        </a>
+        <p className="mt-3 text-xs text-muted text-center">
+          ใช้บัญชีอีเมลบริษัทที่ลงทะเบียนกับ Asset A Plus เท่านั้น
+        </p>
       </div>
     </main>
   )

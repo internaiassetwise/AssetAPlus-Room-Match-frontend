@@ -1,29 +1,72 @@
 import { Routes, Route, Navigate } from 'react-router-dom'
 import Landing     from './components/Landing.jsx'
 import RoomDetail  from './components/RoomDetail.jsx'
-import { AuthProvider } from './contexts/AuthContext.jsx'
-import RequireAuth      from './components/admin/RequireAuth.jsx'
+import { AuthProvider }      from './contexts/AuthContext.jsx'
+import { UserAuthProvider }  from './contexts/UserAuthContext.jsx'
+import { LandlordAuthProvider } from './contexts/LandlordAuthContext.jsx'
+import RequireAuth           from './components/admin/RequireAuth.jsx'
+import { RequireLandlord, RequireUser } from './components/RequireAuth.jsx'
 import AdminLayout      from './components/admin/AdminLayout.jsx'
 import AdminLogin       from './components/admin/AdminLogin.jsx'
 import AdminRoomsList   from './components/admin/AdminRoomsList.jsx'
 import AdminRoomForm    from './components/admin/AdminRoomForm.jsx'
+import DevMockBanner    from './components/DevMockBanner.jsx'
+
+// Public-facing user pages
+import SearchPage       from './pages/SearchPage.jsx'
+import MyListings       from './pages/MyListings.jsx'
+import MyListingForm    from './pages/MyListingForm.jsx'
+import Inquiries        from './pages/Inquiries.jsx'
+import Viewings         from './pages/Viewings.jsx'
+import Dashboard        from './pages/Dashboard.jsx'
+import LoginPage        from './pages/LoginPage.jsx'
 
 export default function App() {
   return (
     <AuthProvider>
-      <Routes>
-        <Route path="/"          element={<Landing />} />
-        <Route path="/rooms/:id" element={<RoomDetail />} />
+      <UserAuthProvider>
+        <LandlordAuthProvider>
+          <DevMockBanner />
+          <Routes>
+            <Route path="/"          element={<Landing />} />
+            <Route path="/search"    element={<SearchPage />} />
+            <Route path="/rooms/:id" element={<RoomDetail />} />
 
-        <Route path="/admin/login" element={<AdminLogin />} />
-        <Route element={<RequireAuth><AdminLayout /></RequireAuth>}>
-          <Route path="/admin"               element={<AdminRoomsList />} />
-          <Route path="/admin/rooms/new"     element={<AdminRoomForm mode="create" />} />
-          <Route path="/admin/rooms/:id/edit" element={<AdminRoomForm mode="edit" />} />
-        </Route>
+            <Route path="/login"                          element={<LoginPage />} />
 
-        <Route path="*" element={<Navigate to="/" replace />} />
-      </Routes>
+            {/* Tenant-only routes — wrapped in RequireUser (enforces user_session) */}
+            <Route path="/viewings" element={
+              <RequireUser><Viewings /></RequireUser>
+            } />
+
+            {/* Landlord-only routes — wrapped in RequireLandlord */}
+            <Route path="/dashboard" element={
+              <RequireLandlord><Dashboard /></RequireLandlord>
+            } />
+            <Route path="/my-listings" element={
+              <RequireLandlord><MyListings /></RequireLandlord>
+            } />
+            <Route path="/my-listings/new" element={
+              <RequireLandlord><MyListingForm mode="create" /></RequireLandlord>
+            } />
+            <Route path="/my-listings/:id/edit" element={
+              <RequireLandlord><MyListingForm mode="edit" /></RequireLandlord>
+            } />
+            <Route path="/inquiries" element={
+              <RequireLandlord><Inquiries /></RequireLandlord>
+            } />
+
+            <Route path="/admin/login" element={<AdminLogin />} />
+            <Route element={<RequireAuth><AdminLayout /></RequireAuth>}>
+              <Route path="/admin"               element={<AdminRoomsList />} />
+              <Route path="/admin/rooms/new"     element={<AdminRoomForm mode="create" />} />
+              <Route path="/admin/rooms/:id/edit" element={<AdminRoomForm mode="edit" />} />
+            </Route>
+
+            <Route path="*" element={<Navigate to="/" replace />} />
+          </Routes>
+        </LandlordAuthProvider>
+      </UserAuthProvider>
     </AuthProvider>
   )
 }

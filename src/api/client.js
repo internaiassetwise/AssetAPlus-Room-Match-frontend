@@ -124,4 +124,38 @@ export const api = {
   createRoom:     (body)        => request('/rooms',       { method: 'POST', body: JSON.stringify(body) }),
   updateRoom:     (id, body)    => request(`/rooms/${id}`, { method: 'PATCH', body: JSON.stringify(body) }),
   deleteRoom:     (id)          => request(`/rooms/${id}`, { method: 'DELETE' }),
+
+  // Public-user auth (Google OIDC + mock persona login).
+  // userMe()      → returns { id, email, name, picture, role: 'tenant' } or throws when not signed in.
+  // landlordMe()  → returns { id, name, email, ..., role: 'landlord' } or throws when not signed in.
+  // loginPersona(persona) → POST /auth/mock/login { persona } — dev/demo only.
+  //   The server gates this on MOCK_AUTH=true and returns 404 in prod. When real
+  //   Google OAuth lands, swap this for googleStartUrl() in the UI.
+  userMe:           () => request('/auth/user/me'),
+  userLogout:       () => request('/auth/user/logout', { method: 'POST' }),
+  landlordMe:       () => request('/auth/landlord/me'),
+  landlordLogout:   () => request('/auth/landlord/logout', { method: 'POST' }),
+  loginPersona:     (persona) => request('/auth/mock/login', { method: 'POST', body: JSON.stringify({ persona }) }),
+  googleStartUrl:   (returnTo = '/') => `/api/auth/google/start?return=${encodeURIComponent(returnTo)}`,
+  azureStartUrl:    (returnTo = '/') => `/api/auth/azure/start?return=${encodeURIComponent(returnTo)}`,
+
+  // Viewings (calendar / วันนัดชมห้อง)
+  listViewings:   (params = {}) => request(`/viewings${qs(params)}`),
+  createViewing:  (body)        => request('/viewings',         { method: 'POST',  body: JSON.stringify(body) }),
+  updateViewing:  (id, body)    => request(`/viewings/${id}`,  { method: 'PATCH', body: JSON.stringify(body) }),
+
+  // Inquiries (tenant → landlord messages)
+  listInquiries:  (params = {}) => request(`/inquiries${qs(params)}`),
+  createInquiry:  (body)        => request('/inquiries',         { method: 'POST',  body: JSON.stringify(body) }),
+  replyInquiry:   (id, body)    => request(`/inquiries/${id}`,  { method: 'PATCH', body: JSON.stringify(body) }),
+
+  // Landlord "my listings" (CRUD scoped to logged-in landlord)
+  listMyListings:   ()           => request('/my-listings'),
+  getMyListing:     (id)         => request(`/my-listings/${id}`),
+  createMyListing:  (body)       => request('/my-listings',         { method: 'POST',  body: JSON.stringify(body) }),
+  updateMyListing:  (id, body)   => request(`/my-listings/${id}`,  { method: 'PATCH', body: JSON.stringify(body) }),
+  deleteMyListing:  (id)         => request(`/my-listings/${id}`,  { method: 'DELETE' }),
+
+  // Dashboard KPIs
+  getDashboard:     ()           => request('/dashboard'),
 }

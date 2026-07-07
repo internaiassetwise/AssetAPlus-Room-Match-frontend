@@ -1,6 +1,7 @@
-import { useState } from 'react'
+import { useState, useEffect } from 'react'
 import { ArrowRight, Home, Bed, Users, Phone, BadgeCheck } from './icons.jsx'
 import { api, ApiError } from '../api/client.js'
+import { useUserAuth } from '../contexts/UserAuthContext.jsx'
 
 const PROPERTY_TYPES = ['คอนโด', 'ทาวน์เฮ้าส์', 'บ้านเดี่ยว', 'อพาร์ทเมนท์']
 const OCCUPATIONS = [
@@ -66,7 +67,7 @@ export default function MatchForm() {
           </div>
 
           {/* Form */}
-          {tab === 'landlord' ? <LandlordForm /> : <TenantForm />}
+          {tab === 'landlord' ? <LandlordForm /> : <TenantPanel />}
         </div>
       </div>
     </section>
@@ -231,26 +232,67 @@ function LandlordForm() {
   )
 }
 
+// ─────────────────────────────── Tenant gate ───────────────────────────────
+//
+// Tenant tab is gated by Google sign-in. Landlord tab stays anonymous.
+// When signed in, we pre-fill name/email from the Google profile — the user
+// can override either before submitting.
+
+function TenantPanel() {
+  const { user, loading } = useUserAuth()
+  if (loading && !import.meta.env.DEV) return <TenantSkeleton />
+  // In mock-auth dev mode the user is always signed in. The TenantForm
+  // handles a null `user` gracefully (fields just start empty).
+  return <TenantForm user={user} />
+}
+
+function TenantSkeleton() {
+  return (
+    <div className="card p-7 sm:p-8 animate-pulse space-y-4">
+      <div className="h-12 bg-navy-50 rounded-lg" />
+      <div className="grid sm:grid-cols-2 gap-4">
+        <div className="h-10 bg-navy-50 rounded-lg" />
+        <div className="h-10 bg-navy-50 rounded-lg" />
+      </div>
+      <div className="h-10 bg-navy-50 rounded-lg" />
+      <div className="h-32 bg-navy-50 rounded-lg" />
+    </div>
+  )
+}
+
 // ─────────────────────────────── Tenant form ────────────────────────────────
 
-function TenantForm() {
-  const [form, setForm] = useState({
-    name: '', phone: '', email: '',
+function TenantForm({ user }) {
+  const [form, setForm] = useState(() => ({
+    // Pre-fill from Google profile. User can override.
+    fullName: user?.name || '',
+    phone:    '',
+    email:    user?.email || '',
     occupation: 'professional', monthlyIncome: '', moveInDate: '',
     hasPets: false, smoker: false,
     zone: '', propertyType: 'คอนโด',
     minBedrooms: 1, maxBedrooms: 2,
     minRent: '', maxRent: '',
     note: '',
-  })
+  }))
   const [status, setStatus] = useState('idle')
   const [errors, setErrors] = useState({})
+
+  // If the user logs out + back in with a different account, refresh pre-fill.
+  useEffect(() => {
+    if (!user) return
+    setForm((s) => ({
+      ...s,
+      fullName: s.fullName || user.name || '',
+      email:    s.email    || user.email || '',
+    }))
+  }, [user?.id])
 
   const update = (field) => (e) => setForm((s) => ({ ...s, [field]: e.target.value }))
 
   function validate() {
     const e = {}
-    if (!form.name.trim()) e.name = 'กรุณากรอกชื่อ'
+    if (!form.fullName.trim()) e.fullName = 'กรุณากรอกชื่อ'
     if (!form.phone.trim()) e.phone = 'กรุณากรอกเบอร์โทร'
     else if (!/^[0-9+\-\s]{8,}$/.test(form.phone)) e.phone = 'เบอร์โทรไม่ถูกต้อง'
     if (form.email && !/^\S+@\S+\.\S+$/.test(form.email)) e.email = 'อีเมลไม่ถูกต้อง'
@@ -298,18 +340,19 @@ function TenantForm() {
 
   return (
     <form onSubmit={onSubmit} noValidate className="card p-7 sm:p-8 space-y-5">
+      <SignedInBanner user={user} />
       <FormHeader icon={Users} title="บอกความต้องการ" sub="ใช้เวลาไม่ถึง 1 นาที" />
 
       <div className="grid sm:grid-cols-2 gap-4">
-        <Field id="t-name"  label="ชื่อ-นามสกุล" required error={errors.name}>
-          <input id="t-name" className={inputCls(errors.name)} value={form.name} onChange={update('name')} placeholder="คุณสมหญิง ดีงาม" />
+        <Field id="t-fullName"  label="ชื่อ-นามสกุล" required error={errors.fullName}>
+          <input id="t-fullName" className={inputCls(errors.fullName)} value={form.fullName} onChange={update('fullName')} placeholder="คุณสมหญิง ดีงาม" />
         </Field>
         <Field id="t-phone" label="เบอร์โทร" required error={errors.phone}>
           <input id="t-phone" inputMode="tel" className={inputCls(errors.phone)} value={form.phone} onChange={update('phone')} placeholder="08x-xxx-xxxx" />
         </Field>
       </div>
 
-      <Field id="t-email" label="อีเมล (ถ้ามี)" error={errors.email}>
+      <Field id="t-email" label="อีเมล" error={errors.email}>
         <input id="t-email" type="email" className={inputCls(errors.email)} value={form.email} onChange={update('email')} placeholder="you@example.com" />
       </Field>
 
@@ -388,6 +431,30 @@ function TenantForm() {
 }
 
 // ───────────────────────────────── Shared bits ──────────────────────────────
+
+// Tiny "signed in as" pill at the top of the tenant form. Reassures the user
+// that the Google identity is recognized and where their name/email came from.
+function SignedInBanner({ user }) {
+  if (!user) return null
+  return (
+    <div className="flex items-center gap-3 px-4 py-3 rounded-xl bg-navy-50 border border-navy-100">
+      {user.picture ? (
+        <img src={user.picture} alt="" className="w-9 h-9 rounded-full ring-2 ring-white" />
+      ) : (
+        <div className="w-9 h-9 rounded-full bg-navy-200 grid place-items-center text-navy-700 font-semibold text-sm">
+          {(user.name || user.email || '?').slice(0, 1).toUpperCase()}
+        </div>
+      )}
+      <div className="min-w-0">
+        <div className="text-sm font-semibold text-navy-700 truncate">{user.name || 'ผู้ใช้ Google'}</div>
+        <div className="text-xs text-muted truncate">{user.email}</div>
+      </div>
+      <span className="ml-auto text-[11px] font-semibold text-emerald-700 bg-emerald-50 border border-emerald-100 px-2 py-0.5 rounded-full whitespace-nowrap">
+        ลงชื่อเข้าใช้แล้ว
+      </span>
+    </div>
+  )
+}
 
 function FormHeader({ icon: Icon, title, sub }) {
   return (
