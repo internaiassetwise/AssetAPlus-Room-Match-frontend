@@ -1,0 +1,51 @@
+import { Phone, LineChat, Key } from './icons.jsx'
+
+export default function Footer() {
+  return (
+    <footer className="bg-navy-900 text-white">
+      <div className="container-page py-16 sm:py-20">
+        <div className="grid md:grid-cols-4 gap-10 items-start">
+          <div className="md:col-span-2">
+            <div className="flex items-center gap-3 mb-4">
+              <span className="w-11 h-11 rounded-lg bg-navy-700 text-white grid place-items-center">
+                <Key size={22} />
+              </span>
+              <div className="leading-tight">
+                <div className="font-display font-bold text-lg">Room Match</div>
+                <div className="text-[11px] font-semibold text-ember-400 tracking-[0.18em] mt-1">ASSET A PLUS</div>
+              </div>
+            </div>
+            <p className="text-white/65 text-[15px] max-w-xs leading-relaxed">
+              บริการจับคู่ผู้เช่าและดูแลห้องเช่าโดยทีมงานมืออาชีพ Asset Wise
+            </p>
+          </div>
+
+          <div>
+            <div className="font-semibold mb-4 text-base">ติดต่อเรา</div>
+            <ul className="space-y-2.5 text-[15px] text-white/70">
+              <li className="flex items-center gap-2.5"><Phone size={16} /> <a href="tel:021680000" className="hover:text-white">02-168-0000</a></li>
+              <li className="flex items-center gap-2.5"><LineChat size={16} /> <a href="https://line.me/R/ti/p/@assetaplus" className="hover:text-white">@assetaplus</a></li>
+              <li>จันทร์–เสาร์ 9:00–18:00</li>
+            </ul>
+          </div>
+
+          <div>
+            <div className="font-semibold mb-4 text-base">เมนู</div>
+            <ul className="space-y-2.5 text-[15px] text-white/70">
+              <li><a href="#hero"      className="hover:text-white">หน้าแรก</a></li>
+              <li><a href="#how"       className="hover:text-white">วิธีการ</a></li>
+              <li><a href="#listings"  className="hover:text-white">ห้องว่าง</a></li>
+              <li><a href="#landlords" className="hover:text-white">สำหรับเจ้าของห้อง</a></li>
+              <li><a href="#faq"       className="hover:text-white">คำถาม</a></li>
+            </ul>
+          </div>
+        </div>
+
+        <div className="mt-12 pt-7 border-t border-white/10 flex flex-wrap items-center justify-between gap-4">
+          <div className="font-display font-bold tracking-[0.2em] text-white/85 text-base">ASSETWISE</div>
+          <div className="text-sm text-white/55">© {new Date().getFullYear()} Asset Wise PCL. All rights reserved.</div>
+        </div>
+      </div>
+    </footer>
+  )
+}

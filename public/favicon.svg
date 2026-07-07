@@ -1,0 +1,8 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 64 64" fill="none">
+  <rect x="2" y="2" width="60" height="60" rx="14" fill="#1E3A8A" stroke="#172E70" stroke-width="2"/>
+  <!-- Stylized "key" icon (Asset Plus motif) -->
+  <circle cx="24" cy="32" r="8" stroke="#F97316" stroke-width="4" fill="none"/>
+  <path d="M30 32 L52 32 M48 32 L48 40 M44 32 L44 38"
+        stroke="#F97316" stroke-width="4" stroke-linecap="round"/>
+  <circle cx="24" cy="32" r="2" fill="#F97316"/>
+</svg>
