@@ -7,10 +7,8 @@
   body {
     @apply font-thai bg-white text-ink antialiased text-[17px] leading-relaxed;
   }
-  /* Thai-first headings: Plus Jakarta Sans has no Thai glyphs, so Thai
-     headings use Noto Sans Thai (font-thai) directly. font-display is reserved
-     for Latin / digit headings where Plus Jakarta's tighter metrics give
-     a more confident feel. */
+  /* Thai-first site: every heading uses Noto Sans Thai (font-thai) which has
+     full Latin coverage, so we don't need a separate Latin display font. */
   h1, h2, h3, h4 {
     @apply font-thai text-navy-700 tracking-tight font-bold;
     line-height: 1.3;

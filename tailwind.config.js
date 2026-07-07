@@ -41,9 +41,11 @@ export default {
         surface:'#FFFFFF',
       },
       fontFamily: {
-        sans:    ['"Plus Jakarta Sans"', '"Noto Sans Thai"', 'system-ui', 'sans-serif'],
-        thai:    ['"Noto Sans Thai"', '"Plus Jakarta Sans"', 'sans-serif'],
-        display: ['"Plus Jakarta Sans"', '"Noto Sans Thai"', 'sans-serif'],
+        // Thai-first site: Noto Sans Thai is the primary for everything.
+        // It has full Latin coverage, so we don't need a separate Latin font.
+        sans:    ['"Noto Sans Thai"', 'system-ui', 'sans-serif'],
+        thai:    ['"Noto Sans Thai"', 'system-ui', 'sans-serif'],
+        display: ['"Noto Sans Thai"', 'system-ui', 'sans-serif'],
       },
       boxShadow: {
         // Subtle elevation — no more chunky comic-book offset shadows
