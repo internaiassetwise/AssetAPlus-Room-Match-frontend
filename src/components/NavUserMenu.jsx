@@ -104,7 +104,7 @@ export default function NavUserMenu({ tenantUser, landlordUser, onTenantLogout, 
         aria-expanded={open}
       >
         <Avatar user={primary} />
-        <span className="hidden xl:inline text-sm font-medium text-navy-700 max-w-[120px] truncate">
+        <span className="hidden 2xl:inline text-sm font-medium text-navy-700 max-w-[120px] truncate">
           {primary.name}
         </span>
         {bothActive && (

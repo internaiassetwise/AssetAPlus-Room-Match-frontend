@@ -52,16 +52,26 @@ export default function Navbar() {
           </div>
         </Link>
 
-        {/* Desktop nav — primary items at lg, all items at xl */}
+        {/* Desktop nav — marketing anchors only when not signed in (sign-in
+            context switches priorities toward feature links) */}
         <div className="hidden lg:flex items-center gap-1 min-w-0">
           <a className="nav-link" href="/#hero">หน้าแรก</a>
-          <a className="nav-link hidden xl:inline-flex" href="/#how">วิธีการ</a>
-          <a className="nav-link" href="/#listings">ห้องว่าง</a>
-          <Link className="nav-link inline-flex items-center gap-1.5" to="/search">
-            <Search size={14} /> ค้นหา
-          </Link>
-          <a className="nav-link hidden xl:inline-flex" href="/#landlords">เจ้าของห้อง</a>
-          <a className="nav-link hidden xl:inline-flex" href="/#faq">คำถาม</a>
+          {!anySignedIn && (
+            <>
+              <a className="nav-link hidden xl:inline-flex" href="/#how">วิธีการ</a>
+              <a className="nav-link" href="/#listings">ห้องว่าง</a>
+              <Link className="nav-link inline-flex items-center gap-1.5" to="/search">
+                <Search size={14} /> ค้นหา
+              </Link>
+              <a className="nav-link hidden xl:inline-flex" href="/#landlords">เจ้าของห้อง</a>
+              <a className="nav-link hidden xl:inline-flex" href="/#faq">คำถาม</a>
+            </>
+          )}
+          {anySignedIn && (
+            <Link className="nav-link inline-flex items-center gap-1.5" to="/search">
+              <Search size={14} /> ค้นหา
+            </Link>
+          )}
           {/* Landlord-only links — appear only when a landlord session exists */}
           {landlordUser && (
             <>
@@ -71,7 +81,7 @@ export default function Navbar() {
               <Link className="nav-link inline-flex items-center gap-1.5" to="/my-listings">
                 <Home size={14} /> ห้องของฉัน
               </Link>
-              <Link className="nav-link hidden xl:inline-flex items-center gap-1.5" to="/inquiries">
+              <Link className="nav-link hidden 2xl:inline-flex items-center gap-1.5" to="/inquiries">
                 <Inbox size={14} /> กล่องข้อความ
               </Link>
             </>
@@ -129,13 +139,22 @@ export default function Navbar() {
         <div className="md:hidden border-t border-line bg-white">
           <div className="container-page py-4 flex flex-col">
             <a className="nav-link py-3 text-base" href="/#hero" onClick={() => setOpen(false)}>หน้าแรก</a>
-            <a className="nav-link py-3 text-base" href="/#how" onClick={() => setOpen(false)}>วิธีการ</a>
-            <a className="nav-link py-3 text-base" href="/#listings" onClick={() => setOpen(false)}>ห้องว่าง</a>
-            <Link className="nav-link py-3 text-base inline-flex items-center gap-2" to="/search" onClick={() => setOpen(false)}>
-              <Search size={14} /> ค้นหา
-            </Link>
-            <a className="nav-link py-3 text-base" href="/#landlords" onClick={() => setOpen(false)}>เจ้าของห้อง</a>
-            <a className="nav-link py-3 text-base" href="/#faq" onClick={() => setOpen(false)}>คำถาม</a>
+            {!anySignedIn && (
+              <>
+                <a className="nav-link py-3 text-base" href="/#how" onClick={() => setOpen(false)}>วิธีการ</a>
+                <a className="nav-link py-3 text-base" href="/#listings" onClick={() => setOpen(false)}>ห้องว่าง</a>
+                <Link className="nav-link py-3 text-base inline-flex items-center gap-2" to="/search" onClick={() => setOpen(false)}>
+                  <Search size={14} /> ค้นหา
+                </Link>
+                <a className="nav-link py-3 text-base" href="/#landlords" onClick={() => setOpen(false)}>เจ้าของห้อง</a>
+                <a className="nav-link py-3 text-base" href="/#faq" onClick={() => setOpen(false)}>คำถาม</a>
+              </>
+            )}
+            {anySignedIn && (
+              <Link className="nav-link py-3 text-base inline-flex items-center gap-2" to="/search" onClick={() => setOpen(false)}>
+                <Search size={14} /> ค้นหา
+              </Link>
+            )}
 
             {/* Tenant-only / landlord-only / both-visible links */}
             {landlordUser && (
