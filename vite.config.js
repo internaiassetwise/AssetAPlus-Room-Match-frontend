@@ -1,26 +1,21 @@
 import { defineConfig } from 'vite'
 import react from '@vitejs/plugin-react'
-import { fileURLToPath } from 'node:url'
 
 // VITE_API_BASE — leave unset in dev to use the /api proxy (below).
 // Set to a full URL in production (e.g. https://api.yourapp.com/api).
 export default defineConfig(({ mode }) => {
   const apiBase = process.env.VITE_API_BASE
-  // npm workspaces hoists some deps to the root node_modules. Vite's dep
-  // optimizer does not walk up the tree, so we alias the ones we use.
-  const root = fileURLToPath(new URL('..', import.meta.url))
-  const alias = {
-    react:            `${root}/node_modules/react`,
-    'react-dom':      `${root}/node_modules/react-dom`,
-    'react-router-dom': `${root}/node_modules/react-router-dom`,
-    'react-router':   `${root}/node_modules/react-router`,
-    scheduler:        `${root}/node_modules/scheduler`,
-  }
+  // No alias needed: this is now a standalone repo, so bare specifiers
+  // (react, react-dom, react-router-dom, etc.) resolve from
+  // ./node_modules normally. The previous aliases pointed one directory up
+  // to the old monorepo root — fine locally, but Railway's build container
+  // only sees this directory, so the aliases pointed at non-existent paths
+  // and Vite emitted bare specifiers in the bundle, breaking the production
+  // build with ERR_NAME_NOT_RESOLVED in the browser.
 
   return {
     plugins: [react()],
     base: './',                         // safe for subpath deploys (Netlify, GH Pages)
-    resolve: { alias },
     server: {
       port: 5173,
       // Only proxy in dev. When VITE_API_BASE is set we assume prod deploy.
