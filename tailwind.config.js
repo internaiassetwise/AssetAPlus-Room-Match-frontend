@@ -41,9 +41,9 @@ export default {
         surface:'#FFFFFF',
       },
       fontFamily: {
-        sans:    ['"Plus Jakarta Sans"', '"Sarabun"', 'system-ui', 'sans-serif'],
-        thai:    ['"Sarabun"', '"Plus Jakarta Sans"', 'sans-serif'],
-        display: ['"Plus Jakarta Sans"', '"Sarabun"', 'sans-serif'],
+        sans:    ['"Plus Jakarta Sans"', '"Noto Sans Thai"', 'system-ui', 'sans-serif'],
+        thai:    ['"Noto Sans Thai"', '"Plus Jakarta Sans"', 'sans-serif'],
+        display: ['"Plus Jakarta Sans"', '"Noto Sans Thai"', 'sans-serif'],
       },
       boxShadow: {
         // Subtle elevation — no more chunky comic-book offset shadows

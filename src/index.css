@@ -8,7 +8,7 @@
     @apply font-thai bg-white text-ink antialiased text-[17px] leading-relaxed;
   }
   /* Thai-first headings: Plus Jakarta Sans has no Thai glyphs, so Thai
-     headings use Sarabun (font-thai) directly. font-display is reserved
+     headings use Noto Sans Thai (font-thai) directly. font-display is reserved
      for Latin / digit headings where Plus Jakarta's tighter metrics give
      a more confident feel. */
   h1, h2, h3, h4 {
