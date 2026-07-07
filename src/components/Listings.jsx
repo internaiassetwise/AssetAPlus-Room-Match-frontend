@@ -1,5 +1,6 @@
 import { useState, useEffect } from 'react'
-import { MapPin, Bed, Bath, Ruler, Clock, ArrowRight, Home } from './icons.jsx'
+import { Link } from 'react-router-dom'
+import { MapPin, Bed, Bath, Ruler, Clock, ArrowRight, Home, Search } from './icons.jsx'
 import RoomDetailModal from './RoomDetailModal.jsx'
 import { useApi } from '../hooks/useApi.js'
 import { api } from '../api/client.js'
@@ -187,9 +188,9 @@ export default function Listings() {
         )}
 
         <div className="text-center mt-14">
-          <button className="btn btn-primary btn-lg">
-            ดูห้องทั้งหมด <ArrowRight size={18} />
-          </button>
+          <Link to="/search" className="btn btn-primary btn-lg">
+            <Search size={18} /> ค้นหาบนแผนที่ <ArrowRight size={16} />
+          </Link>
         </div>
       </div>
     </section>
