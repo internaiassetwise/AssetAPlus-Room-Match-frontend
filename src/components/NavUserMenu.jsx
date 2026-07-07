@@ -99,12 +99,12 @@ export default function NavUserMenu({ tenantUser, landlordUser, onTenantLogout, 
     <div className="relative">
       <button
         onClick={() => setOpen(!open)}
-        className="flex items-center gap-2 px-2 py-1 rounded-full hover:bg-navy-50 transition-colors"
+        className="flex items-center gap-2 px-2 py-1 rounded-full hover:bg-navy-50 transition-colors shrink-0"
         aria-haspopup="menu"
         aria-expanded={open}
       >
         <Avatar user={primary} />
-        <span className="text-sm font-medium text-navy-700 max-w-[120px] truncate">
+        <span className="hidden xl:inline text-sm font-medium text-navy-700 max-w-[120px] truncate">
           {primary.name}
         </span>
         {bothActive && (

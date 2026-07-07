@@ -40,28 +40,28 @@ export default function Navbar() {
           : 'bg-white border-b border-transparent'
       }`}
     >
-      <nav className="container-page flex items-center justify-between h-20">
+      <nav className="container-page flex items-center justify-between h-20 gap-4">
         {/* Logo */}
-        <Link to="/" className="flex items-center gap-3 group">
+        <Link to="/" className="flex items-center gap-3 group shrink-0">
           <span className="w-11 h-11 rounded-lg bg-navy-600 text-white grid place-items-center group-hover:bg-navy-700 transition-colors">
             <Key size={22} />
           </span>
-          <div className="leading-none">
+          <div className="leading-none whitespace-nowrap">
             <div className="font-bold text-navy-700 text-base tracking-tight">Room Match</div>
             <div className="text-[11px] font-semibold text-ember-600 tracking-[0.18em] mt-1">ASSET A PLUS</div>
           </div>
         </Link>
 
-        {/* Desktop nav */}
-        <div className="hidden lg:flex items-center gap-1">
+        {/* Desktop nav — primary items at lg, all items at xl */}
+        <div className="hidden lg:flex items-center gap-1 min-w-0">
           <a className="nav-link" href="/#hero">หน้าแรก</a>
-          <a className="nav-link" href="/#how">วิธีการ</a>
+          <a className="nav-link hidden xl:inline-flex" href="/#how">วิธีการ</a>
           <a className="nav-link" href="/#listings">ห้องว่าง</a>
           <Link className="nav-link inline-flex items-center gap-1.5" to="/search">
             <Search size={14} /> ค้นหา
           </Link>
-          <a className="nav-link" href="/#landlords">เจ้าของห้อง</a>
-          <a className="nav-link" href="/#faq">คำถาม</a>
+          <a className="nav-link hidden xl:inline-flex" href="/#landlords">เจ้าของห้อง</a>
+          <a className="nav-link hidden xl:inline-flex" href="/#faq">คำถาม</a>
           {/* Landlord-only links — appear only when a landlord session exists */}
           {landlordUser && (
             <>
@@ -71,7 +71,7 @@ export default function Navbar() {
               <Link className="nav-link inline-flex items-center gap-1.5" to="/my-listings">
                 <Home size={14} /> ห้องของฉัน
               </Link>
-              <Link className="nav-link inline-flex items-center gap-1.5" to="/inquiries">
+              <Link className="nav-link hidden xl:inline-flex items-center gap-1.5" to="/inquiries">
                 <Inbox size={14} /> กล่องข้อความ
               </Link>
             </>

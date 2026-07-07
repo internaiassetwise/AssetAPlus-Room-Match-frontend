@@ -1,9 +1,11 @@
-// src/components/DevMockBanner.jsx — Sticky dev-only banner that surfaces
-// the active mock persona (tenant or landlord) and offers a "switch" link
-// to /login.
+// src/components/DevMockBanner.jsx — Sticky banner that surfaces the active
+// mock persona (tenant and/or landlord) and offers a "switch" link to /login.
 //
-// Only rendered in DEV (`import.meta.env.DEV`). In production this returns
-// null — the persona picker on /login is what users interact with there.
+// Shown whenever a user_session or landlord_session cookie is present —
+// i.e. while MOCK_AUTH=true is set on the backend. When real OAuth takes
+// over and MOCK_AUTH is flipped off, the mock-login endpoint returns 404
+// and no cookies are ever set, so the banner stays hidden automatically
+// (the early-return on !tenantUser && !landlordUser guards this).
 
 import { Link } from 'react-router-dom'
 import { Sparkles } from './icons.jsx'
@@ -11,8 +13,6 @@ import { useUserAuth }     from '../contexts/UserAuthContext.jsx'
 import { useLandlordAuth } from '../contexts/LandlordAuthContext.jsx'
 
 export default function DevMockBanner() {
-  if (!import.meta.env.DEV) return null
-
   const { user: tenantUser }     = useUserAuth()
   const { landlord: landlordUser } = useLandlordAuth()
 
