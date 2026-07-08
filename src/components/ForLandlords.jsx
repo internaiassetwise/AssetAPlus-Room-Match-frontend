@@ -1,10 +1,11 @@
 import { Phone, LineChat, Sparkles, Bolt, Shield, Heart, ArrowRight } from './icons.jsx'
+import { Link } from 'react-router-dom'
 
 const PERKS = [
-  { icon: Sparkles, title: 'ถ่ายรูปห้องมืออาชีพ', desc: 'ภาพสวย ตรงปก ดึงดูดผู้เช่าเร็วขึ้น 3 เท่า' },
-  { icon: Bolt,     title: 'ลงประกาศ 10+ ช่องทาง',   desc: 'Facebook, Line, เว็บพันธมิตร เข้าถึงผู้เช่าทุกกลุ่ม' },
-  { icon: Shield,   title: 'คัดกรองผู้เช่า',         desc: 'ตรวจเอกสาร สัญญามาตรฐาน ประกันค่าเช่า' },
-  { icon: Heart,    title: 'ดูแลต่อเนื่อง',         desc: 'รายงานทุกเดือน ช่วยเหลือตลอดสัญญา' },
+  { icon: Sparkles, title: 'แอดมินลงประกาศให้', desc: 'บอกรายละเอียดห้องทาง Line แอดมินจัดการลงประกาศและดูแลรูปภาพให้' },
+  { icon: Bolt,     title: 'เข้าถึงผู้เช่าคุณภาพ',   desc: 'ฐานผู้เช่าที่ผ่านการคัดกรอง พร้อมเช่า' },
+  { icon: Shield,   title: 'ตรวจเอกสารผู้เช่า',       desc: 'สัญญามาตรฐาน ประกันค่าเช่า' },
+  { icon: Heart,    title: 'ดูแลต่อเนื่อง',           desc: 'รายงานทุกเดือน ช่วยเหลือตลอดสัญญา' },
 ]
 
 export default function ForLandlords() {
@@ -22,13 +23,13 @@ export default function ForLandlords() {
             สำหรับเจ้าของห้อง
           </span>
           <h2 className="mt-5 font-bold text-4xl sm:text-5xl lg:text-[48px] leading-[1.2] tracking-tight">
-            ฝากห้องไว้กับเรา
+            ฝากห้องผ่าน Line
             <br />
-            <span className="text-ember-400">รายได้ต่อเนื่อง</span>
+            <span className="text-ember-400">แอดมินดูแลให้</span>
           </h2>
           <p className="mt-5 text-white/75 max-w-md text-lg leading-relaxed">
-            เราดูแลครบวงจร ตั้งแต่วันแรกจนผู้เช่าเข้าอยู่
-            เจ้าของห้องแค่นั่งดูรายได้เข้าทุกเดือน
+            ติดต่อแอดมินทาง Line เพื่อลงประกาศห้อง แก้ไขรายละเอียด
+            และอัปโหลดรูปภาพ เจ้าของห้องแค่นั่งดูรายได้เข้าทุกเดือน
           </p>
 
           <div className="mt-8 grid sm:grid-cols-2 gap-4">
@@ -44,9 +45,9 @@ export default function ForLandlords() {
           </div>
 
           <div className="mt-9 flex flex-wrap gap-3">
-            <a href="#cta" className="btn btn-ember btn-lg">
-              เริ่มฝากห้องวันนี้ <ArrowRight size={18} />
-            </a>
+            <Link to="/contact-admin?intent=list-a-room" className="btn btn-line btn-lg">
+              <LineChat size={18} /> ลงประกาศผ่าน Line
+            </Link>
             <a href="tel:021680000" className="btn bg-white/10 text-white border border-white/20 btn-lg hover:bg-white/15">
               <Phone size={18} /> 02-168-0000
             </a>

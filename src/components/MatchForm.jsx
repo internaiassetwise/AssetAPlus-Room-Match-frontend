@@ -33,12 +33,12 @@ export default function MatchForm() {
     <section id="match" className="section bg-cream-50">
       <div className="container-page">
         <div className="text-center max-w-2xl mx-auto mb-10">
-          <span className="eyebrow">Match ใน 24 ชม.</span>
+          <span className="eyebrow">แอดมินช่วยต่อให้</span>
           <h2 className="mt-4 font-bold text-navy-700 text-4xl sm:text-5xl tracking-tight">
             ฝากข้อมูล<span className="text-ember-600"> ให้เราจับคู่</span>
           </h2>
           <p className="mt-5 text-muted text-lg leading-relaxed">
-            ทั้งเจ้าของห้องและผู้เช่า กรอกแบบฟอร์มสั้นๆ ทีมงานจะติดต่อกลับภายใน 24 ชม.
+            ทั้งเจ้าของห้องและผู้เช่า กรอกแบบฟอร์มสั้นๆ แอดมินจะติดต่อกลับทาง Line ภายใน 24 ชม.
           </p>
         </div>
 

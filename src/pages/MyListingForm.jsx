@@ -1,7 +1,14 @@
-// src/pages/MyListingForm.jsx — Create/edit landlord room.
+// src/pages/MyListingForm.jsx — Edit landlord room.
 //
-// Uses /my-listings POST or PATCH; map-picker lets the landlord click to set
-// lat/lng without typing them manually.
+// Under the middleman flow:
+//   - Description is admin-only. The textarea is replaced with a locked
+//     summary + Line CTA so the landlord sees the value but cannot edit it
+//     in-app.
+//   - All other fields (rent, status, available_from, address, map, amenities)
+//     remain fully editable.
+//
+// Create mode (`mode="create"`) is no longer user-accessible — the route
+// `/my-listings/new` should be redirected to /contact-admin by the router.
 
 import { useState, useEffect } from 'react'
 import { useNavigate, useParams } from 'react-router-dom'
@@ -9,9 +16,10 @@ import Navbar from '../components/Navbar.jsx'
 import Footer from '../components/Footer.jsx'
 import DevMockBanner from '../components/DevMockBanner.jsx'
 import MapView from '../components/MapView.jsx'
+import ContactAdminLineCTA from '../components/ContactAdminLineCTA.jsx'
 import { api, ApiError } from '../api/client.js'
 import { useApi } from '../hooks/useApi.js'
-import { Home, ArrowRight, MapPin } from '../components/icons.jsx'
+import { Home, ArrowRight, MapPin, Shield, Pencil } from '../components/icons.jsx'
 
 const PROPERTY_TYPES = [
   { value: 'condo',     label: 'คอนโด' },
@@ -81,19 +89,20 @@ export default function MyListingForm({ mode = 'create' }) {
     if (!validate()) return
     setStatus('sending')
     try {
+      // Strip `description` before submit — admin-only. Backend strips it too
+      // but we send nothing to keep the payload obvious.
+      const { description: _desc, ...rest } = form
       const payload = {
-        ...form,
-        zoneId: Number(form.zoneId),
-        bedrooms: Number(form.bedrooms),
-        bathrooms: Number(form.bathrooms),
-        sizeSqm: Number(form.sizeSqm),
-        monthlyRent: Number(form.monthlyRent),
-        lat: form.lat != null ? Number(form.lat) : undefined,
-        lng: form.lng != null ? Number(form.lng) : undefined,
+        ...rest,
+        zoneId: Number(rest.zoneId),
+        bedrooms: Number(rest.bedrooms),
+        bathrooms: Number(rest.bathrooms),
+        sizeSqm: Number(rest.sizeSqm),
+        monthlyRent: Number(rest.monthlyRent),
+        lat: rest.lat != null ? Number(rest.lat) : undefined,
+        lng: rest.lng != null ? Number(rest.lng) : undefined,
       }
-      const saved = isEdit
-        ? await api.updateMyListing(id, payload)
-        : await api.createMyListing(payload)
+      const saved = await api.updateMyListing(id, payload)
       navigate(`/rooms/${saved.id}`)
     } catch (err) {
       if (err instanceof ApiError && err.code === 'VALIDATION_ERROR' && Array.isArray(err.details)) {
@@ -169,9 +178,8 @@ export default function MyListingForm({ mode = 'create' }) {
             </Field>
           </div>
 
-          <Field id="f-desc" label="รายละเอียด">
-            <textarea id="f-desc" rows={4} className="input resize-none" value={form.description} onChange={update('description')} />
-          </Field>
+          {/* Description — admin-only. Locked in edit mode. */}
+          <DescriptionLocked room={existing} />
 
           {/* Map picker for lat/lng — click anywhere to drop a marker */}
           <div>
@@ -203,7 +211,7 @@ export default function MyListingForm({ mode = 'create' }) {
           </div>
 
           <button type="submit" disabled={status === 'sending'} className="btn btn-primary btn-lg w-full disabled:opacity-60">
-            {status === 'sending' ? 'กำลังบันทึก…' : (isEdit ? 'บันทึกการแก้ไข' : 'เพิ่มห้อง')}
+            {status === 'sending' ? 'กำลังบันทึก…' : 'บันทึกการแก้ไข'}
             <ArrowRight size={18} />
           </button>
           {status === 'error' && (
@@ -213,6 +221,54 @@ export default function MyListingForm({ mode = 'create' }) {
       </main>
       <Footer />
     </>
+  )
+}
+
+/**
+ * Locked description field. Renders the existing description (read-only) plus
+ * a notice + Line CTA. Replaces the editable textarea so landlords see the
+ * current value but understand they must contact admin to change it.
+ */
+function DescriptionLocked({ room }) {
+  return (
+    <div>
+      <div className="flex items-center justify-between mb-1.5">
+        <label className="label !mb-0">รายละเอียด</label>
+        <span className="inline-flex items-center gap-1 text-[11px] font-semibold px-2 py-0.5 rounded-full bg-amber-50 text-amber-800 border border-amber-200">
+          <Shield size={12} /> แก้ไขโดยแอดมิน
+        </span>
+      </div>
+      {room?.description ? (
+        <div className="rounded-lg border border-amber-200 bg-amber-50/50 px-4 py-3 text-[15px] text-navy-700 leading-relaxed whitespace-pre-line">
+          {room.description}
+        </div>
+      ) : (
+        <div className="rounded-lg border border-dashed border-amber-300 bg-amber-50/50 px-4 py-3 text-sm text-muted italic">
+          ยังไม่มีรายละเอียด — แอดมินจะช่วยเขียนให้เมื่อยืนยันห้อง
+        </div>
+      )}
+      <div className="mt-2 rounded-lg bg-navy-50/60 border border-navy-200 p-4 flex items-start gap-3">
+        <Pencil size={16} className="text-navy-600 mt-0.5 shrink-0" />
+        <div className="text-sm text-navy-700 leading-relaxed">
+          <div className="font-semibold">
+            ต้องการแก้ไขรายละเอียดห้อง?
+          </div>
+          <p className="mt-1 text-muted">
+            รายละเอียดห้องแก้ไขได้โดยแอดมินเท่านั้น เพื่อให้ข้อมูลตรงกันและดูแลลูกค้าได้อย่างต่อเนื่อง
+            ติดต่อแอดมินทาง Line เพื่อแจ้งการเปลี่ยนแปลง
+          </p>
+          <div className="mt-3">
+            <ContactAdminLineCTA
+              intent="edit-description"
+              room={room ? { id: room.id, title: room.title } : undefined}
+              variant="bare"
+              showPhone={false}
+              label="ติดต่อแอดมินทาง Line"
+            />
+          </div>
+        </div>
+      </div>
+    </div>
   )
 }
 

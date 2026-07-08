@@ -1,4 +1,5 @@
 import { Phone, LineChat, ArrowRight, Shield, Clock, Users, BadgeCheck } from './icons.jsx'
+import { Link } from 'react-router-dom'
 
 const TRUST = [
   { num: '2,500+', label: 'ห้องที่ดูแล' },
@@ -33,12 +34,16 @@ export default function Hero() {
           </p>
 
           <div className="mt-8 flex flex-wrap gap-3">
-            <a href="#cta" className="btn btn-primary btn-lg">
-              ฝากห้องของคุณ <ArrowRight size={18} />
-            </a>
-            <a href="tel:021680000" className="btn btn-outline btn-lg">
-              <Phone size={18} /> 02-168-0000
-            </a>
+            <Link to="/search" className="btn btn-primary btn-lg">
+              ดูห้องว่าง <ArrowRight size={18} />
+            </Link>
+            <Link to="/contact-admin?intent=list-a-room" className="btn bg-[#06C755] text-white hover:bg-[#05b34c] btn-lg">
+              <LineChat size={18} /> พูดคุยกับแอดมินทาง Line
+            </Link>
+          </div>
+
+          <div className="mt-3 text-sm text-muted">
+            หรือโทร <a href="tel:021680000" className="font-medium text-navy-700 hover:underline">02-168-0000</a> · จันทร์–เสาร์ 9:00–18:00
           </div>
 
           <div className="mt-12 grid grid-cols-3 gap-6 max-w-lg">

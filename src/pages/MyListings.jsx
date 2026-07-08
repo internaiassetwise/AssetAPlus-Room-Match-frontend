@@ -1,17 +1,26 @@
 // src/pages/MyListings.jsx — Landlord's own room inventory.
 //
-// Tenant OR landlord can view their own rooms. Lists status badges,
-// edit/delete buttons, and an "เพิ่มห้อง" CTA.
+// Under the middleman flow:
+//   - Landlords cannot self-list a room (POST /api/my-listings is 403 CONTACT_ADMIN)
+//   - Creating a listing goes via /contact-admin
+//   - Editing existing rooms is allowed, but the description field is admin-only
+//     (handled inside MyListingForm)
+//
+// So this page:
+//   - Lists the landlord's own rooms (Read + Edit + Delete)
+//   - Has no "เพิ่มห้อง" button — replaced with a Line CTA in the header
+//   - Empty state is also a Line CTA, not a self-service create form
 
 import { useState } from 'react'
 import { Link, useNavigate } from 'react-router-dom'
 import Navbar from '../components/Navbar.jsx'
 import Footer from '../components/Footer.jsx'
 import DevMockBanner from '../components/DevMockBanner.jsx'
+import ContactAdminLineCTA from '../components/ContactAdminLineCTA.jsx'
 import { useApi } from '../hooks/useApi.js'
 import { api } from '../api/client.js'
 import { useUserAuth } from '../contexts/UserAuthContext.jsx'
-import { Home, Plus, Pencil, Trash, Eye } from '../components/icons.jsx'
+import { Home, Pencil, Trash, Eye, LineChat } from '../components/icons.jsx'
 
 const STATUS_LABEL = {
   available: 'ว่าง',
@@ -48,18 +57,32 @@ export default function MyListings() {
       <DevMockBanner />
       <Navbar />
       <main className="container-page py-10">
-        <header className="flex items-center justify-between gap-4 mb-7">
-          <div>
-            <span className="eyebrow-navy"><Home size={14} /> ห้องของฉัน</span>
-            <h1 className="mt-3 text-3xl sm:text-4xl font-bold text-navy-700">
-              ห้องที่คุณ<span className="text-ember-600"> ปล่อยเช่า</span>
-            </h1>
-            <p className="mt-2 text-muted">จัดการห้องทั้งหมดในที่เดียว</p>
-          </div>
-          <button onClick={() => navigate('/my-listings/new')} className="btn btn-primary">
-            <Plus size={16} /> เพิ่มห้อง
-          </button>
+        <header className="mb-7">
+          <span className="eyebrow-navy"><Home size={14} /> ห้องของฉัน</span>
+          <h1 className="mt-3 text-3xl sm:text-4xl font-bold text-navy-700">
+            ห้องที่คุณ<span className="text-ember-600"> ปล่อยเช่า</span>
+          </h1>
+          <p className="mt-2 text-muted">จัดการห้องทั้งหมดในที่เดียว</p>
         </header>
+
+        {/* Replace the old "เพิ่มห้อง" button with a Line CTA card. */}
+        <div className="card p-5 mb-7 border-navy-200 bg-navy-50/40 flex flex-col sm:flex-row items-start sm:items-center gap-4">
+          <div className="w-11 h-11 rounded-lg bg-[#06C755] grid place-items-center text-white shrink-0">
+            <LineChat size={22} />
+          </div>
+          <div className="flex-1">
+            <div className="font-semibold text-navy-700">อยากลงประกาศห้องใหม่?</div>
+            <p className="mt-0.5 text-sm text-muted leading-relaxed">
+              การลงประกาศห้องใหม่ต้องติดต่อแอดมินทาง Line แอดมินจะช่วยลงประกาศ ตั้งค่ารายละเอียด และเปิดให้เช่า
+            </p>
+          </div>
+          <ContactAdminLineCTA
+            intent="list-a-room"
+            variant="bare"
+            showPhone={false}
+            label="ติดต่อแอดมินทาง Line"
+          />
+        </div>
 
         {rmLoading && <div className="text-muted text-center py-10">กำลังโหลด…</div>}
         {error && <div className="card p-6 text-ember-700">{error.message}</div>}
@@ -91,9 +114,19 @@ function EmptyState() {
         <Home size={28} className="text-navy-600" />
       </div>
       <h3 className="mt-5 text-lg font-semibold text-navy-700">ยังไม่มีห้อง</h3>
-      <p className="mt-2 text-muted">เพิ่มห้องแรกของคุณเพื่อเริ่มรับผู้สนใจ</p>
-      <Link to="/my-listings/new" className="mt-6 btn btn-primary inline-flex">
-        <Plus size={16} /> เพิ่มห้องแรก
+      <p className="mt-2 text-muted max-w-sm mx-auto">
+        ยังไม่มีห้องในระบบ กรุณาติดต่อแอดมินทาง Line เพื่อลงประกาศห้องแรก
+      </p>
+      <div className="mt-6 flex justify-center">
+        <ContactAdminLineCTA
+          intent="list-a-room"
+          variant="bare"
+          showPhone={false}
+          label="ติดต่อแอดมินทาง Line"
+        />
+      </div>
+      <Link to="/contact-admin" className="mt-3 inline-block text-sm text-navy-600 hover:text-navy-700 underline">
+        ดูช่องทางติดต่อทั้งหมด
       </Link>
     </div>
   )
@@ -128,7 +161,7 @@ function RoomCard({ room, onEdit, onDelete, busy }) {
             <Link to={`/rooms/${room.id}`} className="btn btn-ghost btn-sm" aria-label="ดู">
               <Eye size={14} />
             </Link>
-            <button onClick={onEdit} className="btn btn-ghost btn-sm" aria-label="แก้ไข">
+            <button onClick={onEdit} className="btn btn-ghost btn-sm" aria-label="แก้ไข" title="แก้ไข (รายละเอียดแก้ไขโดยแอดมิน)">
               <Pencil size={14} />
             </button>
             <button onClick={onDelete} disabled={busy} className="btn btn-ghost btn-sm text-ember-700 disabled:opacity-50" aria-label="ลบ">

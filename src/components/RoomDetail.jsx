@@ -4,8 +4,7 @@ import Footer from './Footer.jsx'
 import { MapPin, Bed, Bath, Ruler, Phone, LineChat, ArrowRight, Sparkles, Home, ChevronRight, Shield } from './icons.jsx'
 import { useApi } from '../hooks/useApi.js'
 import { api } from '../api/client.js'
-import ViewingPicker from './ViewingPicker.jsx'
-import InquiryForm from './InquiryForm.jsx'
+import AvailableViewingDates from './AvailableViewingDates.jsx'
 
 const FALLBACK_IMAGES = [
   '/images/room-navy.jpg',
@@ -145,11 +144,8 @@ export default function RoomDetail() {
                   <div className="mt-1 text-sm text-muted">ค่าเช่ารายเดือน ไม่รวมค่าน้ำค่าไฟ</div>
                 </div>
 
-                {/* Tenant actions — viewing picker + inquiry form */}
-                <div className="space-y-3">
-                  <ViewingPicker roomId={room.id} />
-                  <InquiryForm roomId={room.id} />
-                </div>
+                {/* Available viewing dates — read-only. Tenant must contact admin via Line. */}
+                <AvailableViewingDates roomId={room.id} room={room} />
 
                 <div className="border-t border-line pt-4 space-y-3">
                   <a href="tel:021680000" className="btn btn-outline w-full">
@@ -163,8 +159,8 @@ export default function RoomDetail() {
                   >
                     <LineChat size={16} /> แชท Line @assetaplus
                   </a>
-                  <button onClick={() => navigate('/#cta')} className="btn btn-ghost w-full">
-                    ฝากห้องของคุณ <ArrowRight size={16} />
+                  <button onClick={() => navigate('/contact-admin?intent=list-a-room')} className="btn btn-ghost w-full">
+                    อยากลงประกาศห้อง? <ArrowRight size={16} />
                   </button>
                 </div>
 

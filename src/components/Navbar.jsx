@@ -118,9 +118,9 @@ export default function Navbar() {
           <a href="tel:021680000" className="btn btn-outline btn-sm">
             <Phone size={16} /> 02-168-0000
           </a>
-          <a href="#cta" className="btn btn-line btn-sm">
+          <Link to="/contact-admin" className="btn btn-line btn-sm">
             <LineChat size={16} /> @assetaplus
-          </a>
+          </Link>
         </div>
 
         {/* Mobile menu button */}
@@ -241,9 +241,9 @@ export default function Navbar() {
               <a href="tel:021680000" className="btn btn-outline flex-1">
                 <Phone size={16} /> โทร
               </a>
-              <a href="#cta" className="btn btn-line flex-1">
+              <Link to="/contact-admin" className="btn btn-line flex-1" onClick={() => setOpen(false)}>
                 <LineChat size={16} /> แชทไลน์
-              </a>
+              </Link>
             </div>
           </div>
         </div>
