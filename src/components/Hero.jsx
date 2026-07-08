@@ -20,25 +20,25 @@ export default function Hero() {
         <div>
           <div className="eyebrow">
             <BadgeCheck size={16} />
-            ฝากห้องกับมืออาชีพ Asset A Plus
+            ห้องว่างในย่านเดียวกับคุณ · ดูแลโดย Asset A Plus
           </div>
 
           <h1 className="mt-6 font-bold text-navy-700 leading-[1.2] text-[44px] sm:text-5xl lg:text-[56px] xl:text-[64px] tracking-tight">
-            <span className="block">ฝากห้องให้เราดูแล</span>
-            <span className="block text-ember-600">ไม่ต้องลงประกาศเอง</span>
+            <span className="block">ห้องใกล้บ้านคุณ</span>
+            <span className="block text-ember-600">พร้อมเข้าอยู่</span>
           </h1>
 
           <p className="mt-7 text-muted text-lg sm:text-xl max-w-xl leading-relaxed">
-            มีฐานผู้เช่าคุณภาพพร้อม Match กับห้องว่างของคุณ
-            ลดเวลาห้องร้าง เพิ่มรายได้ ด้วยทีมงานมืออาชีพที่ดูแลครบทุกขั้นตอน
+            ห้องเช่าคุณภาพจากเจ้าของในย่านเดียวกับคุณ ตรวจสอบสภาพจริง
+            นัดชมห้องได้ผ่านแอดมิน ดูแลครบทุกขั้นตอนตั้งแต่ต้นทำสัญญา
           </p>
 
           <div className="mt-8 flex flex-wrap gap-3">
             <Link to="/search" className="btn btn-primary btn-lg">
               ดูห้องว่าง <ArrowRight size={18} />
             </Link>
-            <Link to="/contact-admin?intent=list-a-room" className="btn bg-[#06C755] text-white hover:bg-[#05b34c] btn-lg">
-              <LineChat size={18} /> พูดคุยกับแอดมินทาง Line
+            <Link to="/contact-admin" className="btn bg-[#06C755] text-white hover:bg-[#05b34c] btn-lg">
+              <LineChat size={18} /> ถามแอดมินทาง Line
             </Link>
           </div>
 
@@ -65,7 +65,7 @@ export default function Hero() {
                 </div>
                 <div>
                   <div className="text-[11px] font-semibold text-muted uppercase tracking-wider">
-                    บริการจับคู่ผู้เช่า & ดูแลห้อง
+                    ดูแลโดยทีมงานมืออาชีพ
                   </div>
                   <div className="font-bold text-navy-700 text-xl mt-1">
                     Asset A Plus
@@ -79,11 +79,10 @@ export default function Hero() {
 
             <ul className="mt-6 space-y-3.5">
               {[
-                'ช่วยหาผู้เช่า',
-                'นัดพาชมห้อง',
-                'ประสานงานผู้เช่าให้ครบ',
-                'ดูแลห้องก่อนส่งมอบ',
-                'ช่วยลดระยะเวลาห้องว่าง',
+                'ตรวจสภาพห้องก่อนส่งมอบ',
+                'นัดชมห้องตามเวลาที่กำหนด',
+                'ทำสัญญามาตรฐาน',
+                'ดูแลตลอดสัญญาเช่า',
               ].map((t) => (
                 <li key={t} className="flex items-start gap-3 text-navy-700 text-[15px]">
                   <BadgeCheck size={20} className="text-navy-600 mt-0.5 flex-shrink-0" />
@@ -95,7 +94,7 @@ export default function Hero() {
             <div className="mt-7 pt-6 border-t border-line">
               <div className="flex items-center justify-between gap-4">
                 <div>
-                  <div className="text-sm text-muted">สนใจให้เราดูแล ติดต่อ</div>
+                  <div className="text-sm text-muted">สนใจห้องไหน ติดต่อ</div>
                   <a href="tel:021680000" className="block text-navy-700 font-semibold text-xl mt-1">
                     02-168-0000
                   </a>
@@ -103,9 +102,9 @@ export default function Hero() {
                     หรือ Line: <span className="font-medium text-navy-700">@assetaplus</span>
                   </div>
                 </div>
-                <a href="#cta" className="btn btn-line">
+                <Link to="/contact-admin" className="btn btn-line">
                   <LineChat size={18} /> แชทเลย
-                </a>
+                </Link>
               </div>
             </div>
           </div>
