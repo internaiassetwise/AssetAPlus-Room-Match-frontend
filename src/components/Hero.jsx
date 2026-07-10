@@ -109,7 +109,7 @@ export default function Hero() {
             </div>
           </div>
 
-          <div className="absolute -bottom-5 -left-5 hidden sm:flex card p-3.5 shadow-lift gap-2.5 items-center">
+          <div className="absolute -top-5 -left-16 hidden sm:flex card p-3.5 shadow-lift gap-2.5 items-center">
             <div className="w-9 h-9 rounded-full bg-emerald-50 grid place-items-center">
               <Clock size={18} className="text-emerald-600" />
             </div>
