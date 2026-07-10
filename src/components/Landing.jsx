@@ -8,7 +8,7 @@ import Footer     from './Footer.jsx'
 
 // Tenant-primary landing. Five sections in scroll order:
 //   Hero       – "ห้องว่างในย่านเดียวกับคุณ", primary CTA → /search,
-//                secondary CTA → Line @assetaplus
+//                secondary CTA → Line @973rjazt
 //   Listings   – Zone chip filter + room grid + "ดูบนแผนที่" → /search
 //   HowItWorks – 3-step tenant flow (no tab switcher)
 //   FAQ        – "มีคำถาม?" answers the common hyperlocal-renter questions

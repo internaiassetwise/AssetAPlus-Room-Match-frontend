@@ -183,7 +183,7 @@ function RoomCard({ room }) {
             <Eye size={14} /> ดูห้อง
           </Link>
           <a
-            href={`https://line.me/R/ti/p/@assetaplus?text=${encodeURIComponent(
+            href={`https://line.me/R/ti/p/@973rjazt?text=${encodeURIComponent(
               room.title
                 ? `สวัสดีค่ะ จะส่งรูปภาพเพิ่มเติมให้ห้อง "${room.title}" (รหัส ${room.id}) ค่ะ`
                 : `สวัสดีค่ะ จะส่งรูปภาพเพิ่มเติมให้ห้องพักค่ะ`

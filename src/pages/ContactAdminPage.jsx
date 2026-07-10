@@ -134,13 +134,13 @@ export default function ContactAdminPage() {
                 <LineChat size={28} />
               </div>
               <div className="flex-1">
-                <h2 className="text-lg sm:text-xl font-bold text-navy-700">แชท Line @assetaplus</h2>
+                <h2 className="text-lg sm:text-xl font-bold text-navy-700">แชท Line @973rjazt</h2>
                 <p className="mt-1 text-muted">
                   ตอบเร็วที่สุด · จันทร์–เสาร์ 9:00–18:00
                 </p>
               </div>
               <a
-                href="https://line.me/R/ti/p/@assetaplus"
+                href="https://line.me/R/ti/p/@973rjazt"
                 target="_blank"
                 rel="noreferrer noopener"
                 className="btn bg-[#06C755] text-white hover:bg-[#05b34c] btn-lg"

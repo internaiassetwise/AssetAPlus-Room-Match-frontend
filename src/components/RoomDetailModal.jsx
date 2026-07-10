@@ -28,7 +28,7 @@ export default function RoomDetailModal({ roomId, onClose }) {
   const title = room?.title || 'กำลังโหลด…'
 
   return (
-    <Modal open={open} onClose={onClose} title={title} maxWidth="max-w-3xl">
+    <Modal open={open} onClose={onClose} title={title} maxWidth="max-w-2xl">
       {loading && (
         <div className="p-10 text-center text-muted">กำลังโหลดข้อมูลห้อง…</div>
       )}
@@ -41,7 +41,7 @@ export default function RoomDetailModal({ roomId, onClose }) {
       )}
 
       {room && (
-        <div className="animate-fade-up">
+        <div className="animate-fade-up max-h-[85vh] overflow-y-auto">
           {/* Image */}
           <div className="relative aspect-[16/9] bg-cream-100 overflow-hidden">
             <img
@@ -59,7 +59,7 @@ export default function RoomDetailModal({ roomId, onClose }) {
           </div>
 
           {/* Body */}
-          <div className="p-7 sm:p-8">
+          <div className="p-6 sm:p-7">
             <div className="flex items-start justify-between gap-4">
               <div>
                 <div className="inline-flex items-center gap-1.5 text-sm font-medium text-muted">

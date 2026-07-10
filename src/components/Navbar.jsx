@@ -1,10 +1,11 @@
 import { useEffect, useState } from 'react'
 import { Link, useNavigate } from 'react-router-dom'
-import { Phone, LineChat, Key, Menu, Close, Shield, LogOut, Search, Calendar, Inbox, Home, Chart } from './icons.jsx'
+import { Phone, LineChat, Menu, Close, Shield, LogOut, Search, Calendar, Inbox, Home, Chart } from './icons.jsx'
 import { useAuth } from '../contexts/AuthContext.jsx'
 import { useUserAuth }     from '../contexts/UserAuthContext.jsx'
 import { useLandlordAuth } from '../contexts/LandlordAuthContext.jsx'
 import NavUserMenu from './NavUserMenu.jsx'
+import Logo from './Logo.jsx'
 
 export default function Navbar() {
   const [scrolled, setScrolled] = useState(false)
@@ -42,14 +43,8 @@ export default function Navbar() {
     >
       <nav className="container-page flex items-center justify-between h-20 gap-4">
         {/* Logo */}
-        <Link to="/" className="flex items-center gap-3 group shrink-0">
-          <span className="w-11 h-11 rounded-lg bg-navy-600 text-white grid place-items-center group-hover:bg-navy-700 transition-colors">
-            <Key size={22} />
-          </span>
-          <div className="leading-none whitespace-nowrap">
-            <div className="font-bold text-navy-700 text-base tracking-tight">Room Match</div>
-            <div className="text-[11px] font-semibold text-ember-600 tracking-[0.18em] mt-1">ASSET A PLUS</div>
-          </div>
+        <Link to="/" className="flex items-center shrink-0" aria-label="RoomMatch — หน้าแรก">
+          <Logo className="h-10 w-28" />
         </Link>
 
         {/* Desktop nav — marketing anchors only when not signed in (sign-in
@@ -119,7 +114,7 @@ export default function Navbar() {
             <Phone size={16} /> 02-168-0000
           </a>
           <Link to="/contact-admin" className="btn btn-line btn-sm">
-            <LineChat size={16} /> @assetaplus
+            <LineChat size={16} /> @973rjazt
           </Link>
         </div>
 

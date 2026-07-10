@@ -7,7 +7,7 @@
 import { useLocation } from 'react-router-dom'
 import { LineChat } from './icons.jsx'
 
-const LINE_URL = 'https://line.me/R/ti/p/@assetaplus?text=' + encodeURIComponent('สวัสดีค่ะ')
+const LINE_URL = 'https://line.me/R/ti/p/@973rjazt?text=' + encodeURIComponent('สวัสดีค่ะ')
 
 function shouldHide(pathname) {
   if (!pathname) return false
@@ -31,7 +31,7 @@ export default function StickyLineCTA() {
       className="fixed bottom-5 right-5 z-40 inline-flex items-center gap-2 rounded-full px-5 py-3 shadow-lift bg-[#06C755] text-white font-semibold hover:bg-[#05b34c] transition-colors"
     >
       <LineChat size={18} />
-      <span className="hidden sm:inline">แชท Line @assetaplus</span>
+      <span className="hidden sm:inline">แชท Line @973rjazt</span>
       <span className="sm:hidden">แชท Line</span>
     </a>
   )

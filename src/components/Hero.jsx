@@ -99,7 +99,7 @@ export default function Hero() {
                     02-168-0000
                   </a>
                   <div className="text-sm text-muted mt-1">
-                    หรือ Line: <span className="font-medium text-navy-700">@assetaplus</span>
+                    หรือ Line: <span className="font-medium text-navy-700">@973rjazt</span>
                   </div>
                 </div>
                 <Link to="/contact-admin" className="btn btn-line">

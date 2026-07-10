@@ -152,12 +152,12 @@ export default function RoomDetail() {
                     <Phone size={16} /> โทร 02-168-0000
                   </a>
                   <a
-                    href="https://line.me/R/ti/p/@assetaplus"
+                    href="https://line.me/R/ti/p/@973rjazt"
                     target="_blank"
                     rel="noreferrer noopener"
                     className="btn w-full bg-[#06C755] text-white hover:bg-[#05b34c]"
                   >
-                    <LineChat size={16} /> แชท Line @assetaplus
+                    <LineChat size={16} /> แชท Line @973rjazt
                   </a>
                   <button onClick={() => navigate('/contact-admin?intent=list-a-room')} className="btn btn-ghost w-full">
                     อยากลงประกาศห้อง? <ArrowRight size={16} />

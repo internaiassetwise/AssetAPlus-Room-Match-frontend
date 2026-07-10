@@ -1,6 +1,7 @@
 // src/components/admin/AdminLayout.jsx — Sidebar shell for /admin/*.
 import { Outlet, NavLink, Link, useNavigate } from 'react-router-dom'
-import { Key, Plus, LogOut, ChevronRight, Bot, Inbox } from '../icons.jsx'
+import { Plus, LogOut, ChevronRight, Bot, Inbox } from '../icons.jsx'
+import Logo from '../Logo.jsx'
 import { useAuth } from '../../contexts/AuthContext.jsx'
 import { useApi } from '../../hooks/useApi.js'
 import { api } from '../../api/client.js'
@@ -29,14 +30,9 @@ export default function AdminLayout() {
       {/* Top bar */}
       <header className="sticky top-0 z-40 bg-white border-b border-line">
         <div className="max-w-7xl mx-auto px-4 sm:px-6 h-16 flex items-center justify-between gap-4">
-          <Link to="/admin" className="flex items-center gap-3">
-            <span className="w-9 h-9 rounded-lg bg-navy-600 text-white grid place-items-center">
-              <Key size={18} />
-            </span>
-            <div className="leading-none">
-              <div className="font-bold text-navy-700 text-sm">Asset A Plus · Admin</div>
-              <div className="text-[10px] font-semibold text-muted tracking-wider mt-1">ROOM MATCH</div>
-            </div>
+          <Link to="/admin" className="flex items-center gap-2.5" aria-label="RoomMatch Admin">
+            <Logo className="h-8 w-24" />
+            <span className="text-[11px] font-semibold text-ember-600 tracking-wider">ADMIN</span>
           </Link>
 
           <div className="flex items-center gap-2">

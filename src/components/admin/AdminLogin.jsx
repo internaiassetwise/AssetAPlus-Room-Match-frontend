@@ -10,6 +10,7 @@
 
 import { useState } from 'react'
 import { useNavigate, useLocation, Navigate, Link } from 'react-router-dom'
+import Logo from '../Logo.jsx'
 import { Key, ArrowRight } from '../icons.jsx'
 import { useAuth } from '../../contexts/AuthContext.jsx'
 import { api, ApiError } from '../../api/client.js'
@@ -48,14 +49,9 @@ export default function AdminLogin() {
   return (
     <main className="min-h-screen bg-cream-50 flex items-center justify-center p-4">
       <div className="w-full max-w-md">
-        <Link to="/" className="inline-flex items-center gap-3 mb-8">
-          <span className="w-11 h-11 rounded-lg bg-navy-600 text-white grid place-items-center">
-            <Key size={22} />
-          </span>
-          <div className="leading-none">
-            <div className="font-bold text-navy-700 text-base tracking-tight">Room Match</div>
-            <div className="text-[11px] font-semibold text-ember-600 tracking-[0.18em] mt-1">ASSET A PLUS · ADMIN</div>
-          </div>
+        <Link to="/" className="inline-flex items-center gap-2.5 mb-8">
+          <Logo className="h-10 w-28" />
+          <span className="text-[11px] font-semibold text-ember-600 tracking-wider">ADMIN</span>
         </Link>
 
         <form onSubmit={onSubmit} noValidate className="card p-7 sm:p-8 space-y-5">

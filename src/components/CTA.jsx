@@ -30,12 +30,12 @@ export default function CTA() {
 
           <div className="mt-9 flex flex-wrap gap-3 justify-center">
             <a
-              href="https://line.me/R/ti/p/@assetaplus"
+              href="https://line.me/R/ti/p/@973rjazt"
               target="_blank"
               rel="noreferrer noopener"
               className="btn bg-[#06C755] text-white px-7 py-3.5 font-semibold rounded-xl hover:bg-[#05b34c] text-[17px]"
             >
-              <LineChat size={18} /> แชท Line @assetaplus
+              <LineChat size={18} /> แชท Line @973rjazt
             </a>
             <a href="tel:021680000" className="btn bg-white text-navy-700 px-7 py-3.5 font-semibold rounded-xl hover:bg-cream-50 text-[17px]">
               <Phone size={18} /> 02-168-0000
