@@ -289,10 +289,33 @@ export const MessageSquare = (p) => (
   </Icon>
 )
 
+export const Bot = (p) => (
+  <Icon {...p}>
+    <path d="M12 8V4H8" />
+    <rect x="2" y="8" width="20" height="12" rx="2" />
+    <path d="M6 14h.01M10 14h.01M14 14h.01M18 14h.01M8 18h.01M14 18h.01" />
+    <path d="M12 18v.01" />
+  </Icon>
+)
+
 export const Inbox = (p) => (
   <Icon {...p}>
     <polyline points="22 12 16 12 14 15 10 15 8 12 2 12" />
     <path d="M5.45 5.11L2 12v6a2 2 0 0 0 2 2h16a2 2 0 0 0 2-2v-6l-3.45-6.89A2 2 0 0 0 16.76 4H7.24a2 2 0 0 0-1.79 1.11z" />
+  </Icon>
+)
+
+export const CheckCircle2 = (p) => (
+  <Icon {...p}>
+    <circle cx="12" cy="12" r="10" />
+    <polyline points="9 12 11 14 15 10" />
+  </Icon>
+)
+
+export const Send = (p) => (
+  <Icon {...p}>
+    <line x1="22" y1="2" x2="11" y2="13" />
+    <polygon points="22 2 15 22 11 13 2 9 22 2" />
   </Icon>
 )
 
@@ -301,4 +324,59 @@ export const X = (p) => (
     <line x1="18" y1="6" x2="6" y2="18" />
     <line x1="6" y1="6" x2="18" y2="18" />
   </Icon>
+)
+
+// ── Block-editor icons ──────────────────────────────────────────────────
+// Each is small enough to drop inside a card title.
+
+export const Type = (p) => (
+  <Icon {...p}>
+    <polyline points="4 7 4 4 20 4 20 7" />
+    <line x1="9" y1="20" x2="15" y2="20" />
+    <line x1="12" y1="4" x2="12" y2="20" />
+  </Icon>
+)
+
+export const Hash = (p) => (
+  <Icon {...p}>
+    <line x1="4" y1="9" x2="20" y2="9" />
+    <line x1="4" y1="15" x2="20" y2="15" />
+    <line x1="10" y1="3" x2="8" y2="21" />
+    <line x1="16" y1="3" x2="14" y2="21" />
+  </Icon>
+)
+
+export const BarChart = (p) => (
+  <Icon {...p}>
+    <line x1="12" y1="20" x2="12" y2="10" />
+    <line x1="18" y1="20" x2="18" y2="4" />
+    <line x1="6"  y1="20" x2="6"  y2="14" />
+    <line x1="3"  y1="20" x2="21" y2="20" />
+  </Icon>
+)
+
+export const List = (p) => (
+  <Icon {...p}>
+    <line x1="8" y1="6" x2="21" y2="6" />
+    <line x1="8" y1="12" x2="21" y2="12" />
+    <line x1="8" y1="18" x2="21" y2="18" />
+    <line x1="3" y1="6" x2="3.01" y2="6" />
+    <line x1="3" y1="12" x2="3.01" y2="12" />
+    <line x1="3" y1="18" x2="3.01" y2="18" />
+  </Icon>
+)
+
+export const LinkIcon = (p) => (
+  <Icon {...p}>
+    <path d="M10 13a5 5 0 0 0 7.54.54l3-3a5 5 0 0 0-7.07-7.07l-1.72 1.71" />
+    <path d="M14 11a5 5 0 0 0-7.54-.54l-3 3a5 5 0 0 0 7.07 7.07l1.71-1.71" />
+  </Icon>
+)
+
+export const ChevronUp = (p) => (
+  <Icon {...p}><polyline points="18 15 12 9 6 15" /></Icon>
+)
+
+export const ChevronLeft = (p) => (
+  <Icon {...p}><polyline points="15 18 9 12 15 6" /></Icon>
 )

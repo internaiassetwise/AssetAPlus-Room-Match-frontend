@@ -10,6 +10,13 @@ import AdminLayout      from './components/admin/AdminLayout.jsx'
 import AdminLogin       from './components/admin/AdminLogin.jsx'
 import AdminRoomsList   from './components/admin/AdminRoomsList.jsx'
 import AdminRoomForm    from './components/admin/AdminRoomForm.jsx'
+import AdminFaqsList    from './components/admin/AdminFaqsList.jsx'
+import AdminFaqForm     from './components/admin/AdminFaqForm.jsx'
+import AdminInquiriesList from './components/admin/AdminInquiriesList.jsx'
+import AdminPendingListings from './components/admin/AdminPendingListings.jsx'
+import AdminViewings     from './components/admin/AdminViewings.jsx'
+import AdminRoomSlots     from './components/admin/AdminRoomSlots.jsx'
+import AdminInbox from './components/admin/AdminInbox.jsx'
 import DevMockBanner    from './components/DevMockBanner.jsx'
 import StickyLineCTA    from './components/StickyLineCTA.jsx'
 
@@ -69,6 +76,14 @@ export default function App() {
               <Route path="/admin"               element={<AdminRoomsList />} />
               <Route path="/admin/rooms/new"     element={<AdminRoomForm mode="create" />} />
               <Route path="/admin/rooms/:id/edit" element={<AdminRoomForm mode="edit" />} />
+              <Route path="/admin/rooms/:id/slots" element={<AdminRoomSlots />} />
+              <Route path="/admin/faqs"          element={<AdminFaqsList />} />
+              <Route path="/admin/faqs/new"      element={<AdminFaqForm mode="create" />} />
+              <Route path="/admin/faqs/:id/edit" element={<AdminFaqForm mode="edit" />} />
+              <Route path="/admin/pending-listings" element={<AdminPendingListings />} />
+              <Route path="/admin/viewings" element={<AdminViewings />} />
+              <Route path="/admin/inbox" element={<AdminInbox />} />
+              <Route path="/admin/bot-inquiries" element={<AdminInquiriesList />} />
             </Route>
 
             <Route path="*" element={<Navigate to="/" replace />} />

@@ -7,7 +7,7 @@
 
 import { useState, useEffect } from 'react'
 import { useNavigate, useSearchParams, Link } from 'react-router-dom'
-import { Search, Key, ArrowRight, Home, MessageSquare, Sparkles, Calendar } from '../components/icons.jsx'
+import { Search, Key, ArrowRight, Home, MessageSquare, Sparkles, Calendar, LineChat } from '../components/icons.jsx'
 import { api, ApiError } from '../api/client.js'
 import { useUserAuth }     from '../contexts/UserAuthContext.jsx'
 import { useLandlordAuth } from '../contexts/LandlordAuthContext.jsx'
@@ -91,17 +91,10 @@ function PersonaCard({ persona, signedIn, busy, onPick }) {
         ) : (
           <button
             type="button"
-            className={`btn w-full ${persona.tone === 'navy' ? 'btn-primary' : 'btn-ember'}`}
+            className="btn w-full bg-[#06C755] text-white hover:bg-[#05b34c]"
             onClick={() => onPick(persona.key)}
-            disabled={busy === persona.key}
           >
-            {busy === persona.key ? (
-              <>กำลังเข้าสู่ระบบ…</>
-            ) : (
-              <>
-                {persona.cta} <ArrowRight size={16} />
-              </>
-            )}
+            <LineChat size={16} /> เข้าสู่ระบบด้วย Line
           </button>
         )}
       </div>
@@ -120,7 +113,19 @@ export default function LoginPage() {
   const [busy,  setBusy]  = useState(null)     // persona key currently being submitted
   const [error, setError] = useState('')
 
-  async function pick(persona) {
+  // Primary: Line Login — a full redirect to the backend OAuth start. The browser
+  // leaves to Line's consent screen and returns with a session cookie (or two, if
+  // the user is both a tenant and a landlord).
+  function loginLine(persona) {
+    const dest = returnTo && returnTo !== '/'
+      ? returnTo
+      : (persona === 'landlord' ? '/dashboard' : '/viewings')
+    window.location.href = `/api/auth/line/start?role=${persona}&return=${encodeURIComponent(dest)}`
+  }
+
+  // Dev-only fallback: mock login (no Line round-trip). Gated to MOCK_AUTH=true
+  // on the server, which returns NOT_FOUND otherwise.
+  async function mockLogin(persona) {
     setBusy(persona)
     setError('')
     try {
@@ -157,19 +162,19 @@ export default function LoginPage() {
           <div className="max-w-4xl mx-auto">
             <span className="eyebrow">
               <Sparkles size={14} className="text-ember-600" />
-              ทดลองใช้งาน · Mock Mode
+              เข้าสู่ระบบด้วย Line
             </span>
             <h1 className="mt-4 font-bold text-navy-700 text-4xl sm:text-5xl tracking-tight">
               เลือกบทบาทเพื่อ<span className="text-ember-600"> เข้าสู่ระบบ</span>
             </h1>
             <p className="mt-4 text-navy-700 text-[17px] leading-relaxed max-w-2xl">
-              ทดลองใช้ระบบโดยไม่ต้องสมัคร OAuth — สลับระหว่างผู้เช่าและผู้ปล่อยเช่าได้ตลอดเวลา
-              เมื่อพร้อมใช้งานจริง OAuth (Google) จะเข้ามาแทนที่หน้านี้
+              ล็อกอินด้วยบัญชี Line เดียวกับที่คุยกับบอท — เลือกเข้ามาในฐานะผู้เช่าหรือผู้ปล่อยเช่า
+              หากคุณเป็นทั้งสองบทบาท จะสลับไปมาได้ในหน้าเดียวหลังล็อกอิน
             </p>
 
-            {error && (
+            {(error || params.get('line_error')) && (
               <div className="mt-6 rounded-lg bg-ember-50 border border-ember-200 px-4 py-3 text-ember-800 text-sm">
-                {error}
+                {error || 'เข้าสู่ระบบด้วย Line ไม่สำเร็จหรือถูกยกเลิก กรุณาลองอีกครั้ง'}
               </div>
             )}
 
@@ -180,9 +185,21 @@ export default function LoginPage() {
                   persona={p}
                   signedIn={p.key === 'tenant' ? !!tenantUser : !!landlordUser}
                   busy={busy}
-                  onPick={pick}
+                  onPick={loginLine}
                 />
               ))}
+            </div>
+
+            <div className="mt-6 text-center text-sm text-muted">
+              หรือ{' '}
+              <button type="button" className="underline hover:text-navy-700" onClick={() => mockLogin('tenant')}>
+                ทดลองเป็นผู้เช่า (Mock)
+              </button>
+              {' · '}
+              <button type="button" className="underline hover:text-navy-700" onClick={() => mockLogin('landlord')}>
+                ผู้ปล่อยเช่า
+              </button>
+              {' '}— สำหรับ dev โดยไม่ต้องล็อกอิน Line
             </div>
 
             <p className="mt-10 text-muted text-sm text-center">

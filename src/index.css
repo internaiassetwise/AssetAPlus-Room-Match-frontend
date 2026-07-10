@@ -25,7 +25,8 @@
   .btn {
     @apply inline-flex items-center justify-center gap-2 font-semibold rounded-lg
            transition-all duration-150 select-none whitespace-nowrap
-           focus:outline-none focus-visible:ring-2 focus-visible:ring-navy-600/40 focus-visible:ring-offset-2;
+           focus:outline-none focus-visible:ring-2 focus-visible:ring-navy-600/40 focus-visible:ring-offset-2
+           disabled:opacity-60 disabled:cursor-not-allowed;
   }
   .btn-primary {
     @apply btn bg-navy-600 text-white px-5 py-2.5 shadow-card

@@ -76,21 +76,41 @@ export default function Modal({ open, onClose, title, children, maxWidth = 'max-
  * Confirmation dialog — built on top of Modal for consistent styling.
  * Use as a controlled component:
  *   <ConfirmDialog open={x} title="..." message="..." onConfirm={...} onCancel={...} />
+ *
+ * Backwards compat: `danger` still works as an alias for `confirmTone="danger"`.
+ * New props: `confirmTone` ('primary' | 'danger', default 'primary'),
+ * `busy` (disables buttons + shows spinner on confirm), `error` (rendered
+ * inline above the buttons).
  */
 export function ConfirmDialog({
   open, title, message, confirmLabel = 'ยืนยัน', cancelLabel = 'ยกเลิก',
-  danger = false, onConfirm, onCancel,
+  danger = false, confirmTone, busy = false, error = '',
+  onConfirm, onCancel,
 }) {
+  const tone = confirmTone || (danger ? 'danger' : 'primary')
+  const confirmClass = tone === 'danger' ? 'btn btn-danger' : 'btn btn-primary'
+  const disabled = busy
   return (
-    <Modal open={open} onClose={onCancel} title={title} maxWidth="max-w-md">
+    <Modal open={open} onClose={busy ? () => {} : onCancel} title={title} maxWidth="max-w-md">
       <div className="p-7 sm:p-8">
         <h3 className="font-bold text-navy-700 text-xl">{title}</h3>
-        {message && <p className="mt-3 text-muted text-[15px] leading-relaxed">{message}</p>}
+        {message && <p className="mt-3 text-muted text-[15px] leading-relaxed whitespace-pre-line">{message}</p>}
+        {error && (
+          <p className="mt-4 text-sm text-ember-700 bg-ember-50 border border-ember-200 rounded-lg px-3 py-2">
+            {error}
+          </p>
+        )}
         <div className="mt-7 flex flex-wrap justify-end gap-3">
-          <button type="button" onClick={onCancel} className="btn btn-outline">
+          <button type="button" onClick={onCancel} disabled={disabled} className="btn btn-outline">
             {cancelLabel}
           </button>
-          <button type="button" onClick={onConfirm} className={danger ? 'btn btn-danger' : 'btn btn-primary'}>
+          <button type="button" onClick={onConfirm} disabled={disabled} className={confirmClass}>
+            {busy && (
+              <span
+                aria-hidden="true"
+                className="inline-block w-3.5 h-3.5 mr-1.5 rounded-full border-2 border-white/40 border-t-white animate-spin"
+              />
+            )}
             {confirmLabel}
           </button>
         </div>

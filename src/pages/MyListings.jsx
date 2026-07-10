@@ -1,18 +1,21 @@
-// src/pages/MyListings.jsx — Landlord's own room inventory.
+// src/pages/MyListings.jsx — Landlord's own room gallery.
 //
-// Under the middleman flow:
-//   - Landlords cannot self-list a room (POST /api/my-listings is 403 CONTACT_ADMIN)
-//   - Creating a listing goes via /contact-admin
-//   - Editing existing rooms is allowed, but the description field is admin-only
-//     (handled inside MyListingForm)
+// Under the middleman flow the landlord only sees this page to:
+//   1. View how their rooms look publicly (hero photo + admin-approved
+//      description + key specs)
+//   2. Open the public room page to double-check
+//   3. Send more photos to admin via Line
 //
-// So this page:
-//   - Lists the landlord's own rooms (Read + Edit + Delete)
-//   - Has no "เพิ่มห้อง" button — replaced with a Line CTA in the header
-//   - Empty state is also a Line CTA, not a self-service create form
+// There is no in-app edit (description is admin-only) and no in-app delete
+// (admin handles the lifecycle). Action buttons collapse into two Line CTAs
+// per room: "อัปโหลดรูปภาพเพิ่มเติม" and "ดูหน้าห้องสาธารณะ".
+//
+// Layout: compact 1/2/3-column grid so multiple rooms are visible without
+// long scrolling. Each card is small but keeps the admin-approved
+// description visible (truncated to 3 lines) — that description is the
+// primary thing the landlord wants to verify.
 
-import { useState } from 'react'
-import { Link, useNavigate } from 'react-router-dom'
+import { Link } from 'react-router-dom'
 import Navbar from '../components/Navbar.jsx'
 import Footer from '../components/Footer.jsx'
 import DevMockBanner from '../components/DevMockBanner.jsx'
@@ -20,7 +23,7 @@ import ContactAdminLineCTA from '../components/ContactAdminLineCTA.jsx'
 import { useApi } from '../hooks/useApi.js'
 import { api } from '../api/client.js'
 import { useUserAuth } from '../contexts/UserAuthContext.jsx'
-import { Home, Pencil, Trash, Eye, LineChat } from '../components/icons.jsx'
+import { Home, Eye, MapPin, Shield, LineChat } from '../components/icons.jsx'
 
 const STATUS_LABEL = {
   available: 'ว่าง',
@@ -35,20 +38,14 @@ const STATUS_STYLES = {
   inactive:  'bg-rose-50 text-rose-700 border-rose-200',
 }
 
+const FALLBACK_IMG = '/images/room-navy.jpg'
+
 export default function MyListings() {
-  const navigate = useNavigate()
   const { user, loading } = useUserAuth()
-  const { data: rooms, loading: rmLoading, error, reload } = useApi(
+  const { data: rooms, loading: rmLoading, error } = useApi(
     () => api.listMyListings(),
     []
   )
-  const [busyId, setBusyId] = useState(null)
-
-  async function remove(id) {
-    if (!confirm('ลบห้องนี้? การกระทำนี้ไม่สามารถยกเลิกได้')) return
-    setBusyId(id)
-    try { await api.deleteMyListing(id); reload() } finally { setBusyId(null) }
-  }
 
   if (loading) return null  // Wait for auth check before redirecting.
 
@@ -62,42 +59,18 @@ export default function MyListings() {
           <h1 className="mt-3 text-3xl sm:text-4xl font-bold text-navy-700">
             ห้องที่คุณ<span className="text-ember-600"> ปล่อยเช่า</span>
           </h1>
-          <p className="mt-2 text-muted">จัดการห้องทั้งหมดในที่เดียว</p>
+          <p className="mt-2 text-muted text-sm sm:text-base">
+            ดูรูปภาพและรายละเอียดที่แอดมินเขียนให้ หากต้องการเปลี่ยนแปลงหรือเพิ่มรูป ติดต่อแอดมินทาง Line
+          </p>
         </header>
-
-        {/* Replace the old "เพิ่มห้อง" button with a Line CTA card. */}
-        <div className="card p-5 mb-7 border-navy-200 bg-navy-50/40 flex flex-col sm:flex-row items-start sm:items-center gap-4">
-          <div className="w-11 h-11 rounded-lg bg-[#06C755] grid place-items-center text-white shrink-0">
-            <LineChat size={22} />
-          </div>
-          <div className="flex-1">
-            <div className="font-semibold text-navy-700">อยากลงประกาศห้องใหม่?</div>
-            <p className="mt-0.5 text-sm text-muted leading-relaxed">
-              การลงประกาศห้องใหม่ต้องติดต่อแอดมินทาง Line แอดมินจะช่วยลงประกาศ ตั้งค่ารายละเอียด และเปิดให้เช่า
-            </p>
-          </div>
-          <ContactAdminLineCTA
-            intent="list-a-room"
-            variant="bare"
-            showPhone={false}
-            label="ติดต่อแอดมินทาง Line"
-          />
-        </div>
 
         {rmLoading && <div className="text-muted text-center py-10">กำลังโหลด…</div>}
         {error && <div className="card p-6 text-ember-700">{error.message}</div>}
-        {rooms && rooms.length === 0 && (
-          <EmptyState />
-        )}
+        {rooms && rooms.length === 0 && <EmptyState />}
         {rooms && rooms.length > 0 && (
           <div className="grid sm:grid-cols-2 lg:grid-cols-3 gap-5">
             {rooms.map((r) => (
-              <RoomCard
-                key={r.id} room={r}
-                onEdit={() => navigate(`/my-listings/${r.id}/edit`)}
-                onDelete={() => remove(r.id)}
-                busy={busyId === r.id}
-              />
+              <RoomCard key={r.id} room={r} />
             ))}
           </div>
         )}
@@ -113,9 +86,9 @@ function EmptyState() {
       <div className="w-16 h-16 rounded-full bg-navy-50 grid place-items-center mx-auto">
         <Home size={28} className="text-navy-600" />
       </div>
-      <h3 className="mt-5 text-lg font-semibold text-navy-700">ยังไม่มีห้อง</h3>
+      <h3 className="mt-5 text-lg font-semibold text-navy-700">ยังไม่มีห้องในระบบ</h3>
       <p className="mt-2 text-muted max-w-sm mx-auto">
-        ยังไม่มีห้องในระบบ กรุณาติดต่อแอดมินทาง Line เพื่อลงประกาศห้องแรก
+        การลงประกาศห้องทำผ่านแอดมินทาง Line เท่านั้น ติดต่อแอดมินเพื่อเริ่มลงประกาศห้องแรกของคุณ
       </p>
       <div className="mt-6 flex justify-center">
         <ContactAdminLineCTA
@@ -125,49 +98,103 @@ function EmptyState() {
           label="ติดต่อแอดมินทาง Line"
         />
       </div>
-      <Link to="/contact-admin" className="mt-3 inline-block text-sm text-navy-600 hover:text-navy-700 underline">
-        ดูช่องทางติดต่อทั้งหมด
-      </Link>
     </div>
   )
 }
 
-function RoomCard({ room, onEdit, onDelete, busy }) {
+/**
+ * Compact card. Shows at a glance:
+ *   - small thumbnail image + status badge
+ *   - title + zone + price
+ *   - compact spec strip (นอน / น้ำ / ตร.ม.)
+ *   - description preview (3 lines, line-clamp) with "เขียนโดยแอดมิน" badge
+ *   - two icon-style buttons: ดูห้อง + อัปโหลดรูป (Line)
+ */
+function RoomCard({ room }) {
+  const status = STATUS_STYLES[room.status] || ''
+  const imgSrc = room.image || FALLBACK_IMG
+
   return (
-    <article className="card card-hover overflow-hidden flex flex-col">
-      {room.image_url && (
-        <div className="aspect-[16/10] overflow-hidden bg-cream-50">
-          <img src={room.image_url} alt="" className="w-full h-full object-cover" />
-        </div>
-      )}
-      <div className="p-5 flex-1 flex flex-col">
-        <div className="flex items-start justify-between gap-2">
-          <div className="min-w-0">
-            <div className="font-semibold text-navy-700 truncate">{room.title}</div>
-            <div className="text-sm text-muted truncate">{room.zone_name_th}</div>
-          </div>
-          <span className={`text-[11px] font-semibold uppercase tracking-wider border rounded-full px-2 py-0.5 shrink-0 ${STATUS_STYLES[room.status] || ''}`}>
+    <article className="card overflow-hidden flex flex-col">
+      {/* Thumbnail */}
+      <div className="aspect-[4/3] bg-cream-100 relative overflow-hidden">
+        <img
+          src={imgSrc}
+          alt={room.title}
+          className="w-full h-full object-cover"
+          loading="lazy"
+          onError={(e) => { e.currentTarget.src = FALLBACK_IMG }}
+        />
+        {room.status && (
+          <span className={`absolute top-2.5 left-2.5 inline-flex items-center text-[10px] font-semibold uppercase tracking-wider border rounded-full px-2 py-0.5 bg-white/90 backdrop-blur-sm ${status}`}>
             {STATUS_LABEL[room.status] || room.status}
           </span>
-        </div>
-        <div className="mt-3 flex items-center gap-3 text-xs text-muted">
-          <span>{room.bedrooms} นอน</span>
-          <span>{room.bathrooms} น้ำ</span>
-          <span>{Number(room.size_sqm).toFixed(0)} ตร.ม.</span>
-        </div>
-        <div className="mt-auto pt-4 flex items-center justify-between">
-          <div className="text-navy-700 font-bold">฿{Number(room.monthly_rent).toLocaleString()}<span className="text-xs font-normal text-muted">/เดือน</span></div>
-          <div className="flex gap-1.5">
-            <Link to={`/rooms/${room.id}`} className="btn btn-ghost btn-sm" aria-label="ดู">
-              <Eye size={14} />
-            </Link>
-            <button onClick={onEdit} className="btn btn-ghost btn-sm" aria-label="แก้ไข" title="แก้ไข (รายละเอียดแก้ไขโดยแอดมิน)">
-              <Pencil size={14} />
-            </button>
-            <button onClick={onDelete} disabled={busy} className="btn btn-ghost btn-sm text-ember-700 disabled:opacity-50" aria-label="ลบ">
-              <Trash size={14} />
-            </button>
+        )}
+      </div>
+
+      <div className="p-5 flex-1 flex flex-col">
+        {/* Title + zone */}
+        <h2 className="font-bold text-navy-700 text-base leading-snug truncate">
+          {room.title}
+        </h2>
+        {room.zone && (
+          <div className="mt-1 inline-flex items-center gap-1 text-xs text-muted truncate">
+            <MapPin size={12} /> {room.zone}
           </div>
+        )}
+
+        {/* Price + spec row */}
+        <div className="mt-3 flex items-baseline justify-between gap-2">
+          <div className="font-bold text-navy-700 text-lg tabular-nums">
+            ฿{Number(room.price || 0).toLocaleString()}
+            <span className="text-xs font-normal text-muted"> / ด</span>
+          </div>
+          <div className="text-[11px] text-muted tabular-nums">
+            {room.beds ?? '-'}น · {room.baths ?? '-'}น้ำ · {room.sqm != null ? `${Number(room.sqm).toFixed(0)} ตร.ม.` : '-'}
+          </div>
+        </div>
+
+        {/* Description preview — admin-written, read-only, line-clamped */}
+        <div className="mt-3 pt-3 border-t border-line">
+          <div className="flex items-center justify-between mb-1.5">
+            <span className="text-[11px] font-semibold text-navy-700 uppercase tracking-wider">รายละเอียด</span>
+            <span className="inline-flex items-center gap-1 text-[10px] font-semibold px-1.5 py-0.5 rounded-full bg-amber-50 text-amber-800 border border-amber-200">
+              <Shield size={10} /> แอดมิน
+            </span>
+          </div>
+          {room.description ? (
+            <p className="text-[13px] text-navy-700 leading-snug line-clamp-3">
+              {room.description}
+            </p>
+          ) : (
+            <p className="text-[13px] text-muted italic">
+              ยังไม่มีรายละเอียด — แอดมินจะช่วยเขียนให้เมื่อยืนยันห้อง
+            </p>
+          )}
+        </div>
+
+        {/* Actions — compact icon buttons */}
+        <div className="mt-auto pt-4 flex items-center gap-2">
+          <Link
+            to={`/rooms/${room.id}`}
+            className="btn btn-outline btn-sm flex-1 justify-center"
+            title="ดูหน้าห้องสาธารณะ"
+          >
+            <Eye size={14} /> ดูห้อง
+          </Link>
+          <a
+            href={`https://line.me/R/ti/p/@assetaplus?text=${encodeURIComponent(
+              room.title
+                ? `สวัสดีค่ะ จะส่งรูปภาพเพิ่มเติมให้ห้อง "${room.title}" (รหัส ${room.id}) ค่ะ`
+                : `สวัสดีค่ะ จะส่งรูปภาพเพิ่มเติมให้ห้องพักค่ะ`
+            )}`}
+            target="_blank"
+            rel="noreferrer noopener"
+            className="btn btn-sm flex-1 justify-center bg-[#06C755] text-white hover:bg-[#05b34c]"
+            title="อัปโหลดรูปภาพเพิ่มเติมผ่าน Line"
+          >
+            <LineChat size={14} /> อัปโหลดรูป
+          </a>
         </div>
       </div>
     </article>

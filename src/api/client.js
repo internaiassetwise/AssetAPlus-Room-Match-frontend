@@ -125,6 +125,19 @@ export const api = {
   updateRoom:     (id, body)    => request(`/rooms/${id}`, { method: 'PATCH', body: JSON.stringify(body) }),
   deleteRoom:     (id)          => request(`/rooms/${id}`, { method: 'DELETE' }),
 
+  // Admin viewing-slots manager — open/cancel bookable viewing time-slots.
+  //   listRoomSlots(id)       → GET    /rooms/:id/slots   (public; open future slots)
+  //   openRoomSlot(id, iso)   → POST   /rooms/:id/slots   (requireAdmin)
+  //   cancelRoomSlot(slotId)  → DELETE /rooms/slots/:id   (requireAdmin)
+  listRoomSlots:  (id)            => request("/rooms/" + id + "/slots"),
+  openRoomSlot:   (id, startsAt)  => request("/rooms/" + id + "/slots", { method:"POST", body: JSON.stringify({ startsAt }) }),
+  cancelRoomSlot: (slotId)        => request("/rooms/slots/" + slotId, { method:"DELETE" }),
+
+  // Phase 5 — admin approval of bot-submitted listings
+  listPendingListings: ()   => request('/rooms/pending'),
+  approveListing:      (id) => request(`/rooms/${id}/approve`, { method: 'POST' }),
+  rejectListing:       (id) => request(`/rooms/${id}/reject`,  { method: 'POST' }),
+
   // Public-user auth (Google OIDC + mock persona login).
   // userMe()      → returns { id, email, name, picture, role: 'tenant' } or throws when not signed in.
   // landlordMe()  → returns { id, name, email, ..., role: 'landlord' } or throws when not signed in.
@@ -158,4 +171,40 @@ export const api = {
 
   // Dashboard KPIs
   getDashboard:     ()           => request('/dashboard'),
+
+  // FAQs (admin knowledge base + RAG source for the Line bot)
+  listFaqs:        (params = {}) => request(`/faqs${qs(params)}`),
+  getFaq:          (id)          => request(`/faqs/${id}`),
+  createFaq:       (body)        => request('/faqs',                 { method: 'POST',  body: JSON.stringify(body) }),
+  updateFaq:       (id, body)    => request(`/faqs/${id}`,          { method: 'PATCH', body: JSON.stringify(body) }),
+  deleteFaq:       (id)          => request(`/faqs/${id}`,          { method: 'DELETE' }),
+  regenerateFaqEmbedding: (id)   => request(`/faqs/${id}/regenerate-embedding`, { method: 'POST' }),
+  // Phase 2.8 — block editor preview/sample-ask
+  previewFaq:      (body)        => request('/faqs/preview',         { method: 'POST',  body: JSON.stringify(body) }),
+  sampleAskFaq:    (body)        => request('/faqs/sample-ask',      { method: 'POST',  body: JSON.stringify(body) }),
+
+  // Bot inquiries inbox — questions/intents the bot forwarded to admin.
+  //   listBotInquiries({status,limit,offset}) → { items, summary:{open,replied,resolved}, limit, offset }
+  //   getBotInquiry(id)                         → single row (full payload)
+  //   replyBotInquiry(id, { reply })            → Express pushes the message
+  //                                              to the tenant via /api/admin/push
+  //                                              on the bot, then marks replied
+  //   resolveBotInquiry(id)                     → close without replying
+  listBotInquiries:  (params = {}) => request(`/admin/bot-inquiries${qs(params)}`),
+  getBotInquiry:     (id)          => request(`/admin/bot-inquiries/${id}`),
+  replyBotInquiry:   (id, body)    => request(`/admin/bot-inquiries/${id}/reply`,   { method: 'POST', body: JSON.stringify(body) }),
+  resolveBotInquiry: (id)          => request(`/admin/bot-inquiries/${id}/resolve`, { method: 'POST' }),
+
+  // Phase 5 — admin inbox over admin_queue (bot escalations). Reply is pushed
+  // to the user's Line in-process by the server (no separate bot hop).
+  listAdminQueue:    (params = {}) => request(`/admin/inbox${qs(params)}`),
+  getAdminQueue:     (id)          => request(`/admin/inbox/${id}`),
+  replyAdminQueue:   (id, body)    => request(`/admin/inbox/${id}/reply`,   { method: 'POST', body: JSON.stringify(body) }),
+  resolveAdminQueue: (id)          => request(`/admin/inbox/${id}/resolve`, { method: 'POST' }),
+
+  // Admin — viewing confirmations (tenant bookings via the bot). A tenant taps a
+  // bookable slot in Line → a 'requested' viewing; admin confirms/declines here.
+  listAdminViewings: (params = {}) => request(`/admin/viewings${qs(params)}`),
+  confirmViewing:    (id)          => request(`/admin/viewings/${id}/confirm`, { method: 'POST' }),
+  declineViewing:    (id)          => request(`/admin/viewings/${id}/decline`, { method: 'POST' }),
 }
