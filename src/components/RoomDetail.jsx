@@ -1,3 +1,4 @@
+import { useState } from 'react'
 import { useNavigate, useParams } from 'react-router-dom'
 import Navbar from './Navbar.jsx'
 import Footer from './Footer.jsx'
@@ -5,6 +6,7 @@ import { MapPin, Bed, Bath, Ruler, Phone, LineChat, ArrowRight, Sparkles, Home, 
 import { useApi } from '../hooks/useApi.js'
 import { api } from '../api/client.js'
 import AvailableViewingDates from './AvailableViewingDates.jsx'
+import Lightbox from './Lightbox.jsx'
 
 const FALLBACK_IMAGES = [
   '/images/room-navy.jpg',
@@ -21,6 +23,10 @@ export default function RoomDetail() {
     () => api.getRoom(id),
     [id],
   )
+  const [lightboxIndex, setLightboxIndex] = useState(null)
+  // Photos shown in the grid + lightbox (real first photo first, then the
+  // decorative fallbacks to fill the grid; deduped).
+  const photos = Array.from(new Set([room?.image || FALLBACK_IMAGES[0], ...FALLBACK_IMAGES.slice(1)]))
 
   return (
     <div className="min-h-screen flex flex-col">
@@ -55,19 +61,31 @@ export default function RoomDetail() {
             {/* Left: images + content */}
             <div>
               <div className="grid grid-cols-4 gap-3 rounded-3xl overflow-hidden">
-                <div className="col-span-4 sm:col-span-2 sm:row-span-2 aspect-[4/3] bg-cream-100">
+                <button
+                  type="button"
+                  onClick={() => setLightboxIndex(0)}
+                  className="col-span-4 sm:col-span-2 sm:row-span-2 aspect-[4/3] bg-cream-100 relative group cursor-zoom-in"
+                >
                   <img
-                    src={room.image || FALLBACK_IMAGES[0]}
+                    src={photos[0]}
                     alt={room.title}
-                    className="w-full h-full object-cover"
+                    className="w-full h-full object-cover transition-transform duration-300 group-hover:scale-[1.03]"
                     loading="lazy"
                     onError={(e) => { e.currentTarget.src = FALLBACK_IMAGES[0] }}
                   />
-                </div>
-                {FALLBACK_IMAGES.slice(1, 4).map((src, i) => (
-                  <div key={src} className="hidden sm:block aspect-square bg-cream-100">
-                    <img src={src} alt="" className="w-full h-full object-cover opacity-90" loading="lazy" />
-                  </div>
+                  <span className="absolute bottom-3 right-3 inline-flex items-center gap-1 text-xs font-medium text-white bg-navy-900/55 backdrop-blur px-2.5 py-1 rounded-full opacity-0 group-hover:opacity-100 transition-opacity">
+                    คลิกเพื่อขยาย
+                  </span>
+                </button>
+                {photos.slice(1, 4).map((src, i) => (
+                  <button
+                    key={src}
+                    type="button"
+                    onClick={() => setLightboxIndex(i + 1)}
+                    className="hidden sm:block aspect-square bg-cream-100 relative group cursor-zoom-in"
+                  >
+                    <img src={src} alt="" className="w-full h-full object-cover opacity-90 group-hover:opacity-100 transition-opacity" loading="lazy" />
+                  </button>
                 ))}
               </div>
 
@@ -182,6 +200,12 @@ export default function RoomDetail() {
       </main>
 
       <Footer />
+      <Lightbox
+        images={photos}
+        index={lightboxIndex}
+        onClose={() => setLightboxIndex(null)}
+        onIndex={setLightboxIndex}
+      />
     </div>
   )
 }
