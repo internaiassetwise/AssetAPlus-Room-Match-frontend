@@ -24,9 +24,12 @@ export default function RoomDetail() {
     [id],
   )
   const [lightboxIndex, setLightboxIndex] = useState(null)
-  // Photos shown in the grid + lightbox (real first photo first, then the
-  // decorative fallbacks to fill the grid; deduped).
-  const photos = Array.from(new Set([room?.image || FALLBACK_IMAGES[0], ...FALLBACK_IMAGES.slice(1)]))
+  // The room's real photos (from room_images via /api/rooms/:id `photos`), then
+  // decorative fallbacks to fill the grid for rooms with few photos (deduped).
+  const realPhotos = Array.isArray(room?.photos) && room.photos.length
+    ? room.photos
+    : [room?.image || FALLBACK_IMAGES[0]]
+  const photos = Array.from(new Set([...realPhotos, ...FALLBACK_IMAGES]))
 
   return (
     <div className="min-h-screen flex flex-col">
