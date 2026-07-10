@@ -50,7 +50,7 @@ export default function AdminLogin() {
     <main className="min-h-screen bg-cream-50 flex items-center justify-center p-4">
       <div className="w-full max-w-md">
         <Link to="/" className="inline-flex items-center gap-2.5 mb-8">
-          <Logo className="h-10 w-28" />
+          <Logo className="h-12 w-40" />
           <span className="text-[11px] font-semibold text-ember-600 tracking-wider">ADMIN</span>
         </Link>
 

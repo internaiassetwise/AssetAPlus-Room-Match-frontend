@@ -31,7 +31,7 @@ export default function AdminLayout() {
       <header className="sticky top-0 z-40 bg-white border-b border-line">
         <div className="max-w-7xl mx-auto px-4 sm:px-6 h-16 flex items-center justify-between gap-4">
           <Link to="/admin" className="flex items-center gap-2.5" aria-label="RoomMatch Admin">
-            <Logo className="h-8 w-24" />
+            <Logo className="h-9 w-28" />
             <span className="text-[11px] font-semibold text-ember-600 tracking-wider">ADMIN</span>
           </Link>
 

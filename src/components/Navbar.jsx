@@ -44,7 +44,7 @@ export default function Navbar() {
       <nav className="container-page flex items-center justify-between h-20 gap-4">
         {/* Logo */}
         <Link to="/" className="flex items-center shrink-0" aria-label="RoomMatch — หน้าแรก">
-          <Logo className="h-10 w-28" />
+          <Logo className="h-12 w-40" />
         </Link>
 
         {/* Desktop nav — marketing anchors only when not signed in (sign-in
