@@ -20,7 +20,7 @@ export default function Hero() {
         <div>
           <div className="eyebrow">
             <BadgeCheck size={16} />
-            ห้องว่างในย่านเดียวกับคุณ · ดูแลโดย Asset A Plus
+            ห้องว่างในย่านเดียวกับคุณ · ดูแลโดย AssetWise
           </div>
 
           <h1 className="mt-6 font-bold text-navy-700 leading-[1.2] text-[44px] sm:text-5xl lg:text-[56px] xl:text-[64px] tracking-tight">
@@ -68,7 +68,7 @@ export default function Hero() {
                     ดูแลโดยทีมงานมืออาชีพ
                   </div>
                   <div className="font-bold text-navy-700 text-xl mt-1">
-                    Asset A Plus
+                    AssetWise
                   </div>
                 </div>
               </div>
@@ -109,7 +109,7 @@ export default function Hero() {
             </div>
           </div>
 
-          <div className="absolute -top-5 -left-5 hidden sm:flex card p-3.5 shadow-lift gap-2.5 items-center">
+          <div className="absolute -bottom-5 -left-5 hidden sm:flex card p-3.5 shadow-lift gap-2.5 items-center">
             <div className="w-9 h-9 rounded-full bg-emerald-50 grid place-items-center">
               <Clock size={18} className="text-emerald-600" />
             </div>
