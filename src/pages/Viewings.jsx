@@ -10,7 +10,6 @@
 import { useState } from 'react'
 import Navbar from '../components/Navbar.jsx'
 import Footer from '../components/Footer.jsx'
-import DevMockBanner from '../components/DevMockBanner.jsx'
 import ViewingCard from '../components/ViewingCard.jsx'
 import ContactAdminLineCTA from '../components/ContactAdminLineCTA.jsx'
 import { useUserAuth }     from '../contexts/UserAuthContext.jsx'
@@ -38,7 +37,6 @@ export default function Viewings() {
 
   return (
     <>
-      <DevMockBanner />
       <Navbar />
       <main className="container-page py-10 max-w-4xl">
         <header className="mb-7">

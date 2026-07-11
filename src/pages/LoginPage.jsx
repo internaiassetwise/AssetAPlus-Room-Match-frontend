@@ -110,7 +110,6 @@ export default function LoginPage() {
   const { user: tenantUser,   reload: reloadTenant   } = useUserAuth()
   const { landlord: landlordUser, reload: reloadLandlord } = useLandlordAuth()
 
-  const [busy,  setBusy]  = useState(null)     // persona key currently being submitted
   const [error, setError] = useState('')
 
   // Primary: Line Login — a full redirect to the backend OAuth start. The browser
@@ -121,29 +120,6 @@ export default function LoginPage() {
       ? returnTo
       : (persona === 'landlord' ? '/dashboard' : '/viewings')
     window.location.href = `/api/auth/line/start?role=${persona}&return=${encodeURIComponent(dest)}`
-  }
-
-  // Dev-only fallback: mock login (no Line round-trip). Gated to MOCK_AUTH=true
-  // on the server, which returns NOT_FOUND otherwise.
-  async function mockLogin(persona) {
-    setBusy(persona)
-    setError('')
-    try {
-      await api.loginPersona(persona)
-      // Refetch the matching context so the navbar + banner update immediately.
-      if (persona === 'tenant') await reloadTenant()
-      else                      await reloadLandlord()
-      navigate(returnTo.startsWith('/') ? returnTo : '/', { replace: true })
-    } catch (err) {
-      const msg = err instanceof ApiError
-        ? (err.code === 'NOT_FOUND'   ? 'โหมด Mock ปิดอยู่ — เปิด MOCK_AUTH=true ใน .env ก่อน' :
-           err.code === 'ORIGIN_BLOCKED' ? 'Origin ไม่ได้รับอนุญาต (CORS)' :
-           err.message)
-        : 'เข้าสู่ระบบไม่สำเร็จ กรุณาลองใหม่อีกครั้ง'
-      setError(msg)
-    } finally {
-      setBusy(null)
-    }
   }
 
   // If both personas are already active, skip the picker entirely.
@@ -184,22 +160,9 @@ export default function LoginPage() {
                   key={p.key}
                   persona={p}
                   signedIn={p.key === 'tenant' ? !!tenantUser : !!landlordUser}
-                  busy={busy}
                   onPick={loginLine}
                 />
               ))}
-            </div>
-
-            <div className="mt-6 text-center text-sm text-muted">
-              หรือ{' '}
-              <button type="button" className="underline hover:text-navy-700" onClick={() => mockLogin('tenant')}>
-                ทดลองเป็นผู้เช่า (Mock)
-              </button>
-              {' · '}
-              <button type="button" className="underline hover:text-navy-700" onClick={() => mockLogin('landlord')}>
-                ผู้ปล่อยเช่า
-              </button>
-              {' '}— สำหรับ dev โดยไม่ต้องล็อกอิน Line
             </div>
 
             <p className="mt-10 text-muted text-sm text-center">

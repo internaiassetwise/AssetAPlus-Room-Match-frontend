@@ -14,7 +14,6 @@ import { useState, useEffect } from 'react'
 import { useNavigate, useParams } from 'react-router-dom'
 import Navbar from '../components/Navbar.jsx'
 import Footer from '../components/Footer.jsx'
-import DevMockBanner from '../components/DevMockBanner.jsx'
 import MapView from '../components/MapView.jsx'
 import ContactAdminLineCTA from '../components/ContactAdminLineCTA.jsx'
 import { api, ApiError } from '../api/client.js'
@@ -118,7 +117,6 @@ export default function MyListingForm({ mode = 'create' }) {
 
   return (
     <>
-      <DevMockBanner />
       <Navbar />
       <main className="container-page py-10 max-w-4xl">
         <header className="mb-6">

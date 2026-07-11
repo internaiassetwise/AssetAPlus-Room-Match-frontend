@@ -17,7 +17,6 @@ import AdminPendingListings from './components/admin/AdminPendingListings.jsx'
 import AdminViewings     from './components/admin/AdminViewings.jsx'
 import AdminRoomSlots     from './components/admin/AdminRoomSlots.jsx'
 import AdminInbox from './components/admin/AdminInbox.jsx'
-import DevMockBanner    from './components/DevMockBanner.jsx'
 import StickyLineCTA    from './components/StickyLineCTA.jsx'
 
 // Public-facing user pages
@@ -35,7 +34,6 @@ export default function App() {
     <AuthProvider>
       <UserAuthProvider>
         <LandlordAuthProvider>
-          <DevMockBanner />
           <Routes>
             <Route path="/"          element={<Landing />} />
             <Route path="/search"    element={<SearchPage />} />

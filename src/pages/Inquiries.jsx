@@ -7,7 +7,6 @@ import { useState } from 'react'
 import { Link } from 'react-router-dom'
 import Navbar from '../components/Navbar.jsx'
 import Footer from '../components/Footer.jsx'
-import DevMockBanner from '../components/DevMockBanner.jsx'
 import { useApi } from '../hooks/useApi.js'
 import { api, ApiError } from '../api/client.js'
 import { Inbox, MessageSquare, ArrowRight, X, Check } from '../components/icons.jsx'
@@ -34,7 +33,6 @@ export default function Inquiries() {
 
   return (
     <>
-      <DevMockBanner />
       <Navbar />
       <main className="container-page py-10 max-w-4xl">
         <header className="mb-7">

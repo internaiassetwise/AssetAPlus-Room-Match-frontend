@@ -6,7 +6,6 @@ import { useApi } from '../hooks/useApi.js'
 import { api } from '../api/client.js'
 import Navbar from '../components/Navbar.jsx'
 import Footer from '../components/Footer.jsx'
-import DevMockBanner from '../components/DevMockBanner.jsx'
 import { Chart, Home, Inbox, Calendar } from '../components/icons.jsx'
 
 export default function Dashboard() {
@@ -14,7 +13,6 @@ export default function Dashboard() {
 
   return (
     <>
-      <DevMockBanner />
       <Navbar />
       <main className="container-page py-10">
         <header className="mb-7">

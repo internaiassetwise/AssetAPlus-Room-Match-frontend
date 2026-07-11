@@ -18,7 +18,6 @@
 import { Link } from 'react-router-dom'
 import Navbar from '../components/Navbar.jsx'
 import Footer from '../components/Footer.jsx'
-import DevMockBanner from '../components/DevMockBanner.jsx'
 import ContactAdminLineCTA from '../components/ContactAdminLineCTA.jsx'
 import { useApi } from '../hooks/useApi.js'
 import { api } from '../api/client.js'
@@ -51,7 +50,6 @@ export default function MyListings() {
 
   return (
     <>
-      <DevMockBanner />
       <Navbar />
       <main className="container-page py-10">
         <header className="mb-7">

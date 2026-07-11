@@ -7,7 +7,6 @@ import { api } from '../api/client.js'
 import { useUserAuth } from '../contexts/UserAuthContext.jsx'
 import Navbar from '../components/Navbar.jsx'
 import Footer from '../components/Footer.jsx'
-import DevMockBanner from '../components/DevMockBanner.jsx'
 import MapView from '../components/MapView.jsx'
 import { Search, Map, Compass, Bed, Bath } from '../components/icons.jsx'
 
@@ -42,7 +41,6 @@ export default function SearchPage() {
 
   return (
     <>
-      <DevMockBanner />
       <Navbar />
 
       <main className="container-page py-10">
