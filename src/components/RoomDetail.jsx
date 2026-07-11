@@ -144,7 +144,7 @@ export default function RoomDetail() {
                     <Shield size={22} />
                   </div>
                   <div>
-                    <div className="font-bold text-navy-700 text-base">Asset A Plus ดูแลให้</div>
+                    <div className="font-bold text-navy-700 text-base">AssetWise ดูแลให้</div>
                     <p className="mt-1.5 text-muted text-[15px] leading-relaxed">
                       นัดชมห้องฟรี ตรวจเอกสารผู้เช่า ทำสัญญามาตรฐาน
                       และรายงานสถานะห้องทุกเดือนให้เจ้าของห้อง

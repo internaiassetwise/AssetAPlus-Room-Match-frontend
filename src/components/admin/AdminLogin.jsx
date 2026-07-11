@@ -57,7 +57,7 @@ export default function AdminLogin() {
         <form onSubmit={onSubmit} noValidate className="card p-7 sm:p-8 space-y-5">
           <div>
             <h1 className="font-bold text-navy-700 text-2xl">เข้าสู่ระบบ Admin</h1>
-            <p className="mt-2 text-muted text-sm">สำหรับเจ้าหน้าที่ Asset A Plus เท่านั้น</p>
+            <p className="mt-2 text-muted text-sm">สำหรับเจ้าหน้าที่ AssetWise เท่านั้น</p>
           </div>
 
           <div>
@@ -114,7 +114,7 @@ export default function AdminLogin() {
           <Key size={18} /> Sign in with Microsoft (Azure AD)
         </a>
         <p className="mt-3 text-xs text-muted text-center">
-          ใช้บัญชีอีเมลบริษัทที่ลงทะเบียนกับ Asset A Plus เท่านั้น
+          ใช้บัญชีอีเมลบริษัทที่ลงทะเบียนกับ AssetWise เท่านั้น
         </p>
       </div>
     </main>
