@@ -9,7 +9,7 @@
 // Layout: summary cards (open / replied / resolved / all — also the filter) on
 // top, table below. Click a row → side panel with the detail + live chat thread.
 
-import { useEffect, useMemo, useState } from 'react'
+import { useEffect, useMemo, useRef, useState } from 'react'
 import { Search, Inbox, X, Send, CheckCircle2, MessageSquare } from '../icons.jsx'
 import { useApi } from '../../hooks/useApi.js'
 import { api, ApiError } from '../../api/client.js'
@@ -90,15 +90,21 @@ export default function AdminInbox() {
     })
   }, [items, filter])
 
+  // Always-current selected id, so the poll interval (set up once per live
+  // ticket) never reads a stale closure.
+  const selectedIdRef = useRef(null)
+  selectedIdRef.current = selected?.id ?? null
+
   async function refreshSelected() {
-    if (!selected) return
-    try { setSelected(await api.getAdminQueue(selected.id)) } catch { /* keep last */ }
+    const id = selectedIdRef.current
+    if (!id) return
+    try { setSelected(await api.getAdminQueue(id)) } catch { /* keep last */ }
   }
 
   // While viewing a live ticket, poll for the user's incoming messages.
   useEffect(() => {
     if (!selected?.isLive) return
-    const t = setInterval(refreshSelected, 5000)
+    const t = setInterval(refreshSelected, 3000)
     return () => clearInterval(t)
   }, [selected?.id, selected?.isLive])
 
