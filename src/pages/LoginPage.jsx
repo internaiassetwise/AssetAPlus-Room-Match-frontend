@@ -1,29 +1,25 @@
-// src/pages/LoginPage.jsx — Persona-based mock login.
+// src/pages/LoginPage.jsx — Line Login role picker.
 //
-// Two personas seeded in DB, one tenant (id=1) and one landlord (id=1). Clicking
-// a card POSTs the persona to /api/auth/mock/login which creates a session row
-// and sets the matching cookie (user_session or landlord_session). When real
-// OAuth lands, this page gets replaced with the Google sign-in button.
+// Two roles a person can hold: tenant (ผู้เช่า) and landlord (ผู้ปล่อยเช่า).
+// Each card redirects to the backend Line OAuth start with the chosen role; the
+// callback sets user_session and/or landlord_session (a single Line account can
+// be both, so after login the role can be switched in-page).
 
-import { useState, useEffect } from 'react'
+import { useEffect } from 'react'
 import { useNavigate, useSearchParams, Link } from 'react-router-dom'
-import { Search, Key, ArrowRight, Home, MessageSquare, Sparkles, Calendar, LineChat } from '../components/icons.jsx'
-import { api, ApiError } from '../api/client.js'
+import { Home, Key, MessageSquare, Sparkles, Calendar, LineChat } from '../components/icons.jsx'
 import { useUserAuth }     from '../contexts/UserAuthContext.jsx'
 import { useLandlordAuth } from '../contexts/LandlordAuthContext.jsx'
 import Navbar from '../components/Navbar.jsx'
 import Footer from '../components/Footer.jsx'
 
-const PERSONAS = [
+const ROLES = [
   {
     key:       'tenant',
-    name:      'คุณสมชาย ใจดี',
     role:      'ผู้เช่า',
-    blurb:     'กำลังมองหาห้องพัก',
-    monogram:  'ส',
+    tagline:   'กำลังมองหาห้องเช่า',
     tone:      'navy',
-    accent:   'bg-navy-50 text-navy-700 border-navy-100',
-    cta:       'เข้าสู่ระบบในฐานะผู้เช่า',
+    accent:    'bg-navy-50 text-navy-700 border-navy-100',
     features: [
       { icon: Home,          label: 'ดูห้องทั้งหมดบนแผนที่' },
       { icon: MessageSquare, label: 'ส่งข้อความถึงเจ้าของห้อง' },
@@ -32,13 +28,10 @@ const PERSONAS = [
   },
   {
     key:       'landlord',
-    name:      'คุณพลอย สุขสมบูรณ์',
     role:      'ผู้ปล่อยเช่า',
-    blurb:     'มีห้องให้เช่า 5 ห้อง',
-    monogram:  'พ',
+    tagline:   'มีห้องให้เช่า',
     tone:      'ember',
-    accent:   'bg-ember-50 text-ember-700 border-ember-100',
-    cta:       'เข้าสู่ระบบในฐานะผู้ปล่อยเช่า',
+    accent:    'bg-ember-50 text-ember-700 border-ember-100',
     features: [
       { icon: Home,          label: 'จัดการประกาศห้องของคุณ' },
       { icon: MessageSquare, label: 'ตอบข้อความจากผู้สนใจ' },
@@ -47,35 +40,31 @@ const PERSONAS = [
   },
 ]
 
-function PersonaCard({ persona, signedIn, busy, onPick }) {
+function RoleCard({ role, signedIn, onPick }) {
+  const Icon = role.tone === 'navy' ? Home : Key
   return (
     <article className="card card-hover overflow-hidden flex flex-col">
-      {/* Persona header */}
-      <div className={`px-7 py-7 border-b ${persona.accent}`}>
+      {/* Role header */}
+      <div className={`px-7 py-7 border-b ${role.accent}`}>
         <div className="flex items-center gap-4">
-          <div className="monogram w-14 h-14 text-xl bg-white">
-            {persona.monogram}
+          <div className={`w-14 h-14 rounded-2xl grid place-items-center text-white shrink-0 ${role.tone === 'navy' ? 'bg-navy-600' : 'bg-ember-600'}`}>
+            <Icon size={26} />
           </div>
           <div className="flex-1 min-w-0">
-            <div className="font-bold text-navy-700 text-xl leading-tight truncate">
-              {persona.name}
+            <div className="font-bold text-navy-700 text-2xl leading-tight">
+              {role.role}
             </div>
-            <div className="mt-1 flex items-center gap-2">
-              <span className={`inline-flex items-center gap-1.5 text-xs font-semibold px-2.5 py-1 rounded-full border ${persona.accent}`}>
-                {persona.role}
-              </span>
-            </div>
+            <p className="mt-1 text-navy-700 text-[15px]">{role.tagline}</p>
           </div>
         </div>
-        <p className="mt-4 text-navy-700 text-[15px]">{persona.blurb}</p>
       </div>
 
       {/* Feature list */}
       <ul className="px-7 py-6 space-y-3 flex-1">
-        {persona.features.map(({ icon: Icon, label }) => (
+        {role.features.map(({ icon: FIcon, label }) => (
           <li key={label} className="flex items-start gap-3 text-[15px] text-navy-700">
-            <span className={`mt-0.5 w-6 h-6 rounded-md grid place-items-center shrink-0 ${persona.tone === 'navy' ? 'bg-navy-50 text-navy-600' : 'bg-ember-50 text-ember-600'}`}>
-              <Icon size={14} />
+            <span className={`mt-0.5 w-6 h-6 rounded-md grid place-items-center shrink-0 ${role.tone === 'navy' ? 'bg-navy-50 text-navy-600' : 'bg-ember-50 text-ember-600'}`}>
+              <FIcon size={14} />
             </span>
             <span>{label}</span>
           </li>
@@ -86,13 +75,13 @@ function PersonaCard({ persona, signedIn, busy, onPick }) {
       <div className="px-7 pb-7">
         {signedIn ? (
           <div className="rounded-lg bg-emerald-50 border border-emerald-200 px-4 py-3 text-emerald-800 text-sm">
-            ✓ คุณเข้าสู่ระบบอยู่แล้วในฐานะ {persona.role}
+            ✓ คุณเข้าสู่ระบบอยู่แล้วในฐานะ {role.role}
           </div>
         ) : (
           <button
             type="button"
             className="btn w-full bg-[#06C755] text-white hover:bg-[#05b34c]"
-            onClick={() => onPick(persona.key)}
+            onClick={() => onPick(role.key)}
           >
             <LineChat size={16} /> เข้าสู่ระบบด้วย Line
           </button>
@@ -107,10 +96,8 @@ export default function LoginPage() {
   const [params] = useSearchParams()
   const returnTo = params.get('return') || '/'
 
-  const { user: tenantUser,   reload: reloadTenant   } = useUserAuth()
-  const { landlord: landlordUser, reload: reloadLandlord } = useLandlordAuth()
-
-  const [error, setError] = useState('')
+  const { user: tenantUser } = useUserAuth()
+  const { landlord: landlordUser } = useLandlordAuth()
 
   // Primary: Line Login — a full redirect to the backend OAuth start. The browser
   // leaves to Line's consent screen and returns with a session cookie (or two, if
@@ -122,7 +109,7 @@ export default function LoginPage() {
     window.location.href = `/api/auth/line/start?role=${persona}&return=${encodeURIComponent(dest)}`
   }
 
-  // If both personas are already active, skip the picker entirely.
+  // If both roles are already active, skip the picker entirely.
   useEffect(() => {
     if (tenantUser && landlordUser) {
       navigate(returnTo.startsWith('/') ? returnTo : '/', { replace: true })
@@ -148,18 +135,18 @@ export default function LoginPage() {
               หากคุณเป็นทั้งสองบทบาท จะสลับไปมาได้ในหน้าเดียวหลังล็อกอิน
             </p>
 
-            {(error || params.get('line_error')) && (
+            {params.get('line_error') && (
               <div className="mt-6 rounded-lg bg-ember-50 border border-ember-200 px-4 py-3 text-ember-800 text-sm">
-                {error || 'เข้าสู่ระบบด้วย Line ไม่สำเร็จหรือถูกยกเลิก กรุณาลองอีกครั้ง'}
+                เข้าสู่ระบบด้วย Line ไม่สำเร็จหรือถูกยกเลิก กรุณาลองอีกครั้ง
               </div>
             )}
 
             <div className="mt-10 grid sm:grid-cols-2 gap-6">
-              {PERSONAS.map((p) => (
-                <PersonaCard
-                  key={p.key}
-                  persona={p}
-                  signedIn={p.key === 'tenant' ? !!tenantUser : !!landlordUser}
+              {ROLES.map((r) => (
+                <RoleCard
+                  key={r.key}
+                  role={r}
+                  signedIn={r.key === 'tenant' ? !!tenantUser : !!landlordUser}
                   onPick={loginLine}
                 />
               ))}
