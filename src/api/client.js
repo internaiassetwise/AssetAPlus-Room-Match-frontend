@@ -206,6 +206,9 @@ export const api = {
   getAdminQueue:     (id)          => request(`/admin/inbox/${id}`),
   replyAdminQueue:   (id, body)    => request(`/admin/inbox/${id}/reply`,   { method: 'POST', body: JSON.stringify(body) }),
   resolveAdminQueue: (id)          => request(`/admin/inbox/${id}/resolve`, { method: 'POST' }),
+  // Live takeover — mute the bot for this user and chat with them in-thread.
+  takeoverAdminQueue:(id)          => request(`/admin/inbox/${id}/takeover`, { method: 'POST' }),
+  releaseAdminQueue: (id)          => request(`/admin/inbox/${id}/release`,  { method: 'POST' }),
 
   // Admin — viewing confirmations (tenant bookings via the bot). A tenant taps a
   // bookable slot in Line → a 'requested' viewing; admin confirms/declines here.

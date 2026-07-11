@@ -1,15 +1,16 @@
-// src/components/admin/AdminInbox.jsx — Admin inbox over admin_queue (Phase 5).
+// src/components/admin/AdminInbox.jsx — Admin inbox over admin_queue.
 //
-// Everything the bot escalates (FAQ misses, edit-description requests, photos
-// with no draft, viewings to confirm, system errors) lands in admin_queue.
-// Admin opens one, types a reply, hits "ส่งคำตอบ" — the server pushes the
-// message straight to the user's Line in-process and marks the item replied.
+// Everything the bot escalates lands in admin_queue. The inbox is now a LIVE
+// takeover console: opening a ticket and hitting "รับเรื่อง" mutes the bot for
+// that user and turns the ticket into a chat thread — the user's next messages
+// stream in here (the bot stays silent), and each reply is pushed to their
+// Line. "ปิดเรื่อง & ส่งกลับบอท" ends it and hands the user back to the AI.
 //
 // Layout: summary cards (open / replied / resolved / all — also the filter) on
-// top, table below. Click a row → side panel with the full payload + reply form.
+// top, table below. Click a row → side panel with the detail + live chat thread.
 
 import { useEffect, useMemo, useState } from 'react'
-import { Search, Inbox, X, Send, CheckCircle2 } from '../icons.jsx'
+import { Search, Inbox, X, Send, CheckCircle2, MessageSquare } from '../icons.jsx'
 import { useApi } from '../../hooks/useApi.js'
 import { api, ApiError } from '../../api/client.js'
 
@@ -63,8 +64,10 @@ export default function AdminInbox() {
   const [selected, setSelected] = useState(null)
   const [replyText, setReplyText] = useState('')
   const [sending, setSending] = useState(false)
-  const [sendError, setSendError] = useState('')
+  const [takingOver, setTakingOver] = useState(false)
+  const [releasing, setReleasing] = useState(false)
   const [resolving, setResolving] = useState(false)
+  const [sendError, setSendError] = useState('')
 
   const apiStatus = status === 'all' ? undefined : status
   const { data, loading, error, refetch } = useApi(
@@ -87,18 +90,52 @@ export default function AdminInbox() {
     })
   }, [items, filter])
 
+  async function refreshSelected() {
+    if (!selected) return
+    try { setSelected(await api.getAdminQueue(selected.id)) } catch { /* keep last */ }
+  }
+
+  // While viewing a live ticket, poll for the user's incoming messages.
+  useEffect(() => {
+    if (!selected?.isLive) return
+    const t = setInterval(refreshSelected, 5000)
+    return () => clearInterval(t)
+  }, [selected?.id, selected?.isLive])
+
+  async function takeover() {
+    if (!selected) return
+    setTakingOver(true); setSendError('')
+    try {
+      setSelected(await api.takeoverAdminQueue(selected.id))
+      setReplyText('')
+      await refetch()
+    } catch (err) {
+      setSendError(err instanceof ApiError ? err.message : 'รับเรื่องไม่สำเร็จ')
+    } finally { setTakingOver(false) }
+  }
+
+  async function release() {
+    if (!selected) return
+    setReleasing(true); setSendError('')
+    try {
+      setSelected(await api.releaseAdminQueue(selected.id))
+      await refetch()
+    } catch (err) {
+      setSendError(err instanceof ApiError ? err.message : 'ปิดเรื่องไม่สำเร็จ')
+    } finally { setReleasing(false) }
+  }
+
   async function sendReply() {
     if (!selected || !replyText.trim()) return
     setSending(true); setSendError('')
     try {
-      await api.replyAdminQueue(selected.id, { reply: replyText.trim() })
-      setSelected(null); setReplyText('')
-      await refetch()
+      // Live ticket: reply appends to the thread + pushes to Line; keep the panel
+      // open so the conversation continues.
+      setSelected(await api.replyAdminQueue(selected.id, { reply: replyText.trim() }))
+      setReplyText('')
     } catch (err) {
       setSendError(err instanceof ApiError ? err.message : 'ส่งคำตอบไม่สำเร็จ')
-    } finally {
-      setSending(false)
-    }
+    } finally { setSending(false) }
   }
 
   async function resolve() {
@@ -110,9 +147,7 @@ export default function AdminInbox() {
       await refetch()
     } catch (err) {
       setSendError(err instanceof ApiError ? err.message : 'ปิดรายการไม่สำเร็จ')
-    } finally {
-      setResolving(false)
-    }
+    } finally { setResolving(false) }
   }
 
   useEffect(() => {
@@ -122,6 +157,9 @@ export default function AdminInbox() {
     return () => window.removeEventListener('keydown', onKey)
   }, [selected])
 
+  const thread = selected?.thread ?? []
+  const busy = sending || takingOver || releasing || resolving
+
   return (
     <section>
       <div className="mb-7">
@@ -130,8 +168,8 @@ export default function AdminInbox() {
           Inbox · คำถามที่บอทส่งต่อ
         </h1>
         <p className="mt-2 text-muted max-w-2xl">
-          เมื่อบอทตอบไม่ได้ หรือผู้ใช้ขอแก้รายละเอียดห้อง / ส่งรูป / นัดชมห้อง รายการจะมาอยู่ที่นี่
-          ตอบกลับแล้วข้อความจะถูกส่งไปยัง Line ของผู้ใช้ให้อัตโนมัติ
+          เมื่อบอทตอบไม่ได้ รายการจะมาที่นี่ กด <b>รับเรื่อง</b> เพื่อคุยกับลูกค้าเอง —
+          บอทจะเงียบไประหว่างนั้น และข้อความของลูกค้าจะวิ่งเข้ามาที่นี่ทันที
         </p>
       </div>
 
@@ -207,7 +245,7 @@ export default function AdminInbox() {
                 <tr
                   key={it.id}
                   onClick={() => { setSelected(it); setReplyText(''); setSendError('') }}
-                  className={`hover:bg-cream-50/40 cursor-pointer ${it.status === 'open' ? '' : 'opacity-70'}`}
+                  className={`hover:bg-cream-50/40 cursor-pointer ${it.isLive ? 'bg-emerald-50/40' : (it.status === 'open' ? '' : 'opacity-70')}`}
                 >
                   <td className="px-5 py-4 whitespace-nowrap">
                     <span className={`inline-block px-2 py-0.5 text-xs rounded-full border ${REASON_BADGE[it.reason] || 'bg-navy-50 text-navy-700 border-navy-200'}`}>
@@ -221,9 +259,16 @@ export default function AdminInbox() {
                     <span className="line-clamp-2">{it.summary || payloadText(it.reason, it.originalPayload) || '—'}</span>
                   </td>
                   <td className="px-5 py-4 whitespace-nowrap">
-                    <span className={`inline-block px-2 py-0.5 text-xs rounded-full border ${STATUS_BADGE[it.status] || ''}`}>
-                      {STATUS_LABEL[it.status] || it.status}
-                    </span>
+                    {it.isLive ? (
+                      <span className="inline-flex items-center gap-1.5 px-2 py-0.5 text-xs rounded-full border bg-emerald-50 text-emerald-700 border-emerald-200">
+                        <span className="w-1.5 h-1.5 rounded-full bg-emerald-500 animate-pulse" />
+                        กำลังตอบอยู่
+                      </span>
+                    ) : (
+                      <span className={`inline-block px-2 py-0.5 text-xs rounded-full border ${STATUS_BADGE[it.status] || ''}`}>
+                        {STATUS_LABEL[it.status] || it.status}
+                      </span>
+                    )}
                   </td>
                   <td className="px-5 py-4 text-xs text-muted whitespace-nowrap">{fmtDate(it.createdAt)}</td>
                 </tr>
@@ -233,18 +278,26 @@ export default function AdminInbox() {
         </div>
       </div>
 
-      {/* Side panel for reply */}
+      {/* Side panel for live chat / detail */}
       {selected && (
         <>
           <div className="fixed inset-0 bg-navy-900/30 z-40" onClick={() => { setSelected(null); setReplyText('') }} />
           <aside className="fixed top-0 right-0 bottom-0 w-full max-w-lg bg-white shadow-2xl z-50 flex flex-col">
             <header className="px-6 py-4 border-b border-line flex items-center justify-between">
               <div>
-                <span className={`inline-block px-2 py-0.5 text-xs rounded-full border ${REASON_BADGE[selected.reason] || ''}`}>
-                  {REASON_LABEL[selected.reason] || selected.reason}
-                </span>
+                <div className="flex items-center gap-2 flex-wrap">
+                  <span className={`inline-block px-2 py-0.5 text-xs rounded-full border ${REASON_BADGE[selected.reason] || ''}`}>
+                    {REASON_LABEL[selected.reason] || selected.reason}
+                  </span>
+                  {selected.isLive && (
+                    <span className="inline-flex items-center gap-1.5 px-2 py-0.5 text-xs rounded-full border bg-emerald-50 text-emerald-700 border-emerald-200">
+                      <span className="w-1.5 h-1.5 rounded-full bg-emerald-500 animate-pulse" />
+                      กำลังตอบอยู่
+                    </span>
+                  )}
+                </div>
                 <h2 className="mt-2 font-bold text-navy-700 text-lg">
-                  {selected.status === 'open' ? 'ตอบกลับผู้ใช้' : 'รายละเอียด'}
+                  {selected.isLive ? 'แชทสดกับลูกค้า' : (selected.status === 'open' ? 'รอแอดมินรับเรื่อง' : 'รายละเอียด')}
                 </h2>
               </div>
               <button onClick={() => { setSelected(null); setReplyText('') }} className="btn btn-ghost btn-sm" aria-label="ปิด">
@@ -253,17 +306,19 @@ export default function AdminInbox() {
             </header>
 
             <div className="flex-1 overflow-y-auto p-6 space-y-4">
-              <div>
-                <div className="text-xs uppercase text-muted mb-1">Line user id</div>
-                <div className="font-mono text-sm text-navy-700">{selected.lineUserId}</div>
-              </div>
-              <div>
-                <div className="text-xs uppercase text-muted mb-1">ส่งเมื่อ</div>
-                <div className="text-sm text-navy-700">{fmtDate(selected.createdAt)}</div>
+              <div className="grid grid-cols-2 gap-4">
+                <div>
+                  <div className="text-xs uppercase text-muted mb-1">Line user id</div>
+                  <div className="font-mono text-xs text-navy-700 break-all">{selected.lineUserId}</div>
+                </div>
+                <div>
+                  <div className="text-xs uppercase text-muted mb-1">ส่งเมื่อ</div>
+                  <div className="text-sm text-navy-700">{fmtDate(selected.createdAt)}</div>
+                </div>
               </div>
               {selected.summary && (
                 <div>
-                  <div className="text-xs uppercase text-muted mb-1">สรุป</div>
+                  <div className="text-xs uppercase text-muted mb-1">สรุปจากบอท</div>
                   <div className="text-sm text-navy-700">{selected.summary}</div>
                 </div>
               )}
@@ -273,31 +328,58 @@ export default function AdminInbox() {
                   {payloadText(selected.reason, selected.originalPayload) || '—'}
                 </div>
               </div>
-              {selected.adminReply && (
+
+              {/* Live chat thread */}
+              {thread.length > 0 && (
                 <div>
-                  <div className="text-xs uppercase text-muted mb-1">คำตอบของคุณ</div>
-                  <div className="card p-4 text-sm text-navy-700 whitespace-pre-wrap">{selected.adminReply}</div>
-                  <div className="text-xs text-muted mt-1">ตอบเมื่อ {fmtDate(selected.repliedAt)}</div>
+                  <div className="text-xs uppercase text-muted mb-2">แชท</div>
+                  <div className="space-y-2">
+                    {thread.map((m, i) => (
+                      <div key={i} className={`flex ${m.role === 'admin' ? 'justify-end' : 'justify-start'}`}>
+                        <div className={`max-w-[80%] px-3 py-2 rounded-2xl text-sm whitespace-pre-wrap ${
+                          m.role === 'admin'
+                            ? 'bg-navy-600 text-white rounded-br-sm'
+                            : 'bg-cream-50 text-navy-700 rounded-bl-sm border border-line'
+                        }`}>
+                          {m.text}
+                          <div className={`text-[10px] mt-1 ${m.role === 'admin' ? 'text-navy-100' : 'text-muted'}`}>{fmtDate(m.ts)}</div>
+                        </div>
+                      </div>
+                    ))}
+                  </div>
                 </div>
               )}
+
               {sendError && <div className="text-sm text-ember-700">{sendError}</div>}
             </div>
 
-            {selected.status === 'open' && (
+            {selected.isLive ? (
               <footer className="px-6 py-4 border-t border-line bg-cream-50 space-y-3">
                 <textarea
                   value={replyText} onChange={(e) => setReplyText(e.target.value)}
-                  placeholder="พิมพ์คำตอบ… จะถูกส่งไปยัง Line ของผู้ใช้ทันที"
-                  rows={4} className="input w-full resize-none" disabled={sending || resolving}
+                  placeholder="พิมพ์ข้อความถึงลูกค้า… จะถูกส่งไปยัง Line ทันที (บอทเงียบอยู่)"
+                  rows={3} className="input w-full resize-none" disabled={busy}
+                  onKeyDown={(e) => { if (e.key === 'Enter' && (e.metaKey || e.ctrlKey)) sendReply() }}
                 />
                 <div className="flex flex-wrap gap-2 justify-end">
-                  <button onClick={resolve} disabled={sending || resolving} className="btn btn-ghost">
-                    <CheckCircle2 size={16} /> {resolving ? 'กำลังปิด…' : 'ปิดโดยไม่ตอบ'}
+                  <button onClick={release} disabled={busy} className="btn btn-ghost">
+                    <CheckCircle2 size={16} /> {releasing ? 'กำลังปิด…' : 'ปิดเรื่อง & ส่งกลับบอท'}
                   </button>
-                  <button onClick={sendReply} disabled={sending || resolving || !replyText.trim()} className="btn btn-primary">
-                    <Send size={16} /> {sending ? 'กำลังส่ง…' : 'ส่งคำตอบ'}
+                  <button onClick={sendReply} disabled={busy || !replyText.trim()} className="btn btn-primary">
+                    <Send size={16} /> {sending ? 'กำลังส่ง…' : 'ส่งข้อความ'}
                   </button>
                 </div>
+              </footer>
+            ) : (
+              <footer className="px-6 py-4 border-t border-line bg-cream-50 space-y-3">
+                <button onClick={takeover} disabled={busy} className="btn btn-primary w-full">
+                  <MessageSquare size={16} /> {takingOver ? 'กำลังรับเรื่อง…' : 'รับเรื่อง · แชทกับลูกค้า'}
+                </button>
+                {selected.status !== 'resolved' && (
+                  <button onClick={resolve} disabled={busy} className="btn btn-ghost w-full">
+                    <CheckCircle2 size={16} /> {resolving ? 'กำลังปิด…' : 'ปิดเรื่องโดยไม่รับ'}
+                  </button>
+                )}
               </footer>
             )}
           </aside>
