@@ -10,6 +10,7 @@ import { useNavigate, useSearchParams, Link } from 'react-router-dom'
 import { Home, Key, MessageSquare, Sparkles, Calendar, LineChat } from '../components/icons.jsx'
 import { useUserAuth }     from '../contexts/UserAuthContext.jsx'
 import { useLandlordAuth } from '../contexts/LandlordAuthContext.jsx'
+import { api } from '../api/client.js'
 import Navbar from '../components/Navbar.jsx'
 import Footer from '../components/Footer.jsx'
 
@@ -106,7 +107,7 @@ export default function LoginPage() {
     const dest = returnTo && returnTo !== '/'
       ? returnTo
       : (persona === 'landlord' ? '/dashboard' : '/viewings')
-    window.location.href = `/api/auth/line/start?role=${persona}&return=${encodeURIComponent(dest)}`
+    window.location.href = api.lineStartUrl(persona, dest)
   }
 
   // If both roles are already active, skip the picker entirely.

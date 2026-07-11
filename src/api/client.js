@@ -148,9 +148,14 @@ export const api = {
   userLogout:       () => request('/auth/user/logout', { method: 'POST' }),
   landlordMe:       () => request('/auth/landlord/me'),
   landlordLogout:   () => request('/auth/landlord/logout', { method: 'POST' }),
-  loginPersona:     (persona) => request('/auth/mock/login', { method: 'POST', body: JSON.stringify({ persona }) }),
-  googleStartUrl:   (returnTo = '/') => `/api/auth/google/start?return=${encodeURIComponent(returnTo)}`,
-  azureStartUrl:    (returnTo = '/') => `/api/auth/azure/start?return=${encodeURIComponent(returnTo)}`,
+  // Auth start URLs are full-page browser redirects (window.location / <a href>),
+  // so they MUST be absolute. A relative '/api/auth/...' would resolve against the
+  // FRONTEND origin — a separate host in production, where there's no /api route,
+  // so the SPA catch-all would swallow it and bounce the user home. BASE already
+  // points at the backend (VITE_API_BASE in prod), so prepend it here.
+  lineStartUrl:     (role, returnTo = '/') => `${BASE}/auth/line/start?role=${role}&return=${encodeURIComponent(returnTo)}`,
+  googleStartUrl:   (returnTo = '/') => `${BASE}/auth/google/start?return=${encodeURIComponent(returnTo)}`,
+  azureStartUrl:    (returnTo = '/') => `${BASE}/auth/azure/start?return=${encodeURIComponent(returnTo)}`,
 
   // Viewings (calendar / วันนัดชมห้อง)
   listViewings:   (params = {}) => request(`/viewings${qs(params)}`),
