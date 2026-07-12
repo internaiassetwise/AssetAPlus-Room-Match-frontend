@@ -49,6 +49,7 @@ export default function RoomDetailModal({ roomId, onClose }) {
               alt={room.title}
               className="w-full h-full object-cover"
               loading="lazy"
+              decoding="async"
               onError={(e) => { e.currentTarget.src = FALLBACK_IMAGE }}
             />
             {room.badge && (

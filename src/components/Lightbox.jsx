@@ -80,6 +80,7 @@ export default function Lightbox({ images = [], index, onClose, onIndex }) {
         alt=""
         className="max-w-[92vw] max-h-[86vh] object-contain rounded-xl shadow-2xl"
         onClick={(e) => e.stopPropagation()}
+        decoding="async"
       />
 
       {count > 1 && (

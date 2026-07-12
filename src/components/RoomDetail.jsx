@@ -74,6 +74,7 @@ export default function RoomDetail() {
                     alt={room.title}
                     className="w-full h-full object-cover transition-transform duration-300 group-hover:scale-[1.03]"
                     loading="lazy"
+                    decoding="async"
                     onError={(e) => { e.currentTarget.src = FALLBACK_IMAGES[0] }}
                   />
                   <span className="absolute bottom-3 right-3 inline-flex items-center gap-1 text-xs font-medium text-white bg-navy-900/55 backdrop-blur px-2.5 py-1 rounded-full opacity-0 group-hover:opacity-100 transition-opacity">
@@ -87,7 +88,7 @@ export default function RoomDetail() {
                     onClick={() => setLightboxIndex(i + 1)}
                     className="hidden sm:block aspect-square bg-cream-100 relative group cursor-zoom-in"
                   >
-                    <img src={src} alt="" className="w-full h-full object-cover opacity-90 group-hover:opacity-100 transition-opacity" loading="lazy" />
+                    <img src={src} alt="" className="w-full h-full object-cover opacity-90 group-hover:opacity-100 transition-opacity" loading="lazy" decoding="async" />
                   </button>
                 ))}
               </div>
