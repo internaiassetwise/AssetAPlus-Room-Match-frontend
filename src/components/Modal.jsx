@@ -57,7 +57,12 @@ export default function Modal({ open, onClose, title, children, maxWidth = 'max-
       className="bg-transparent p-0 m-0 max-w-none max-h-none w-full h-full backdrop:bg-navy-900/55 backdrop:backdrop-blur-sm open:animate-fade-up"
       onClose={onClose}
     >
-      <div className={`relative w-[min(92vw,${maxWidthToPx(maxWidth)})] mx-auto my-8 bg-white rounded-2xl shadow-lift overflow-hidden`}>
+      {/* maxWidth is a static tailwind class (e.g. "max-w-xl") so Tailwind can
+          generate it — do NOT interpolate a value into an arbitrary class; JIT
+          scans at build time and can't see runtime strings (that was the bug:
+          the card rendered full-width on desktop). mx-4 keeps it off the screen
+          edges on mobile, sm:mx-auto centers the capped card on desktop. */}
+      <div className={`relative ${maxWidth} mx-4 sm:mx-auto my-8 bg-white rounded-2xl shadow-lift overflow-hidden`}>
         <button
           type="button"
           onClick={onClose}
@@ -117,17 +122,4 @@ export function ConfirmDialog({
       </div>
     </Modal>
   )
-}
-
-function maxWidthToPx(twClass) {
-  const map = {
-    'max-w-sm':   '24rem',
-    'max-w-md':   '28rem',
-    'max-w-lg':   '32rem',
-    'max-w-xl':   '36rem',
-    'max-w-2xl':  '42rem',
-    'max-w-3xl':  '48rem',
-    'max-w-4xl':  '56rem',
-  }
-  return map[twClass] || '42rem'
 }
