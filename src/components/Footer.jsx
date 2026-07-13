@@ -9,7 +9,7 @@ export default function Footer() {
         <div className="grid md:grid-cols-4 gap-10 items-start">
           <div className="md:col-span-2">
             <div className="mb-4">
-              <Logo onDark className="h-12 w-40" />
+              <Logo className="h-12 w-40" />
             </div>
             <p className="text-white/65 text-[15px] max-w-xs leading-relaxed">
               บริการจับคู่ผู้เช่าและดูแลห้องเช่าโดยทีมงานมืออาชีพ Asset Wise
