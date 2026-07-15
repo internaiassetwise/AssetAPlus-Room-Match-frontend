@@ -253,7 +253,7 @@ export default function Hero() {
                 display = String(s.value)
               } else if (raw != null) {
                 if (s.isStar) display = Number(raw).toFixed(1)
-                else display = `${raw}+`
+                else display = String(raw)
               }
               return (
                 <StatTile
