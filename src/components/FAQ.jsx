@@ -47,7 +47,14 @@ export default function FAQ() {
                 >
                   <div className="overflow-hidden">
                     <div className="px-6 pb-6 text-muted text-[15px] leading-relaxed">
-                      {item.a}
+                      {/* Annotation #27 — FAQ answers may contain inline HTML
+                          (e.g. <span class="whitespace-nowrap"> on a phone
+                          number). Render as HTML when the string contains a
+                          tag, otherwise fall back to plain text to avoid
+                          escaping when no markup is intended. */}
+                      {/<[a-z][\s\S]*>/i.test(item.a)
+                        ? <span dangerouslySetInnerHTML={{ __html: item.a }} />
+                        : item.a}
                     </div>
                   </div>
                 </div>

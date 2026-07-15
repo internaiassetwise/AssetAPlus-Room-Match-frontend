@@ -2,7 +2,10 @@
 // page's body section. Renders the toggle, the persona-specific HowItWorks,
 // the persona-specific listings preview, and the persona-specific form/CTA.
 //
-// Background tint swaps between navy (tenant) and ember/cream (landlord).
+// Page Feedback: tenant + landlord arms of the `#landlords` band reverted to
+// the previous side-by-side layout (copy + bullets on the left, form/image on
+// the right). Background tint still swaps between navy (tenant) and ember/
+// cream (landlord).
 
 import { useState } from 'react'
 import PersonaToggle from './PersonaToggle.jsx'
@@ -10,7 +13,7 @@ import HowItWorksForPersona from './HowItWorksForPersona.jsx'
 import ListingsForPersona from './ListingsForPersona.jsx'
 import TenantRegistrationForm from './TenantRegistrationForm.jsx'
 import LandlordListingsCTA from './LandlordListingsCTA.jsx'
-import { HOW_SECTION, LISTINGS_SECTION } from '../data/content.js'
+import { HOW_SECTION, LISTINGS_SECTION, PERSONA_THEME } from '../data/content.js'
 
 export default function PersonaFlow() {
   const [persona, setPersona] = useState('tenant')
@@ -62,8 +65,7 @@ export default function PersonaFlow() {
                   บอกความต้องการ <br /><span className="text-ember-600">เจ้าหน้าที่ติดต่อกลับ</span>
                 </h3>
                 <p className="mt-5 text-muted text-base sm:text-lg max-w-md leading-relaxed">
-                  กรอกความต้องการของคุณ เจ้าหน้าที่จะคัดกรรมห้องที่เหมาะสม
-                  และโทรหาติดต่อกลับภายใน 1-2 วันทำการ ไม่ต้องรอนานเหมือนเดิม
+                  กรอกความต้องการของคุณ เจ้าหน้าที่จะคัดสรรห้องที่เหมาะสม
                 </p>
                 <ul className="mt-7 space-y-3 text-navy-700 text-[15px]">
                   <li className="flex items-start gap-2.5">
@@ -79,14 +81,16 @@ export default function PersonaFlow() {
                     รับข้อมูลห้องที่เหมาะ ตรงกับความต้องการของคุณโดยตรง
                   </li>
                 </ul>
-                <a href="#listings" className="mt-8 inline-flex items-center gap-2 text-navy-700 font-semibold hover:underline">
-                  ดูรายการห้องทั้งหมด →
-                </a>
-              </div>
+                </div>
               <TenantRegistrationForm />
             </>
           ) : (
-            <LandlordListingsCTA />
+            // Page Feedback: Landlord CTA must span the full width of the
+            // parent grid (it already has its own 2-col layout inside).
+            // Otherwise it sits in column 1 and column 2 stays blank.
+            <div className="lg:col-span-2">
+              <LandlordListingsCTA />
+            </div>
           )}
         </div>
       </div>

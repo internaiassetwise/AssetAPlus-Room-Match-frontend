@@ -23,7 +23,7 @@ export const HOW_TENANT_STEPS = [
   {
     num: '01',
     icon: 'form',
-    title: 'ลงทะเบียนแจ้งความสนใจ',
+    title: 'ค้นหาห้องที่สนใจ หรือ ลงทะเบียนแจ้งความสนใจ',
     desc: 'กรอกข้อมูลแจ้งความสนใจห้องที่อยากได้ ใช้เวลาไม่ถึง 1 นาที',
   },
   {
@@ -110,7 +110,8 @@ export const TENANT_MOVE_IN_OPTIONS = [
   { value: '1to3month', label: '1-3 เดือน' },
 ]
 
-// Brief page 8 — FAQ list (ordered as in the mockup).
+// Brief page 8 — FAQ list (ordered as in the mockup). Annotation #27:
+// phone number kept inline via <span class="whitespace-nowrap">.
 export const FAQS = [
   {
     q: 'ผู้เช่าต้องเสียค่าใช้จ่ายอะไรบ้างไหม?',
@@ -122,7 +123,7 @@ export const FAQS = [
   },
   {
     q: 'สถานะห้อง "ว่าง / จอง" อัพเดทบ่อยแค่ไหน?',
-    a: 'อัพเดททุก 1 สัปดาห์ หากต้องการสอบถามข้อมูลล่าสุด สามารถติดต่อฝ่ายที่ดูแลเรื่องการเช่าได้ผ่านเบอร์ 02-168-0000 และ Line @ASWROOMMATCH',
+    a: 'อัพเดททุก 1 สัปดาห์ หากต้องการสอบถามข้อมูลล่าสุด สามารถติดต่อฝ่ายที่ดูแลเรื่องการเช่าได้ผ่านเบอร์ <span class="whitespace-nowrap">02-168-0000</span> และ Line @ASWROOMMATCH',
   },
   {
     q: 'อยากลงประกาศปล่อยเช่าห้อง ต้องทำยังไง?',
@@ -130,58 +131,74 @@ export const FAQS = [
   },
   {
     q: 'ครอบคลุมทำเลไหนบ้างในกรุงเทพ?',
-    a: '8 ทำเลทั่ว กทม. และปริมณฑล ได้แก่ ลาดพร้าว, รัชดา-ห้วยขวาง, อ่อนนุช, เกษตร, แจ้งวัฒนะ, ศาลายา, ศรีสมาน และนครปฐม รวมกว่า 200 ห้อง',
+    a: '8 ทำเลทั่ว กทม. และปริมณฑล ได้แก่ ลาดพร้าว, รัชดา-ห้วยขวาง, อ่อนนุช, เกษตร, แจ้งวัฒนะ, ศาลายา, ศรีสมาน และนครปาฐม รวมกว่า 200 ห้อง',
   },
 ]
 
-// Brief page 2 — Hero stat tiles. XXX/XX are placeholders the user fills.
+// Brief page 2 — Hero stat tiles. Driven from /api/stats via api.listStats().
+// keys map onto the rows returned by stats.repo.js. `unit` renders inline
+// next to the value ("XX ห้อง"); `label` is the descriptor on line 2.
 export const STATS_LANDING = [
-  { num: 'XXX', label: 'ห้องในสต็อค' },
-  { num: 'XX',  label: 'ห้องที่ Match แล้ว' },
-  { num: '4.9', label: 'ความพึงพอใจ' },
+  { key: 'rooms_available', unit: 'ห้อง', label: 'ที่มีในสต๊อก' },
+  { key: 'matches_signed',  unit: 'ห้อง', label: 'ที่ Match แล้ว' },
+  { key: 'avg_rating',      label: 'ความพึงพอใจ', isStar: true },
 ]
 
 // Hero headline + sub-copy per brief page 2.
 export const HERO = {
-  eyebrow: 'ห้องว่างพร้อมเข้าอยู่ · ดูแลโดย AssetWise',
+  eyebrow: '',
   title: [
-    { text: 'ห้องใกล้บ้านคุณ', tone: 'plain' },
-    { text: 'พร้อมเข้าอยู่',     tone: 'accent' },
+    { text: 'Roommatch', tone: 'plain' },
   ],
-  body: 'ค้นหาห้องที่ใช่ หรือส่งข้อมูลความต้องการ เจ้าหน้าที่จะแนะนำห้องที่เหมาะสมให้ใน 1-2 วันทำการ',
+  body: 'Platform ที่ช่วยจับคู่ผู้เช่า–ผู้ให้เช่า จบในที่เดียว อัพเดทสถานะห้องสม่ำเสมอ ติดต่อสอบถามเพิ่มเติมได้ทาง Line ทันที',
+  primaryCta: {
+    text: 'ลงประกาศปล่อยห้อง',
+    href: 'https://line.me/R/ti/p/%40assetaplus?text=%E0%B8%AA%E0%B8%A7%E0%B8%B1%E0%B8%AA%E0%B8%94%E0%B8%B5%E0%B8%84%E0%B9%88%E0%B8%B0%20%E0%B8%AD%E0%B8%A2%E0%B8%B2%E0%B8%81%E0%B8%A5%E0%B8%87%E0%B8%9B%E0%B8%A3%E0%B8%B0%E0%B8%81%E0%B8%B2%E0%B8%A8%E0%B8%AB%E0%B9%89%E0%B8%AD%E0%B8%87%E0%B9%83%E0%B8%AB%E0%B9%89%E0%B9%80%E0%B8%8A%E0%B9%88%E0%B8%B2%E0%B8%84%E0%B9%88%E0%B8%B0',
+  },
+  secondaryCta: {
+    text: 'ค้นหาห้องที่ใช่',
+    to:   '/search',
+  },
 }
 
-// "วิธีใช้งาน" section copy per brief page 3.
+// "วิธีใช้งาน" section copy per brief page 3. Both roles share title.
 export const HOW_SECTION = {
   tenant: {
     eyebrow: 'วิธีใช้งาน',
-    title:   'ค้นหาห้องที่สนใจ หรือ ลงทะเบียนแจ้งความสนใจ',
-    lede:    'เลือกวิธีที่ใช่สำหรับคุณ หรือ ลงทะเบียนแจ้งความสนใจไว้ ทีมงานจะคัดกรรมห้องที่เหมาะสมแนะนำเบื้องต้น',
+    title:   'ง่ายมากเพียง 3 ขั้นตอน',
+    lede:    '',
   },
   landlord: {
     eyebrow: 'วิธีใช้งาน',
-    title:   'ลงประกาศห้องให้เช่า จับคู่ผู้เช่าคุณภาพ',
-    lede:    'ทัก Line แจ้งข้อมูลห้อง ทีมงานช่วยจัดการให้ครบทุกขั้นตอน',
+    title:   'ง่ายมากเพียง 3 ขั้นตอน',
+    lede:    '',
   },
+}
+
+// Annotation #11 / #20 — persona-themed color tokens.
+// tenant: navy pair (#003299 / #C2DDF9). landlord: ember pair (#FF6600 / #FFEDBC).
+export const PERSONA_THEME = {
+  tenant:   { sectionBg: 'bg-[#C2DDF9]', accentBg: 'bg-[#003299]', accentText: 'text-[#003299]', accentSolid: 'bg-[#003299]' },
+  landlord: { sectionBg: 'bg-[#FFEDBC]', accentBg: 'bg-[#FF6600]', accentText: 'text-[#FF6600]', accentSolid: 'bg-[#FF6600]' },
 }
 
 // Brief page 4 — Listings section copy.
 export const LISTINGS_SECTION = {
   tenant: {
-    eyebrow: 'ห้องในระบบตอนนี้',
-    titleA:  'ห้องที่',
-    titleAccent: 'Match',
-    titleB:  'กับคุณ',
-    matchLabel: 'ห้องที่ Match กับคุณ',
+    eyebrow: 'ห้องว่างพร้อมอยู่',
+    titleA:  'ห้องในระบบ',
+    titleAccent: 'ตอนนี้',
+    titleB:  '',
+    matchLabel: 'ห้องในระบบตอนนี้',
     searchLabel: 'ค้นหา',
     lastUpdated: 'อัพเดทล่าสุด:',
   },
   landlord: {
-    eyebrow: 'ห้องในระบบตอนนี้',
-    titleA:  'ห้องที่',
-    titleAccent: 'Match',
-    titleB:  'กับคุณ',
-    matchLabel: 'ห้องที่ตรงกับผู้เช่าคุณ',
+    eyebrow: 'ห้องว่างพร้อมอยู่',
+    titleA:  'ห้องในระบบ',
+    titleAccent: 'ตอนนี้',
+    titleB:  '',
+    matchLabel: 'ห้องในระบบตอนนี้',
     searchLabel: 'ค้นหา',
     lastUpdated: 'อัพเดทล่าสุด:',
   },
@@ -191,7 +208,7 @@ export const LISTINGS_SECTION = {
 export const TENANT_FORM = {
   eyebrow: 'แจ้งความสนใจล่วงหน้า',
   title:   'บอกความต้องการ เจ้าหน้าที่ติดต่อกลับ',
-  body:    'กรอกความต้องการของคุณ เจ้าหน้าที่จะคัดกรรมห้องที่เหมาะสม และโทรหาติดต่อกลับภายใน 1-2 วันทำการ ไม่ต้องรอนานเหมือนเดิม',
+  body:    'กรอกความต้องการของคุณ เจ้าหน้าที่จะคัดกรรมห้องที่เหมาะสม',
   bullets: [
     'กรอกความต้องการ โซน งบ ประเภทห้องที่อยากได้',
     'เจ้าหน้าที่ติดต่อกลับ ภายใน 1-2 วันทำการ',
@@ -218,19 +235,28 @@ export const LANDLORD_CTA = {
   eyebrow: 'สำหรับเจ้าของห้อง',
   titleA: 'มีห้องว่าง',
   titleAccent: 'อยู่ไหม?',
-  body: 'ลงประกาศห้องได้ฟรี มีทีมงานคุณภาพช่วยดูแล หาผู้เช่าคุณภาพให้คุณได้อย่างรวดเร็ว',
+  body: '',
   primary: '+ ลงประกาศห้องฟรีเลย',
+  primaryHref: 'https://line.me/R/ti/p/%40assetaplus?text=%E0%B8%AA%E0%B8%A7%E0%B8%B1%E0%B8%AA%E0%B8%94%E0%B8%B5%E0%B8%84%E0%B9%88%E0%B8%B0%20%E0%B8%AD%E0%B8%A2%E0%B8%B2%E0%B8%81%E0%B8%A5%E0%B8%87%E0%B8%9B%E0%B8%A3%E0%B8%B0%E0%B8%81%E0%B8%B2%E0%B8%A8%E0%B8%AB%E0%B9%89%E0%B8%AD%E0%B8%87%E0%B9%83%E0%B8%AB%E0%B9%89%E0%B9%80%E0%B8%8A%E0%B9%88%E0%B8%B2%E0%B8%84%E0%B9%88%E0%B8%B0',
   secondary: 'ดูวิดีโอประกาศ',
-  helper: 'กดแล้วไป line',
+  helper:   'แอดมินตอบกลับภายใน 1 วัน',
 }
 
 // Brief page 8 — Bottom CTA strip.
 export const BOTTOM_CTA = {
   eyebrow: 'ติดต่อแอดมิน',
   title: [
-    { text: 'ทุกเรื่อง ติดต่อ', tone: 'plain' },
-    { text: 'ผ่านแอดมิน',     tone: 'accent' },
+    { text: 'ติดต่อเรา ได้ที่', tone: 'plain' },
   ],
   body: 'ไม่ว่าจะถามรายละเอียดห้อง นัดชมห้อง ลงประกาศ หรือแก้ไขรายละเอียด แอดมินพร้อมดูแลผ่านทุกช่องทาง',
   trust: ['ไม่มีค่าลงทะเบียน', 'ตอบกลับภายใน 1 วัน', 'สัญญามาตรฐาน'],
 }
+
+// Annotation #29 — navbar marketing order.
+export const NAV_MARKETING = [
+  { text: 'หน้าแรก',   href: '/#hero' },
+  { text: 'วิธีใช้งาน', href: '/#how-it-works' },
+  { text: 'ดูห้องว่าง',  href: '/#listings' },
+  { text: 'ปล่อยห้อง',  href: '/#landlords' },
+  { text: 'FAQ',        href: '/#faq' },
+]

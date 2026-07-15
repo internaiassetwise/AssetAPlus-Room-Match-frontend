@@ -4,7 +4,7 @@
 // On success: green check card. On error: inline message.
 
 import { useState } from 'react'
-import { Phone, Home, BadgeCheck, ArrowRight, Search } from './icons.jsx'
+import { Phone, Home, BadgeCheck, Search } from './icons.jsx'
 import { api, ApiError } from '../api/client.js'
 import { TENANT_ZONES, TENANT_PROPERTY_TYPES, TENANT_MOVE_IN_OPTIONS, TENANT_FORM } from '../data/content.js'
 
@@ -20,7 +20,7 @@ function Field({ label, children, hint, required }) {
   )
 }
 
-export default function TenantRegistrationForm() {
+export default function TenantRegistrationForm({ theme }) {
   const [zone, setZone]               = useState('')
   const [propertyType, setPropType]   = useState('')
   const [moveIn, setMoveIn]           = useState('')
@@ -166,9 +166,7 @@ export default function TenantRegistrationForm() {
           disabled={status === 'sending'}
           className={`btn ${accentBtn} text-white w-full disabled:opacity-60 disabled:cursor-not-allowed`}
         >
-          <ArrowRight size={18} />
           {status === 'sending' ? 'กำลังส่ง…' : TENANT_FORM.form.submitText}
-          <ArrowRight size={16} />
         </button>
       </form>
     </div>

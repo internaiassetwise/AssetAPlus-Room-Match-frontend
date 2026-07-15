@@ -1,3 +1,9 @@
+// src/components/Navbar.jsx — top navigation.
+//
+// Annotation #29: marketing menu order driven by NAV_MARKETING array.
+// Same five anchor links the brief shows on every screen for unauthenticated
+// users: หน้าแรก / วิธีใช้งาน / ดูห้องว่าง / ปล่อยห้อง / FAQ.
+
 import { useEffect, useState } from 'react'
 import { Link, useNavigate } from 'react-router-dom'
 import { Phone, LineChat, Menu, Close, Shield, LogOut, Search, Calendar, Inbox, Home, Chart } from './icons.jsx'
@@ -6,6 +12,7 @@ import { useUserAuth }     from '../contexts/UserAuthContext.jsx'
 import { useLandlordAuth } from '../contexts/LandlordAuthContext.jsx'
 import NavUserMenu from './NavUserMenu.jsx'
 import Logo from './Logo.jsx'
+import { NAV_MARKETING } from '../data/content.js'
 
 export default function Navbar() {
   const [scrolled, setScrolled] = useState(false)
@@ -47,21 +54,13 @@ export default function Navbar() {
           <Logo className="h-12 w-40" />
         </Link>
 
-        {/* Desktop nav — marketing anchors only when not signed in (sign-in
-            context switches priorities toward feature links) */}
+        {/* Desktop nav — marketing anchors from NAV_MARKETING when not signed in */}
         <div className="hidden lg:flex items-center gap-1 min-w-0">
-          <a className="nav-link" href="/#hero">หน้าแรก</a>
-          {!anySignedIn && (
-            <>
-              <a className="nav-link hidden xl:inline-flex" href="/#how">วิธีการ</a>
-              <a className="nav-link" href="/#listings">ห้องว่าง</a>
-              <Link className="nav-link inline-flex items-center gap-1.5" to="/search">
-                <Search size={14} /> ค้นหา
-              </Link>
-              <a className="nav-link hidden xl:inline-flex" href="/#landlords">เจ้าของห้อง</a>
-              <a className="nav-link hidden xl:inline-flex" href="/#faq">คำถาม</a>
-            </>
-          )}
+          {!anySignedIn && NAV_MARKETING.map((item) => (
+            <a key={item.text} className="nav-link" href={item.href}>
+              {item.text}
+            </a>
+          ))}
           {anySignedIn && (
             <Link className="nav-link inline-flex items-center gap-1.5" to="/search">
               <Search size={14} /> ค้นหา
@@ -133,18 +132,16 @@ export default function Navbar() {
       {open && (
         <div className="md:hidden border-t border-line bg-white">
           <div className="container-page py-4 flex flex-col">
-            <a className="nav-link py-3 text-base" href="/#hero" onClick={() => setOpen(false)}>หน้าแรก</a>
-            {!anySignedIn && (
-              <>
-                <a className="nav-link py-3 text-base" href="/#how" onClick={() => setOpen(false)}>วิธีการ</a>
-                <a className="nav-link py-3 text-base" href="/#listings" onClick={() => setOpen(false)}>ห้องว่าง</a>
-                <Link className="nav-link py-3 text-base inline-flex items-center gap-2" to="/search" onClick={() => setOpen(false)}>
-                  <Search size={14} /> ค้นหา
-                </Link>
-                <a className="nav-link py-3 text-base" href="/#landlords" onClick={() => setOpen(false)}>เจ้าของห้อง</a>
-                <a className="nav-link py-3 text-base" href="/#faq" onClick={() => setOpen(false)}>คำถาม</a>
-              </>
-            )}
+            {!anySignedIn && NAV_MARKETING.map((item) => (
+              <a
+                key={item.text}
+                className="nav-link py-3 text-base"
+                href={item.href}
+                onClick={() => setOpen(false)}
+              >
+                {item.text}
+              </a>
+            ))}
             {anySignedIn && (
               <Link className="nav-link py-3 text-base inline-flex items-center gap-2" to="/search" onClick={() => setOpen(false)}>
                 <Search size={14} /> ค้นหา

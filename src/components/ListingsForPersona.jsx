@@ -1,16 +1,17 @@
 // src/components/ListingsForPersona.jsx — shared listings+filter block used
 // inside both tenant and landlord arms of the landing PersonaFlow section.
 //
-// Fetches rooms from /api/rooms with optional filters. Same RoomCard used by
-// both arms so a landlord viewing the "what tenants see" preview gets the
-// exact same visual.
+// Annotation #11: brief page 4 — zone chip "ค้นหา" row + "ตัวกรอง" dropdown.
+// Dropdown reveals ทำเล / ประเภทห้อง / งบขั้นต่ำ / งบสูงสุด + Apply button.
+// Eyebrow + title swapped to "ห้องว่างพร้อมอยู่" + "ห้องในระบบ ตอนนี้".
 
 import { useEffect, useState } from 'react'
-import { MapPin, Home, Clock } from './icons.jsx'
+import { MapPin, Home, Clock, Search, Filter, ChevronDown, X } from './icons.jsx'
 import { useApi } from '../hooks/useApi.js'
 import { api } from '../api/client.js'
 import RoomDetailModal from './RoomDetailModal.jsx'
 import { RoomCard } from './RoomCard.jsx'
+import { LISTINGS_SECTION } from '../data/content.js'
 
 function SkeletonCard() {
   return (
@@ -25,11 +26,16 @@ function SkeletonCard() {
   )
 }
 
-export default function ListingsForPersona({ persona, eyebrow, titleA, titleAccent, titleB, searchLabel, lastUpdated }) {
-  const [activeZone, setActiveZone] = useState(null)
-  const [debouncedZone, setDebouncedZone] = useState(null)
-  const [maxBudget, setMaxBudget] = useState('')
-  const [bedrooms, setBedrooms] = useState('')
+export default function ListingsForPersona({ persona, theme }) {
+  const copy = LISTINGS_SECTION[persona]
+
+  const [activeZone, setActiveZone]         = useState(null)
+  const [debouncedZone, setDebouncedZone]   = useState(null)
+  const [maxBudget, setMaxBudget]           = useState('')
+  const [minBudget, setMinBudget]           = useState('')
+  const [bedrooms, setBedrooms]             = useState('')
+  const [propertyType, setPropertyType]     = useState('')
+  const [showFilters, setShowFilters]       = useState(false)
   const [selectedRoomId, setSelectedRoomId] = useState(null)
 
   const { data: zones } = useApi(() => api.listZones(), [])
@@ -43,9 +49,11 @@ export default function ListingsForPersona({ persona, eyebrow, titleA, titleAcce
   const params = {
     ...(debouncedZone ? { zone: debouncedZone } : {}),
     ...(maxBudget !== '' ? { maxRent: Number(maxBudget) } : {}),
+    ...(minBudget !== '' ? { minRent: Number(minBudget) } : {}),
     ...(bedrooms !== '' ? { bedrooms: Number(bedrooms) } : {}),
+    ...(propertyType ? { propertyType } : {}),
   }
-  const { data: rooms, loading, error } = useApi(() => api.listRooms(params), [debouncedZone, maxBudget, bedrooms])
+  const { data: rooms, loading, error } = useApi(() => api.listRooms(params), [debouncedZone, maxBudget, minBudget, bedrooms, propertyType])
 
   // "อัพเดทล่าสุด" timestamp — render today, Thai style.
   const today = new Date()
@@ -58,83 +66,118 @@ export default function ListingsForPersona({ persona, eyebrow, titleA, titleAcce
   const accent = persona === 'tenant' ? 'text-navy-600' : 'text-ember-600'
   const headerText = (
     <>
-      {titleA}<span className={`${accent}`}>{titleAccent}</span>{titleB}
+      {copy.titleA}<span className={`${accent}`}>{copy.titleAccent}</span>{copy.titleB}
     </>
   )
 
+  const clearAll = () => {
+    setActiveZone(null); setMaxBudget(''); setMinBudget(''); setBedrooms(''); setPropertyType('')
+  }
+
   return (
-    <section className="section bg-cream-50" id={`persona-listings-${persona}`}>
+    <section className="section bg-transparent" id={`persona-listings-${persona}`}>
       <div className="container-page">
         <div className="flex flex-wrap items-end justify-between gap-4 mb-8">
           <div>
-            <span className="eyebrow">{eyebrow}</span>
+            <span className={`eyebrow ${persona === 'tenant' ? '' : 'eyebrow-navy'}`}>
+              {copy.eyebrow}
+            </span>
             <h2 className="mt-4 font-bold text-navy-700 text-3xl sm:text-4xl tracking-tight">
               {headerText}
             </h2>
           </div>
           <div className="inline-flex items-center gap-1.5 text-sm text-muted">
             <Clock size={16} className="text-navy-600" />
-            {lastUpdated} <span className="font-semibold text-navy-700">{lastUpdatedText}</span>
+            {copy.lastUpdated} <span className="font-semibold text-navy-700">{lastUpdatedText}</span>
           </div>
         </div>
 
-        <div className="card p-5 mb-8">
-          <div className="grid gap-4 md:grid-cols-4">
-            <div>
-              <label className="label">{searchLabel}</label>
-              <div className="flex flex-wrap gap-2">
-                <button
-                  type="button"
-                  onClick={() => setActiveZone(null)}
-                  className={`chip ${activeZone === null ? 'chip-active' : ''}`}
-                >
-                  ทั้งหมด
-                </button>
-                {zonesDisplay.map((z) => (
-                  <button
-                    type="button"
-                    key={z.id}
-                    onClick={() => setActiveZone(z.id)}
-                    className={`chip ${activeZone === z.id ? 'chip-active' : ''}`}
-                  >
-                    <MapPin size={14} /> {z.name}
-                  </button>
-                ))}
+        {/* Search + filter buttons row (annotation #11) */}
+        <div className="flex flex-wrap items-center gap-3 mb-6">
+          <div className="relative flex-1 min-w-[240px]">
+            <Search size={16} className="absolute left-3.5 top-1/2 -translate-y-1/2 text-muted pointer-events-none" />
+            <input
+              type="search"
+              className="input pl-10"
+              placeholder="ค้นหา เช่น ลาดพร้าว, สตูดิโอ..."
+              aria-label="ค้นหาห้อง"
+            />
+          </div>
+          <button
+            type="button"
+            onClick={() => setShowFilters(!showFilters)}
+            className="btn btn-outline btn-sm inline-flex items-center gap-1.5"
+            aria-expanded={showFilters}
+          >
+            <Filter size={16} /> ตัวกรอง
+            <ChevronDown size={14} className={`transition-transform ${showFilters ? 'rotate-180' : ''}`} />
+          </button>
+          {(activeZone || maxBudget || minBudget || bedrooms || propertyType) && (
+            <button
+              type="button"
+              onClick={clearAll}
+              className="text-xs text-muted hover:text-navy-700 inline-flex items-center gap-1"
+            >
+              <X size={14} /> ล้างตัวกรอง
+            </button>
+          )}
+        </div>
+
+        {/* Filter dropdown panel */}
+        {showFilters && (
+          <div className="card p-5 mb-6 border-navy-200">
+            <div className="grid gap-4 sm:grid-cols-2 lg:grid-cols-4">
+              <div>
+                <label className="label">ทำเล</label>
+                <select className="input" value={activeZone || ''} onChange={(e) => setActiveZone(e.target.value || null)}>
+                  <option value="">ทั้งหมด</option>
+                  {zonesDisplay.map((z) => (
+                    <option key={z.id} value={z.id}>{z.name}</option>
+                  ))}
+                </select>
+              </div>
+              <div>
+                <label className="label">ประเภทห้อง</label>
+                <select className="input" value={propertyType} onChange={(e) => setPropertyType(e.target.value)}>
+                  <option value="">ทุกประเภท</option>
+                  <option value="studio">Studio</option>
+                  <option value="1bed">1 ห้องนอน</option>
+                  <option value="1bed_multi">1 ห้องนอน + ห้องเอนกประสงค์</option>
+                  <option value="2bed">2 ห้องนอน</option>
+                </select>
+              </div>
+              <div>
+                <label className="label">งบขั้นต่ำ (บาท)</label>
+                <input
+                  inputMode="numeric"
+                  className="input"
+                  value={minBudget}
+                  onChange={(e) => setMinBudget(e.target.value)}
+                  placeholder="10000"
+                />
+              </div>
+              <div>
+                <label className="label">งบสูงสุด (บาท)</label>
+                <input
+                  inputMode="numeric"
+                  className="input"
+                  value={maxBudget}
+                  onChange={(e) => setMaxBudget(e.target.value)}
+                  placeholder="35000"
+                />
               </div>
             </div>
-
-            <div>
-              <label className="label">ประเภทห้อง</label>
-              <select className="input" value={bedrooms} onChange={(e) => setBedrooms(e.target.value)}>
-                <option value="">ทุกประเภท</option>
-                <option value="1">1 ห้องนอน</option>
-                <option value="2">2 ห้องนอน</option>
-                <option value="3">3+ ห้องนอน</option>
-              </select>
-            </div>
-
-            <div>
-              <label className="label">งบสูงสุด (บาท)</label>
-              <input
-                inputMode="numeric"
-                className="input"
-                value={maxBudget}
-                onChange={(e) => setMaxBudget(e.target.value)}
-                placeholder="35000"
-              />
-            </div>
-
-            <div className="flex items-end">
+            <div className="mt-5 flex justify-end">
               <button
                 type="button"
-                onClick={() => { setActiveZone(null); setBedrooms(''); setMaxBudget('') }}
-                className="text-xs text-muted hover:text-navy-700 underline w-full text-center py-2.5"
+                onClick={() => setShowFilters(false)}
+                className="btn btn-navy btn-sm"
               >
-                ล้างตัวกรอง
+                Apply
               </button>
             </div>
           </div>
-        </div>
+        )}
 
         {error ? (
           <div className="text-center py-16 text-muted">โหลดข้อมูลไม่สำเร็จ กรุณาลองใหม่อีกครั้ง</div>
