@@ -104,6 +104,7 @@ export const api = {
   listStats:    ()           => request('/stats'),
   submitPreference:      (body) => request('/preferences',       { method: 'POST', body: JSON.stringify(body) }),
   submitTenantPreference:(body) => request('/preferences/tenant', { method: 'POST', body: JSON.stringify(body) }),
+  submitTenantLead:      (body) => request('/leads/tenant',      { method: 'POST', body: JSON.stringify(body) }),
   submitContact:         (body) => request('/contact',           { method: 'POST', body: JSON.stringify(body) }),
 
   // Matches

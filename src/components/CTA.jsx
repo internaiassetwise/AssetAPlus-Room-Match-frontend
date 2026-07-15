@@ -1,10 +1,16 @@
+// src/components/CTA.jsx — Section 5 bottom strip per designer brief page 8.
+//
+// Dark navy background. Headline "ทุกเรื่อง ติดต่อผ่านแอดมิน", three CTAs
+// (Line, phone, see all), and a single-line trust strip underneath.
+
 import { Phone, LineChat, ArrowRight, BadgeCheck } from './icons.jsx'
 import { Link } from 'react-router-dom'
+import { BOTTOM_CTA } from '../data/content.js'
 
 export default function CTA() {
   return (
     <section id="cta" className="section bg-navy-700 text-white relative overflow-hidden">
-      {/* Subtle gradient overlay */}
+      {/* Subtle gradient accent */}
       <div
         aria-hidden
         className="absolute inset-0 opacity-30"
@@ -14,18 +20,24 @@ export default function CTA() {
       <div className="container-page relative">
         <div className="max-w-3xl mx-auto text-center">
           <span className="inline-flex items-center gap-2 rounded-full bg-white/10 text-white px-4 py-1.5 text-sm font-semibold border border-white/15">
-            <BadgeCheck size={16} className="text-ember-400" /> ติดต่อแอดมิน
+            <BadgeCheck size={16} className="text-ember-400" /> {BOTTOM_CTA.eyebrow}
           </span>
 
           <h2 className="mt-6 font-bold text-white text-4xl sm:text-5xl lg:text-[60px] leading-[1.2] tracking-tight">
-            ทุกเรื่อง ติดต่อ
-            <br />
-            <span className="text-ember-400">ผ่านแอดมิน</span>
+            {BOTTOM_CTA.title.map((line, i) => (
+              <span key={i}>
+                {i > 0 && <br />}
+                {line.tone === 'accent' ? (
+                  <span className="text-ember-400">{line.text}</span>
+                ) : (
+                  line.text
+                )}
+              </span>
+            ))}
           </h2>
 
           <p className="mt-6 text-white/75 text-lg sm:text-xl max-w-xl mx-auto leading-relaxed">
-            ไม่ว่าจะถามรายละเอียดห้อง นัดชมห้อง ลงประกาศ หรือแก้ไขรายละเอียด
-            แอดมินพร้อมดูแลผ่านทุกช่องทาง
+            {BOTTOM_CTA.body}
           </p>
 
           <div className="mt-9 flex flex-wrap gap-3 justify-center">
@@ -46,9 +58,11 @@ export default function CTA() {
           </div>
 
           <div className="mt-8 flex flex-wrap items-center justify-center gap-x-7 gap-y-2.5 text-white/85 text-base">
-            <span className="inline-flex items-center gap-2"><BadgeCheck size={16} className="text-ember-400" /> ไม่มีค่าลงทะเบียน</span>
-            <span className="inline-flex items-center gap-2"><BadgeCheck size={16} className="text-ember-400" /> ตอบกลับภายใน 1 วัน</span>
-            <span className="inline-flex items-center gap-2"><BadgeCheck size={16} className="text-ember-400" /> สัญญามาตรฐาน</span>
+            {BOTTOM_CTA.trust.map((t) => (
+              <span key={t} className="inline-flex items-center gap-2">
+                <BadgeCheck size={16} className="text-ember-400" /> {t}
+              </span>
+            ))}
           </div>
         </div>
       </div>
