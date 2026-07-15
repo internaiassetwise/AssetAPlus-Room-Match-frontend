@@ -19,8 +19,10 @@ function Stat({ icon: Icon, label, value }) {
 
 export default function RoomDetailModal({ roomId, onClose }) {
   const navigate = useNavigate()
+  // Skip the fetch while roomId is null — otherwise the call goes out as
+  // /rooms/null on mount and the backend rejects with 400.
   const { data: room, loading, error } = useApi(
-    () => api.getRoom(roomId),
+    () => roomId ? api.getRoom(roomId) : Promise.resolve(null),
     [roomId],
   )
 

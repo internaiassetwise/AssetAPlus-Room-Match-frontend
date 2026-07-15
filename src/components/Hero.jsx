@@ -42,21 +42,33 @@ function RoomPhotoTile() {
 
   useEffect(() => {
     let alive = true
-    api.listRooms({ limit: 20, status: 'available' })
+    // Server hard-codes `status = 'available'` in SQL; no `status` query param
+    // exists, so we only send `limit`.
+    api.listRooms({ limit: 20 })
       .then((res) => {
         if (!alive) return
-        const rooms = res?.data || []
+        // Backend returns a RAW array (no { data } envelope).
+        const rooms = Array.isArray(res) ? res : (res?.data || [])
+        // Randomize order so each visit shows a different room first.
+        // Fisher-Yates shuffle on a copy.
+        const shuffled = rooms.slice()
+        for (let i = shuffled.length - 1; i > 0; i--) {
+          const j = Math.floor(Math.random() * (i + 1))
+          ;[shuffled[i], shuffled[j]] = [shuffled[j], shuffled[i]]
+        }
         // Flatten rooms → { src, title } slide list. Cap at 8 to keep payload
-        // + memory bounded; mark first photo of each room so the carousel
+        // + memory bounded; take the first photo of each room so the carousel
         // shows one photo per room rather than every photo on every room.
         // Accept both `image` (singular string, current API) and `photos`
         // (array, legacy/alt API) for compatibility.
         const items = []
-        for (const r of rooms) {
+        const seen = new Set()
+        for (const r of shuffled) {
           const src = (Array.isArray(r.photos) && r.photos[0])
             || (typeof r.image === 'string' && r.image)
             || null
-          if (src) {
+          if (src && !seen.has(src)) {
+            seen.add(src)
             items.push({ src, title: r.title || r.zone || 'RoomMatch ห้องว่าง' })
           }
           if (items.length >= 8) break
@@ -165,7 +177,7 @@ export default function Hero() {
   useEffect(() => {
     let alive = true
     api.listStats()
-      .then((res) => { if (alive) setStats(res?.data || null) })
+      .then((res) => { if (alive) setStats(res || null) })
       .catch(() => { if (alive) setStats(null) })
       .finally(() => { if (alive) setLoading(false) })
     return () => { alive = false }
