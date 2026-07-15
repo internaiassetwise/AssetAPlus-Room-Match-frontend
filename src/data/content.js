@@ -135,13 +135,14 @@ export const FAQS = [
   },
 ]
 
-// Brief page 2 — Hero stat tiles. Driven from /api/stats via api.listStats().
-// keys map onto the rows returned by stats.repo.js. `unit` renders inline
-// next to the value ("XX ห้อง"); `label` is the descriptor on line 2.
+// Brief page 2 — Hero stat tiles. Tile values come from one of:
+//   • key:   fetched live from /api/stats (row matches stats.repo.js fields)
+//   • value: literal string rendered directly (skips the API call entirely)
+// `unit` renders inline next to the value ("XX ห้อง"); `label` is line 2 below.
 export const STATS_LANDING = [
   { key: 'rooms_available', unit: 'ห้อง', label: 'ที่มีในสต๊อก' },
   { key: 'matches_signed',  unit: 'ห้อง', label: 'ที่ Match แล้ว' },
-  { key: 'avg_rating',      label: 'ความพึงพอใจ', isStar: true },
+  { value: '4.9',           label: 'ความพึงพอใจ', isStar: true },
 ]
 
 // Hero headline + sub-copy per brief page 2.

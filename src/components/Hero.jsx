@@ -244,20 +244,25 @@ export default function Hero() {
 
           <div className="mt-12 grid grid-cols-3 gap-6 max-w-xl">
             {STATS_LANDING.map((s) => {
-              const raw = stats?.[s.key]
+              // value tiles render the literal from STATS_LANDING with no fetch
+              // and no loading shimmer; key tiles read from the /api/stats row.
+              const isStatic = s.value != null
+              const raw = isStatic ? null : stats?.[s.key]
               let display = '—'
-              if (raw != null) {
+              if (isStatic) {
+                display = String(s.value)
+              } else if (raw != null) {
                 if (s.isStar) display = Number(raw).toFixed(1)
                 else display = `${raw}+`
               }
               return (
                 <StatTile
-                  key={s.key}
+                  key={s.key || s.label}
                   value={display}
                   unit={s.unit}
                   label={s.label}
                   isStar={s.isStar}
-                  loading={loading}
+                  loading={loading && !isStatic}
                 />
               )
             })}
