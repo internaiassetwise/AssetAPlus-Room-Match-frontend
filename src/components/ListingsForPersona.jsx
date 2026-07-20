@@ -132,7 +132,7 @@ export default function ListingsForPersona({ persona, theme }) {
                 <select className="input" value={activeZone || ''} onChange={(e) => setActiveZone(e.target.value || null)}>
                   <option value="">ทั้งหมด</option>
                   {zonesDisplay.map((z) => (
-                    <option key={z.id} value={z.id}>{z.name}</option>
+                    <option key={z.id} value={z.slug}>{z.name}</option>
                   ))}
                 </select>
               </div>

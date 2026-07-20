@@ -1,6 +1,6 @@
 // src/components/admin/AdminLayout.jsx — Sidebar shell for /admin/*.
 import { Outlet, NavLink, Link, useNavigate } from 'react-router-dom'
-import { Plus, LogOut, ChevronRight, Bot, Inbox } from '../icons.jsx'
+import { Plus, LogOut, ChevronRight, Bot, Inbox, Chart } from '../icons.jsx'
 import Logo from '../Logo.jsx'
 import { useAuth } from '../../contexts/AuthContext.jsx'
 import { useApi } from '../../hooks/useApi.js'
@@ -102,6 +102,22 @@ export default function AdminLayout() {
               </span>
               <ChevronRight size={16} className="text-muted" />
             </NavLink>
+            <div className="px-4 pt-5 pb-3 text-[10px] font-bold uppercase tracking-widest text-muted">
+              ลูกค้า
+            </div>
+            {/* Direct browser navigation to the .xlsx endpoint — the admin
+                session cookie (Domain=.up.railway.app in prod) rides along
+                automatically, so requireAdmin passes. */}
+            <a
+              href={api.tenantLeadsXlsxUrl()}
+              className={navItem({ isActive: false })}
+              download
+            >
+              <span className="inline-flex items-center gap-2">
+                <Chart size={16} /> ดาวน์โหลด Lead (Excel)
+              </span>
+              <ChevronRight size={16} className="text-muted" />
+            </a>
           </nav>
         </aside>
 

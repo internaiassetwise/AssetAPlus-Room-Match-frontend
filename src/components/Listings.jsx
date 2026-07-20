@@ -154,8 +154,8 @@ export default function Listings() {
             <button
               type="button"
               key={z.id}
-              onClick={() => setActiveZone(z.id)}
-              className={`chip ${activeZone === z.id ? 'chip-active' : ''}`}
+              onClick={() => setActiveZone(z.slug)}
+              className={`chip ${activeZone === z.slug ? 'chip-active' : ''}`}
             >
               <MapPin size={14} /> {z.name}
               <span className="text-muted">({z.count})</span>

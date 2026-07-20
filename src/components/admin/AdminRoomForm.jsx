@@ -1,7 +1,7 @@
 // src/components/admin/AdminRoomForm.jsx — Create + edit a single room.
-import { useState, useEffect, useMemo } from 'react'
+import { useState, useEffect, useMemo, useRef } from 'react'
 import { useNavigate, useParams, Link } from 'react-router-dom'
-import { ArrowRight, Home } from '../icons.jsx'
+import { ArrowRight, Home, ImagePlus, Trash, Camera } from '../icons.jsx'
 import { useApi } from '../../hooks/useApi.js'
 import { api, ApiError } from '../../api/client.js'
 
@@ -49,6 +49,15 @@ export default function AdminRoomForm({ mode }) {
   const [status, setStatus] = useState('idle')    // idle | sending | sent | error
   const [errors, setErrors] = useState({})
 
+  // ── Photo manager state ────────────────────────────────────────────────
+  // stagedPhotos: files picked locally, not yet uploaded. Each item carries
+  //   an object URL for thumbnail preview; cleanup runs on unmount + on remove.
+  // savedPhotos:  rows already persisted (edit mode only), loaded via the
+  //   admin listRoomPhotos endpoint so we get IDs for delete.
+  const [stagedPhotos, setStagedPhotos] = useState([])  // [{ key, file, previewUrl, status, error }]
+  const [savedPhotos,  setSavedPhotos]  = useState([])  // [{ id, url }]
+  const fileInputRef = useRef(null)
+
   // Hydrate form when editing.
   useEffect(() => {
     if (!isEdit || !existing) return
@@ -69,9 +78,110 @@ export default function AdminRoomForm({ mode }) {
     })
   }, [existing, landlords, zones, isEdit])
 
+  // Load existing photos in edit mode (separate from the room fetch so a
+  // failure here doesn't block the form). Best-effort — on error we just leave
+  // the gallery empty, which is safe since the room is still editable.
+  useEffect(() => {
+    if (!isEdit || !roomId) return
+    let cancelled = false
+    api.listRoomPhotos(roomId)
+      .then((rows) => { if (!cancelled) setSavedPhotos(rows.map((r) => ({ id: r.id, url: r.url }))) })
+      .catch(() => { /* gallery is best-effort */ })
+    return () => { cancelled = true }
+  }, [isEdit, roomId])
+
+  // Revoke staged object URLs ONLY on unmount — not on every state change,
+  // otherwise thumbnails flicker out as new files are added. We use a ref so
+  // the unmount cleanup sees the latest staged list, not the stale closure.
+  const stagedRef = useRef(stagedPhotos)
+  stagedRef.current = stagedPhotos
+  useEffect(() => () => {
+    for (const p of stagedRef.current) {
+      try { URL.revokeObjectURL(p.previewUrl) } catch { /* already revoked */ }
+    }
+  }, [])
+
   const update = (k) => (e) => {
     const v = e?.target?.type === 'checkbox' ? e.target.checked : e.target.value
     setForm((s) => ({ ...s, [k]: v }))
+  }
+
+  // ── Photo handlers ───────────────────────────────────────────────────
+  // accept="image/*" lets desktops pick any image file; on mobile it opens
+  // the native chooser (gallery OR camera). `multiple` lets admins stage
+  // several at once. We don't set `capture` because that would skip the
+  // gallery option on phones — the user explicitly wanted both to work.
+  const MAX_PHOTOS = 12
+  const MAX_FILE_SIZE = 10 * 1024 * 1024   // 10 MB, matches server multer limit
+
+  function onPickFiles(fileList) {
+    const incoming = Array.from(fileList || [])
+    const room = MAX_PHOTOS - stagedPhotos.length - savedPhotos.length
+    const accepted = []
+    const rejected = []
+    for (const f of incoming) {
+      if (!f.type.startsWith('image/')) { rejected.push({ name: f.name, reason: 'ไม่ใช่รูปภาพ' }); continue }
+      if (f.size > MAX_FILE_SIZE)      { rejected.push({ name: f.name, reason: 'ใหญ่เกิน 10 MB' }); continue }
+      if (accepted.length >= room)     { rejected.push({ name: f.name, reason: `เกินจำนวนสูงสุด (${MAX_PHOTOS} รูป)` }); continue }
+      accepted.push(f)
+    }
+    if (accepted.length === 0 && rejected.length > 0) {
+      // Surface the first rejection in an alert — these aren't tied to a field.
+      window.alert(`ไม่สามารถเพิ่มรูปได้: ${rejected[0].name} — ${rejected[0].reason}`)
+    }
+    setStagedPhotos((prev) => [
+      ...prev,
+      ...accepted.map((file) => ({
+        key:        `${Date.now()}-${Math.random().toString(36).slice(2, 8)}`,
+        file,
+        previewUrl: URL.createObjectURL(file),
+        status:     'pending',   // pending | uploading | done | error
+        error:      null,
+      })),
+    ])
+    // Reset the input so the same file can be re-picked (rare but possible
+    // after the user removes the staged entry).
+    if (fileInputRef.current) fileInputRef.current.value = ''
+  }
+
+  function removeStaged(key) {
+    setStagedPhotos((prev) => {
+      const target = prev.find((p) => p.key === key)
+      if (target) { try { URL.revokeObjectURL(target.previewUrl) } catch { /* noop */ } }
+      return prev.filter((p) => p.key !== key)
+    })
+  }
+
+  async function removeSaved(photoId) {
+    if (!roomId) return
+    if (!window.confirm('ลบรูปภาพนี้?')) return
+    // Optimistic: remove from state immediately so the UI feels instant.
+    setSavedPhotos((prev) => prev.filter((p) => p.id !== photoId))
+    try {
+      await api.deleteRoomPhoto(roomId, photoId)
+    } catch (err) {
+      // Roll back on failure and tell the user why.
+      const row = await api.listRoomPhotos(roomId).catch(() => [])
+      const back = row.find((r) => r.id === photoId)
+      if (back) setSavedPhotos((prev) => [...prev, { id: back.id, url: back.url }])
+      window.alert(`ลบไม่สำเร็จ${err?.code && err.code !== 'NETWORK' ? ` (${err.message})` : ''}`)
+    }
+  }
+
+  /** Upload every staged photo to a freshly-saved room. Returns count of failures. */
+  async function uploadStagedPhotos(roomId) {
+    let failures = 0
+    for (const photo of stagedPhotos) {
+      setStagedPhotos((prev) => prev.map((p) => p.key === photo.key ? { ...p, status: 'uploading' } : p))
+      try {
+        await api.uploadRoomPhoto(roomId, photo.file)
+        setStagedPhotos((prev) => prev.map((p) => p.key === photo.key ? { ...p, status: 'done' } : p))
+      } catch (err) {
+        failures++
+        setStagedPhotos((prev) => prev.map((p) => p.key === photo.key ? { ...p, status: 'error', error: err?.message || 'อัปโหลดล้มเหลว' } : p))
+      }
+    }
+    return failures
   }
 
   const landlordsEmpty = landlords && landlords.length === 0
@@ -112,8 +222,21 @@ export default function AdminRoomForm({ mode }) {
       isFeatured: !!form.isFeatured,
     }
     try {
-      if (isEdit) await api.updateRoom(roomId, body)
-      else        await api.createRoom(body)
+      // 1. Create / update the room first — we need its id to attach photos.
+      const saved = isEdit
+        ? await api.updateRoom(roomId, body)
+        : await api.createRoom(body)
+      const targetId = saved?.id ?? roomId
+
+      // 2. Upload any staged photos. Failures are surfaced but don't roll
+      //    back the room write — the room exists either way, and the user
+      //    can re-add photos via the edit page.
+      if (stagedPhotos.length > 0 && targetId) {
+        const failures = await uploadStagedPhotos(targetId)
+        if (failures > 0) {
+          window.alert(`บันทึกห้องแล้ว แต่อัปโหลดรูปไม่สำเร็จ ${failures} จาก ${stagedPhotos.length} รูป — สามารถแก้ไขห้องเพื่อเพิ่มรูปใหม่ได้`)
+        }
+      }
       setStatus('sent')
       navigate('/admin', { replace: true })
     } catch (err) {
@@ -228,16 +351,42 @@ export default function AdminRoomForm({ mode }) {
           <input id="f-amenities" className="input" value={form.amenitiesText} onChange={update('amenitiesText')} placeholder="wifi, pool, near-bts" />
         </Field>
 
+        {/* ── Photo manager ──────────────────────────────────────────────
+            Works on desktop (file picker) and phone (gallery OR camera via
+            accept="image/*"). Photos are staged locally; upload happens on
+            submit after the room write succeeds, so a create-mode room gets
+            its id first. */}
+        <div>
+          <label className="label">รูปภาพห้อง</label>
+          <PhotoPicker
+            stagedPhotos={stagedPhotos}
+            savedPhotos={savedPhotos}
+            fileInputRef={fileInputRef}
+            onPickFiles={onPickFiles}
+            onRemoveStaged={removeStaged}
+            onRemoveSaved={removeSaved}
+            max={MAX_PHOTOS}
+            disabled={status === 'sending'}
+          />
+          <div className="help">
+            รองรับ jpg / png / webp · สูงสุด 10 MB/รูป · ไม่เกิน {MAX_PHOTOS} รูป/ห้อง
+            <br className="sm:hidden" />
+            <span className="text-muted/80"> รูปจะอัปโหลดหลังกด “{isEdit ? 'บันทึกการแก้ไข' : 'สร้างห้อง'}”</span>
+          </div>
+        </div>
+
         <div className="flex flex-wrap items-center justify-end gap-3 pt-3 border-t border-line">
           <Link to="/admin" className="btn btn-outline">ยกเลิก</Link>
-          <button
-            type="submit"
-            disabled={status === 'sending' || landlordsEmpty || zonesEmpty}
-            className="btn btn-primary btn-lg disabled:opacity-60 disabled:cursor-not-allowed"
-          >
-            {status === 'sending' ? 'กำลังบันทึก…' : (isEdit ? 'บันทึกการแก้ไข' : 'สร้างห้อง')}
-            <ArrowRight size={18} />
-          </button>
+            <button
+              type="submit"
+              disabled={status === 'sending' || landlordsEmpty || zonesEmpty}
+              className="btn btn-primary btn-lg disabled:opacity-60 disabled:cursor-not-allowed"
+            >
+              {status === 'sending'
+                ? (stagedPhotos.some((p) => p.status === 'uploading') ? 'กำลังอัปโหลดรูป…' : 'กำลังบันทึก…')
+                : (isEdit ? 'บันทึกการแก้ไข' : 'สร้างห้อง')}
+              <ArrowRight size={18} />
+            </button>
         </div>
 
         {status === 'error' && (
@@ -304,4 +453,131 @@ function inputCls(errored) {
   return errored
     ? 'input border-ember-500 focus:border-ember-500 focus:ring-ember-500/15'
     : 'input'
+}
+
+// ───────────────────────────────── Photo picker ──────────────────────────────
+//
+// Two-zone gallery:
+//   • savedPhotos — already-persisted rows (edit mode). ×  removes via API.
+//   • stagedPhotos — files picked locally, not yet uploaded. ×  unstages.
+//
+// Upload happens on form submit (after the room is created/updated) so we
+// need a stable roomId first. The input itself is a single <input type=file
+// accept="image/*" multiple> — on desktop that opens the OS file picker; on
+// mobile browsers it offers a choice of gallery or camera, satisfying the
+// "works on PC, Mac, and phone" requirement without a separate capture path.
+
+function PhotoPicker({ stagedPhotos, savedPhotos, fileInputRef, onPickFiles, onRemoveStaged, onRemoveSaved, max, disabled }) {
+  const total = stagedPhotos.length + savedPhotos.length
+  const remaining = Math.max(0, max - total)
+
+  return (
+    <div className="space-y-3">
+      {/* Dropzone-style picker button — click opens the file dialog on every
+          platform. Drag/drop is intentionally NOT implemented: native mobile
+          browsers don't support it consistently, and a button is universally
+          discoverable. */}
+      <button
+        type="button"
+        onClick={() => fileInputRef.current?.click()}
+        disabled={disabled || remaining === 0}
+        className="w-full rounded-xl border-2 border-dashed border-navy-200 bg-navy-50/40
+                   hover:border-navy-300 hover:bg-navy-50 transition-colors
+                   px-4 py-6 sm:py-8 flex flex-col items-center justify-center gap-2
+                   text-navy-700 disabled:opacity-50 disabled:cursor-not-allowed
+                   min-h-[120px]"
+      >
+        <span className="w-12 h-12 rounded-full bg-white grid place-items-center text-navy-600 shadow-card">
+          <ImagePlus size={22} />
+        </span>
+        <span className="font-medium text-[15px]">คลิกเพื่อเพิ่มรูปภาพ</span>
+        <span className="text-xs text-muted flex items-center gap-1.5">
+          <Camera size={13} /> ถ่ายจากกล้องหรือเลือกจากคลังในมือถือ
+        </span>
+      </button>
+
+      <input
+        ref={fileInputRef}
+        type="file"
+        accept="image/*"
+        multiple
+        className="sr-only"
+        onChange={(e) => onPickFiles(e.target.files)}
+        aria-label="เลือกไฟล์รูปภาพ"
+      />
+
+      {/* Gallery — saved first (the existing photos), then staged. */}
+      {(savedPhotos.length > 0 || stagedPhotos.length > 0) && (
+        <ul className="grid grid-cols-3 sm:grid-cols-4 gap-2.5">
+          {savedPhotos.map((p) => (
+            <li key={`s-${p.id}`} className="group relative aspect-square rounded-lg overflow-hidden border border-line bg-navy-50">
+              <img src={p.url} alt="" className="w-full h-full object-cover" loading="lazy" />
+              <RemoveButton onClick={() => onRemoveSaved(p.id)} disabled={disabled} />
+            </li>
+          ))}
+          {stagedPhotos.map((p) => (
+            <li
+              key={p.key}
+              className={`group relative aspect-square rounded-lg overflow-hidden border bg-navy-50 ${
+                p.status === 'error' ? 'border-ember-400' : 'border-line'
+              }`}
+            >
+              <img src={p.previewUrl} alt="" className="w-full h-full object-cover" />
+              {p.status === 'uploading' && (
+                <div className="absolute inset-0 bg-navy-900/55 grid place-items-center text-white text-[11px] font-medium">
+                  <Spinner /> อัปโหลด…
+                </div>
+              )}
+              {p.status === 'error' && (
+                <div className="absolute inset-x-0 bottom-0 bg-ember-600/90 text-white text-[10px] px-1.5 py-0.5 truncate" title={p.error}>
+                  ล้มเหลว
+                </div>
+              )}
+              {p.status === 'pending' && (
+                <div className="absolute top-1 left-1 bg-navy-700/85 text-white text-[10px] px-1.5 py-0.5 rounded">
+                  รอบันทึก
+                </div>
+              )}
+              {p.status !== 'uploading' && <RemoveButton onClick={() => onRemoveStaged(p.key)} disabled={disabled} />}
+            </li>
+          ))}
+        </ul>
+      )}
+
+      {total > 0 && (
+        <div className="text-xs text-muted">
+          {total}/{max} รูป
+        </div>
+      )}
+    </div>
+  )
+}
+
+function RemoveButton({ onClick, disabled }) {
+  return (
+    <button
+      type="button"
+      onClick={onClick}
+      disabled={disabled}
+      aria-label="ลบรูปภาพ"
+      // Always visible on touch (mobile has no hover); desktop hides until
+      // hover/focus for a cleaner gallery look.
+      className="absolute top-1.5 right-1.5 w-7 h-7 rounded-full bg-white/90 text-navy-700
+                 shadow-card grid place-items-center opacity-100
+                 sm:opacity-0 sm:group-hover:opacity-100 sm:group-focus-within:opacity-100
+                 transition-opacity hover:bg-ember-50 hover:text-ember-700
+                 disabled:cursor-not-allowed"
+    >
+      <Trash size={14} />
+    </button>
+  )
+}
+
+function Spinner() {
+  return (
+    <span
+      className="inline-block w-3 h-3 mr-1 align-middle border-2 border-white/40 border-t-white rounded-full animate-spin"
+      aria-hidden="true"
+    />
+  )
 }

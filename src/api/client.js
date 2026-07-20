@@ -35,7 +35,11 @@ async function rawRequest(path, opts = {}, { timeoutMs = DEFAULT_TIMEOUT_MS } = 
       signal: controller.signal,
       credentials: 'include',                            // round-trip admin_session cookie
       headers: {
-        'Content-Type': 'application/json',
+        // FormData bodies: let the browser set Content-Type (with the proper
+        // multipart boundary). Hardcoding application/json here would break
+        // file uploads — the server's multipart parser would see JSON headers
+        // and never decode the parts.
+        ...(opts.body instanceof FormData ? {} : { 'Content-Type': 'application/json' }),
         'x-request-id': requestId,
         ...(opts.headers || {}),
       },
@@ -67,12 +71,12 @@ async function rawRequest(path, opts = {}, { timeoutMs = DEFAULT_TIMEOUT_MS } = 
   }
 }
 
-async function request(path, opts = {}) {
+async function request(path, opts = {}, requestOpts = {}) {
   let attempt = 0
   let lastErr
   while (attempt <= MAX_RETRIES) {
     try {
-      return await rawRequest(path, opts)
+      return await rawRequest(path, opts, requestOpts)
     } catch (err) {
       lastErr = err
       const retriable = err instanceof ApiError
@@ -107,6 +111,11 @@ export const api = {
   submitTenantLead:      (body) => request('/leads/tenant',      { method: 'POST', body: JSON.stringify(body) }),
   submitContact:         (body) => request('/contact',           { method: 'POST', body: JSON.stringify(body) }),
 
+  // Tenant leads Excel export — direct browser download (admin cookie is
+  // sent automatically for same-eTLD+1 navigation). Returns an absolute URL
+  // so an <a href> download works cross-origin (frontend → API on Railway).
+  tenantLeadsXlsxUrl: () => `${BASE}/leads/tenant.xlsx`,
+
   // Matches
   listMatches:    (params = {}) => request(`/matches${qs(params)}`),
   createMatch:    (body)        => request('/matches',     { method: 'POST', body: JSON.stringify(body) }),
@@ -125,6 +134,23 @@ export const api = {
   createRoom:     (body)        => request('/rooms',       { method: 'POST', body: JSON.stringify(body) }),
   updateRoom:     (id, body)    => request(`/rooms/${id}`, { method: 'PATCH', body: JSON.stringify(body) }),
   deleteRoom:     (id)          => request(`/rooms/${id}`, { method: 'DELETE' }),
+
+  // Admin room photo manager — multipart upload, one photo per call.
+  //   listRoomPhotos(id)          → GET    /rooms/:id/photos   (requireAdmin; rows with id+url)
+  //   uploadRoomPhoto(id, file)   → POST   /rooms/:id/photos   (multipart 'photo' field)
+  //   deleteRoomPhoto(id, photoId)→ DELETE /rooms/:id/photos/:photoId
+  listRoomPhotos:  (id)            => request(`/rooms/${id}/photos`),
+  uploadRoomPhoto: (id, file)      => {
+    const fd = new FormData()
+    fd.append('photo', file)
+    return request(`/rooms/${id}/photos`, {
+      method: 'POST',
+      body: fd,
+      // File uploads can legitimately exceed the default 8s timeout on slow
+      // mobile uplinks — give them up to 30s.
+    }, { timeoutMs: 30_000 })
+  },
+  deleteRoomPhoto: (id, photoId)   => request(`/rooms/${id}/photos/${photoId}`, { method: 'DELETE' }),
 
   // Admin viewing-slots manager — open/cancel bookable viewing time-slots.
   //   listRoomSlots(id)       → GET    /rooms/:id/slots   (public; open future slots)
