@@ -9,8 +9,8 @@ import { useSearchParams } from 'react-router-dom'
 import Navbar from '../components/Navbar.jsx'
 import Footer from '../components/Footer.jsx'
 import ContactAdminLineCTA from '../components/ContactAdminLineCTA.jsx'
-import { LineChat, Phone, Home, Calendar, MessageSquare, Pencil, Sparkles } from '../components/icons.jsx'
-import { LINE_OA_DISPLAY, LINE_OA_URL } from '../config/line.js'
+import { LineChat, Phone, Home, Calendar, MessageSquare, Pencil, Sparkles, ArrowRight } from '../components/icons.jsx'
+import { LINE_OA_DISPLAY, LINE_OA_URL, lineUrlWithMessage } from '../config/line.js'
 
 // Local "image" icon — the shared icons.jsx doesn't expose one.
 function ImageIcon(p) {
@@ -68,6 +68,14 @@ const INTENTS = [
   },
 ]
 
+const INTENT_MESSAGES = {
+  'ask-about-room':    'สวัสดีค่ะ มีคำถามเกี่ยวกับห้องพักค่ะ',
+  'view-a-room':       'สวัสดีค่ะ สนใจนัดชมห้องพักค่ะ',
+  'list-a-room':       'สวัสดีค่ะ อยากลงประกาศห้องให้เช่าค่ะ',
+  'edit-description':  'สวัสดีค่ะ อยากแก้ไขรายละเอียดห้องค่ะ',
+  'upload-photos':     'สวัสดีค่ะ จะส่งรูปภาพเพิ่มเติมให้ห้องพักค่ะ',
+}
+
 function IntentCard({ intent, icon: Icon, title, blurb, who, accent }) {
   const accentCls = accent === 'ember'
     ? 'border-ember-200 bg-ember-50/40'
@@ -78,6 +86,8 @@ function IntentCard({ intent, icon: Icon, title, blurb, who, accent }) {
   const chipCls = accent === 'ember'
     ? 'bg-ember-50 text-ember-700 border-ember-200'
     : 'bg-navy-50 text-navy-700 border-navy-200'
+
+  const chatUrl = lineUrlWithMessage(INTENT_MESSAGES[intent] || 'สวัสดีค่ะ')
 
   return (
     <article className={`card p-6 border ${accentCls}`}>
@@ -94,12 +104,24 @@ function IntentCard({ intent, icon: Icon, title, blurb, who, accent }) {
           </div>
           <p className="mt-1.5 text-sm text-muted leading-relaxed">{blurb}</p>
           <div className="mt-4">
-            <ContactAdminLineCTA
-              intent={intent}
-              variant="bare"
-              showPhone={false}
-              label="แชทเลย"
-            />
+            <a
+              href={chatUrl}
+              target="_blank"
+              rel="noreferrer noopener"
+              className="inline-flex items-center gap-2 rounded-xl px-5 py-2.5 text-sm font-semibold
+                         bg-[#06C755] text-white
+                         shadow-[0_2px_10px_-2px_rgba(6,199,85,0.45)]
+                         hover:bg-[#05b34c] hover:shadow-[0_4px_16px_-2px_rgba(6,199,85,0.55)]
+                         hover:-translate-y-0.5
+                         active:bg-[#04943e] active:translate-y-0
+                         transition-all duration-150"
+            >
+              <span className="w-5 h-5 rounded-full bg-white/25 grid place-items-center">
+                <LineChat size={12} />
+              </span>
+              แชทเลย
+              <ArrowRight size={14} className="opacity-70" />
+            </a>
           </div>
         </div>
       </div>
