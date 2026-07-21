@@ -97,6 +97,7 @@ export const TENANT_ZONES = [
   'ศาลายา',
   'ศรีสมาน',
   'นครปฐม',
+  'อื่นๆ',
 ]
 
 export const TENANT_PROPERTY_TYPES = [
@@ -107,9 +108,10 @@ export const TENANT_PROPERTY_TYPES = [
 ]
 
 export const TENANT_MOVE_IN_OPTIONS = [
-  { value: 'immediate', label: 'เร็ว ๆ นี้' },
   { value: '1month',    label: 'ภายใน 1 เดือน' },
   { value: '1to3month', label: '1-3 เดือน' },
+  { value: '3to6month', label: '3-6 เดือน' },
+  { value: '6to12month',label: '6-12 เดือน' },
 ]
 
 // Brief page 8 — FAQ list (ordered as in the mockup). Annotation #27:
