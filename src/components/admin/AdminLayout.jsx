@@ -1,6 +1,6 @@
 // src/components/admin/AdminLayout.jsx — Sidebar shell for /admin/*.
 import { Outlet, NavLink, Link, useNavigate } from 'react-router-dom'
-import { Plus, LogOut, ChevronRight, Bot, Inbox, Chart } from '../icons.jsx'
+import { Plus, LogOut, ChevronRight, Bot, Inbox, Chart, Users } from '../icons.jsx'
 import Logo from '../Logo.jsx'
 import { useAuth } from '../../contexts/AuthContext.jsx'
 import { useApi } from '../../hooks/useApi.js'
@@ -105,6 +105,12 @@ export default function AdminLayout() {
             <div className="px-4 pt-5 pb-3 text-[10px] font-bold uppercase tracking-widest text-muted">
               ลูกค้า
             </div>
+            <NavLink to="/admin/matching" className={navItem}>
+              <span className="inline-flex items-center gap-2">
+                <Users size={16} /> จับคู่ ผู้เช่า × ห้อง
+              </span>
+              <ChevronRight size={16} className="text-muted" />
+            </NavLink>
             {/* Direct browser navigation to the .xlsx endpoint — the admin
                 session cookie (Domain=.up.railway.app in prod) rides along
                 automatically, so requireAdmin passes. */}
