@@ -9,6 +9,7 @@
 
 import { BadgeCheck, LineChat, Plus, Bolt } from './icons.jsx'
 import { LANDLORD_BENEFITS, LANDLORD_CTA } from '../data/content.js'
+import { lineUrlWithMessage } from '../config/line.js'
 
 const BENEFIT_ICON = {
   free:   Plus,
@@ -53,7 +54,7 @@ export default function LandlordListingsCTA({ theme }) {
 
         <div className="mt-8 flex flex-wrap items-center gap-3">
           <a
-            href={LANDLORD_CTA.primaryHref || 'https://line.me/R/ti/p/%40assetaplus?text=%E0%B8%AA%E0%B8%A7%E0%B8%B1%E0%B8%AA%E0%B8%94%E0%B8%B5%E0%B8%84%E0%B9%88%E0%B8%B0%20%E0%B8%AD%E0%B8%A2%E0%B8%B2%E0%B8%81%E0%B8%A5%E0%B8%87%E0%B8%9B%E0%B8%A3%E0%B8%B0%E0%B8%81%E0%B8%B2%E0%B8%A8%E0%B8%AB%E0%B9%89%E0%B8%AD%E0%B8%87%E0%B9%83%E0%B8%AB%E0%B9%89%E0%B9%80%E0%B8%8A%E0%B9%88%E0%B8%B2%E0%B8%84%E0%B9%88%E0%B8%B0'}
+            href={LANDLORD_CTA.primaryHref || lineUrlWithMessage('สวัสดีค่ะ อยากลงประกาศห้องให้เช่าค่ะ')}
             target="_blank"
             rel="noreferrer noopener"
             className="btn bg-ember-500 text-white px-6 py-3 text-base font-semibold rounded-xl shadow-ember hover:bg-ember-600 active:bg-ember-700"

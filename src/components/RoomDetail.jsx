@@ -5,6 +5,7 @@ import Footer from './Footer.jsx'
 import { MapPin, Bed, Bath, Ruler, Phone, LineChat, ArrowRight, Sparkles, Home, ChevronRight, Shield } from './icons.jsx'
 import { useApi } from '../hooks/useApi.js'
 import { api } from '../api/client.js'
+import { LINE_OA_DISPLAY, LINE_OA_URL } from '../config/line.js'
 import AvailableViewingDates from './AvailableViewingDates.jsx'
 import Lightbox from './Lightbox.jsx'
 
@@ -174,12 +175,12 @@ export default function RoomDetail() {
                     <Phone size={16} /> โทร 02-168-0000
                   </a>
                   <a
-                    href="https://line.me/R/ti/p/@973rjazt"
+                    href={LINE_OA_URL}
                     target="_blank"
                     rel="noreferrer noopener"
                     className="btn w-full bg-[#06C755] text-white hover:bg-[#05b34c]"
                   >
-                    <LineChat size={16} /> แชท Line @973rjazt
+                    <LineChat size={16} /> แชท Line {LINE_OA_DISPLAY}
                   </a>
                   <button onClick={() => navigate('/contact-admin?intent=list-a-room')} className="btn btn-ghost w-full">
                     อยากลงประกาศห้อง? <ArrowRight size={16} />

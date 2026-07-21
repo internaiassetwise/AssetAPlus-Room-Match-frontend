@@ -21,6 +21,7 @@ import Footer from '../components/Footer.jsx'
 import ContactAdminLineCTA from '../components/ContactAdminLineCTA.jsx'
 import { useApi } from '../hooks/useApi.js'
 import { api } from '../api/client.js'
+import { lineUrlWithMessage } from '../config/line.js'
 import { useUserAuth } from '../contexts/UserAuthContext.jsx'
 import { Home, Eye, MapPin, Shield, LineChat } from '../components/icons.jsx'
 
@@ -181,11 +182,11 @@ function RoomCard({ room }) {
             <Eye size={14} /> ดูห้อง
           </Link>
           <a
-            href={`https://line.me/R/ti/p/@973rjazt?text=${encodeURIComponent(
+            href={lineUrlWithMessage(
               room.title
                 ? `สวัสดีค่ะ จะส่งรูปภาพเพิ่มเติมให้ห้อง "${room.title}" (รหัส ${room.id}) ค่ะ`
                 : `สวัสดีค่ะ จะส่งรูปภาพเพิ่มเติมให้ห้องพักค่ะ`
-            )}`}
+            )}
             target="_blank"
             rel="noreferrer noopener"
             className="btn btn-sm flex-1 justify-center bg-[#06C755] text-white hover:bg-[#05b34c]"

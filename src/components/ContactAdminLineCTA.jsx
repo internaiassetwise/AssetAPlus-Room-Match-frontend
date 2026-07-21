@@ -1,6 +1,6 @@
 // src/components/ContactAdminLineCTA.jsx — Reusable Line + phone CTA card.
 //
-// Renders a small card with a primary "แชท Line @973rjazt" button. The
+// Renders a small card with a primary "แชท Line" button. The
 // `intent` prop picks a Thai-language message that's pre-filled into the Line
 // chat when the user opens the URL. `room` optionally enriches the message
 // with the room title + id so admin can identify the request quickly.
@@ -10,8 +10,9 @@
 
 import { Link } from 'react-router-dom'
 import { LineChat, Phone } from './icons.jsx'
+import { LINE_OA_DISPLAY, LINE_OA_URL } from '../config/line.js'
 
-const LINE_BASE = 'https://line.me/R/ti/p/@973rjazt'
+const LINE_BASE = LINE_OA_URL
 
 /**
  * Build the prefilled Thai message for each intent.
@@ -49,7 +50,7 @@ function lineUrl(intent, room) {
  * @param {object} props
  * @param {'ask-about-room'|'view-a-room'|'list-a-room'|'edit-description'|'upload-photos'} [props.intent='ask-about-room']
  * @param {object} [props.room]     Optional room object — picks up `title` + `id`.
- * @param {string}  [props.label]   Override the button label (defaults to "แชท Line @973rjazt").
+ * @param {string}  [props.label]   Override the button label (defaults to "แชท Line {@aswroommatch}").
  * @param {string}  [props.note]    Optional descriptive line above the button.
  * @param {boolean} [props.showPhone=true]
  * @param {'card'|'row'|'bare'} [props.variant='card']
@@ -62,7 +63,7 @@ function lineUrl(intent, room) {
 export default function ContactAdminLineCTA({
   intent       = 'ask-about-room',
   room,
-  label        = 'แชท Line @973rjazt',
+  label        = `แชท Line ${LINE_OA_DISPLAY}`,
   note,
   showPhone    = true,
   variant      = 'card',

@@ -1,6 +1,7 @@
 import { Phone, LineChat, ArrowRight } from './icons.jsx'
 import { Link } from 'react-router-dom'
 import Logo from './Logo.jsx'
+import { LINE_OA_DISPLAY, LINE_OA_URL } from '../config/line.js'
 
 export default function Footer() {
   return (
@@ -30,7 +31,7 @@ export default function Footer() {
             <div className="font-semibold mb-4 text-base">ติดต่อเรา</div>
             <ul className="space-y-2.5 text-[15px] text-white/70">
               <li className="flex items-center gap-2.5"><Phone size={16} /> <a href="tel:021680000" className="hover:text-white">02-168-0000</a></li>
-              <li className="flex items-center gap-2.5"><LineChat size={16} /> <a href="https://line.me/R/ti/p/@973rjazt" target="_blank" rel="noreferrer noopener" className="hover:text-white">@973rjazt</a></li>
+              <li className="flex items-center gap-2.5"><LineChat size={16} /> <a href={LINE_OA_URL} target="_blank" rel="noreferrer noopener" className="hover:text-white">{LINE_OA_DISPLAY}</a></li>
               <li>จันทร์–เสาร์ 9:00–18:00</li>
             </ul>
           </div>

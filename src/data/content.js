@@ -4,6 +4,8 @@
 // stats) is fetched from `/api` via `api/client.js` — never baked into this
 // file so a marketer can tweak without redeploy.
 
+import { LINE_OA_DISPLAY, lineUrlWithMessage } from '../config/line.js'
+
 export const ZONES = [
   { id: 'asoke',     name: 'อโศก',     count: 42 },
   { id: 'phrom',     name: 'พร้อมพงษ์', count: 38 },
@@ -45,7 +47,7 @@ export const HOW_LANDLORD_STEPS = [
     num: '01',
     icon: 'chat',
     title: 'ลงข้อมูลห้อง',
-    desc: 'ทัก Line @assetaplus แล้วแจ้งข้อมูลห้อง ทีมงานจะช่วยลงระบบให้ทันที',
+    desc: `ทัก Line ${LINE_OA_DISPLAY} แล้วแจ้งข้อมูลห้อง ทีมงานจะช่วยลงระบบให้ทันที`,
   },
   {
     num: '02',
@@ -127,7 +129,7 @@ export const FAQS = [
   },
   {
     q: 'อยากลงประกาศปล่อยเช่าห้อง ต้องทำยังไง?',
-    a: 'ทัก Line @assetaplus แล้วแจ้งข้อมูลห้อง ทีมงานจะช่วยลงระบบให้ ห้องของคุณก็จะขึ้นในระบบให้ผู้เช่าเห็นได้ทันที',
+    a: `ทัก Line ${LINE_OA_DISPLAY} แล้วแจ้งข้อมูลห้อง ทีมงานจะช่วยลงระบบให้ ห้องของคุณก็จะขึ้นในระบบให้ผู้เช่าเห็นได้ทันที`,
   },
   {
     q: 'ครอบคลุมทำเลไหนบ้างในกรุงเทพ?',
@@ -154,7 +156,7 @@ export const HERO = {
   body: 'Platform ที่ช่วยจับคู่ผู้เช่า–ผู้ให้เช่า จบในที่เดียว อัพเดทสถานะห้องสม่ำเสมอ ติดต่อสอบถามเพิ่มเติมได้ทาง Line ทันที',
   primaryCta: {
     text: 'ลงประกาศปล่อยห้อง',
-    href: 'https://line.me/R/ti/p/%40assetaplus?text=%E0%B8%AA%E0%B8%A7%E0%B8%B1%E0%B8%AA%E0%B8%94%E0%B8%B5%E0%B8%84%E0%B9%88%E0%B8%B0%20%E0%B8%AD%E0%B8%A2%E0%B8%B2%E0%B8%81%E0%B8%A5%E0%B8%87%E0%B8%9B%E0%B8%A3%E0%B8%B0%E0%B8%81%E0%B8%B2%E0%B8%A8%E0%B8%AB%E0%B9%89%E0%B8%AD%E0%B8%87%E0%B9%83%E0%B8%AB%E0%B9%89%E0%B9%80%E0%B8%8A%E0%B9%88%E0%B8%B2%E0%B8%84%E0%B9%88%E0%B8%B0',
+    href: lineUrlWithMessage('สวัสดีค่ะ อยากลงประกาศห้องให้เช่าค่ะ'),
   },
   secondaryCta: {
     text: 'ค้นหาห้องที่ใช่',
@@ -238,7 +240,7 @@ export const LANDLORD_CTA = {
   titleAccent: 'อยู่ไหม?',
   body: '',
   primary: '+ ลงประกาศห้องฟรีเลย',
-  primaryHref: 'https://line.me/R/ti/p/%40assetaplus?text=%E0%B8%AA%E0%B8%A7%E0%B8%B1%E0%B8%AA%E0%B8%94%E0%B8%B5%E0%B8%84%E0%B9%88%E0%B8%B0%20%E0%B8%AD%E0%B8%A2%E0%B8%B2%E0%B8%81%E0%B8%A5%E0%B8%87%E0%B8%9B%E0%B8%A3%E0%B8%B0%E0%B8%81%E0%B8%B2%E0%B8%A8%E0%B8%AB%E0%B9%89%E0%B8%AD%E0%B8%87%E0%B9%83%E0%B8%AB%E0%B9%89%E0%B9%80%E0%B8%8A%E0%B9%88%E0%B8%B2%E0%B8%84%E0%B9%88%E0%B8%B0',
+  primaryHref: lineUrlWithMessage('สวัสดีค่ะ อยากลงประกาศห้องให้เช่าค่ะ'),
   secondary: 'ดูวิดีโอประกาศ',
   helper:   'แอดมินตอบกลับภายใน 1 วัน',
 }

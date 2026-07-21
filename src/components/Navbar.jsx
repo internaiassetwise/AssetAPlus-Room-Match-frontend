@@ -10,6 +10,7 @@ import { Phone, LineChat, Menu, Close, Shield, LogOut, Search, Calendar, Inbox, 
 import { useAuth } from '../contexts/AuthContext.jsx'
 import { useUserAuth }     from '../contexts/UserAuthContext.jsx'
 import { useLandlordAuth } from '../contexts/LandlordAuthContext.jsx'
+import { LINE_OA_DISPLAY } from '../config/line.js'
 import NavUserMenu from './NavUserMenu.jsx'
 import Logo from './Logo.jsx'
 import { NAV_MARKETING } from '../data/content.js'
@@ -113,7 +114,7 @@ export default function Navbar() {
             <Phone size={16} /> 02-168-0000
           </a>
           <Link to="/contact-admin" className="btn btn-line btn-sm">
-            <LineChat size={16} /> @973rjazt
+            <LineChat size={16} /> {LINE_OA_DISPLAY}
           </Link>
         </div>
 
