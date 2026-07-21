@@ -10,7 +10,7 @@
 import { useState, useMemo } from 'react'
 import { useApi } from '../../hooks/useApi.js'
 import { api, ApiError } from '../../api/client.js'
-import { Users, Home, Sparkles, Check, X, ArrowRight } from '../icons.jsx'
+import { Users, Home, Sparkles, Check, X, ArrowRight, Phone, LineChat } from '../icons.jsx'
 
 const MATCH_STATUS = [
   { value: 'suggested',       label: 'แนะนำ' },
@@ -117,7 +117,7 @@ export default function AdminMatching() {
               <option value="">— เลือกผู้เช่า —</option>
               {tenantList.map((t) => (
                 <option key={t.id} value={t.id}>
-                  {t.full_name || `ผู้เช่า #${t.id}`}{t.phone ? ` · ${t.phone}` : ''}
+                  {t.full_name || `ผู้เช่า #${t.id}`}{t.line_id ? ` · Line ${t.line_id.slice(0, 8)}…` : ''}
                 </option>
               ))}
             </select>
@@ -224,16 +224,44 @@ export default function AdminMatching() {
             {tenantList.map((t) => (
               <div
                 key={t.id}
-                className={`px-5 py-3.5 cursor-pointer transition-colors ${selectedTenant === String(t.id) ? 'bg-navy-50' : 'hover:bg-cream-50/40'}`}
+                className={`px-5 py-4 cursor-pointer transition-colors ${selectedTenant === String(t.id) ? 'bg-navy-50' : 'hover:bg-cream-50/40'}`}
                 onClick={() => { setSelectedTenant(String(t.id)); setSelectedRoom('') }}
               >
                 <div className="flex items-center justify-between gap-2">
-                  <div className="min-w-0">
-                    <div className="text-sm font-medium text-navy-700 truncate">
+                  <div className="min-w-0 flex-1">
+                    <div className="text-sm font-semibold text-navy-700 truncate">
                       {t.full_name || `ผู้เช่า #${t.id}`}
                     </div>
-                    <div className="text-xs text-muted">
-                      {[t.phone, t.email].filter(Boolean).join(' · ') || 'ไม่มีข้อมูลติดต่อ'}
+                    {/* Contact: Line ID is the primary channel. Show as a
+                        copyable badge so the admin can paste it into the
+                        admin inbox search to find + chat with this tenant. */}
+                    <div className="mt-1.5 flex flex-wrap items-center gap-1.5">
+                      {t.line_id && (
+                        <button
+                          type="button"
+                          onClick={(e) => {
+                            e.stopPropagation()
+                            navigator.clipboard?.writeText(t.line_id).catch(() => {})
+                          }}
+                          className="inline-flex items-center gap-1 text-xs font-medium text-[#06C755] bg-[#06C755]/10 hover:bg-[#06C755]/20 rounded-md px-2 py-0.5 transition-colors"
+                          title={`คัดลอก Line ID: ${t.line_id}`}
+                        >
+                          <LineChat size={11} /> Line · {t.line_id.slice(0, 10)}…
+                        </button>
+                      )}
+                      {t.source && (
+                        <span className="text-[10px] font-medium text-muted bg-gray-50 rounded-md px-1.5 py-0.5">
+                          {t.source === 'line-bot' ? 'เข้าผ่านบอท' : t.source}
+                        </span>
+                      )}
+                      {t.created_at && (
+                        <span className="text-[10px] text-muted">
+                          เข้าร่วม {new Date(t.created_at).toLocaleDateString('th-TH', { dateStyle: 'short' })}
+                        </span>
+                      )}
+                      {!t.line_id && !t.phone && !t.email && (
+                        <span className="text-xs text-muted">ไม่มีข้อมูลติดต่อ</span>
+                      )}
                     </div>
                   </div>
                   {selectedTenant === String(t.id) && <Check size={16} className="text-navy-600 shrink-0" />}
