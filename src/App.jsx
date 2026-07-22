@@ -18,6 +18,7 @@ import AdminViewings     from './components/admin/AdminViewings.jsx'
 import AdminRoomSlots     from './components/admin/AdminRoomSlots.jsx'
 import AdminInbox from './components/admin/AdminInbox.jsx'
 import AdminMatching from './components/admin/AdminMatching.jsx'
+import AdminTenants from './components/admin/AdminTenants.jsx'
 import StickyLineCTA    from './components/StickyLineCTA.jsx'
 
 // Public-facing user pages
@@ -83,6 +84,7 @@ export default function App() {
               <Route path="/admin/viewings" element={<AdminViewings />} />
               <Route path="/admin/inbox" element={<AdminInbox />} />
               <Route path="/admin/matching" element={<AdminMatching />} />
+              <Route path="/admin/tenants" element={<AdminTenants />} />
               <Route path="/admin/bot-inquiries" element={<AdminInquiriesList />} />
             </Route>
 

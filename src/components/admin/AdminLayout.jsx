@@ -111,6 +111,12 @@ export default function AdminLayout() {
               </span>
               <ChevronRight size={16} className="text-muted" />
             </NavLink>
+            <NavLink to="/admin/tenants" className={navItem}>
+              <span className="inline-flex items-center gap-2">
+                <Users size={16} /> รายชื่อผู้เช่า
+              </span>
+              <ChevronRight size={16} className="text-muted" />
+            </NavLink>
             {/* Direct browser navigation to the .xlsx endpoint — the admin
                 session cookie (Domain=.up.railway.app in prod) rides along
                 automatically, so requireAdmin passes. */}
