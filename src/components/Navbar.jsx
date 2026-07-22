@@ -67,7 +67,8 @@ export default function Navbar() {
               <Search size={14} /> ค้นหา
             </Link>
           )}
-          {/* Landlord-only links — appear only when a landlord session exists */}
+          {/* Landlord-only links — appear only when a landlord session exists.
+              Admin is the middleman, so landlords don't get inquiries or viewings. */}
           {landlordUser && (
             <>
               <Link className="nav-link inline-flex items-center gap-1.5" to="/dashboard">
@@ -76,12 +77,10 @@ export default function Navbar() {
               <Link className="nav-link inline-flex items-center gap-1.5" to="/my-listings">
                 <Home size={14} /> ห้องของฉัน
               </Link>
-              <Link className="nav-link hidden 2xl:inline-flex items-center gap-1.5" to="/inquiries">
-                <Inbox size={14} /> กล่องข้อความ
-              </Link>
             </>
           )}
-          {anySignedIn && (
+          {/* นัดชมห้อง — tenant-only (landlords go through admin as middleman) */}
+          {anySignedIn && !landlordUser && (
             <Link className="nav-link inline-flex items-center gap-1.5" to="/viewings">
               <Calendar size={14} /> นัดชมห้อง
             </Link>
@@ -149,7 +148,7 @@ export default function Navbar() {
               </Link>
             )}
 
-            {/* Tenant-only / landlord-only / both-visible links */}
+            {/* Landlord-only links — admin is middleman, no inquiries/viewings */}
             {landlordUser && (
               <>
                 <Link className="nav-link py-3 text-base inline-flex items-center gap-2" to="/dashboard" onClick={() => setOpen(false)}>
@@ -158,12 +157,10 @@ export default function Navbar() {
                 <Link className="nav-link py-3 text-base inline-flex items-center gap-2" to="/my-listings" onClick={() => setOpen(false)}>
                   <Home size={16} /> ห้องของฉัน
                 </Link>
-                <Link className="nav-link py-3 text-base inline-flex items-center gap-2" to="/inquiries" onClick={() => setOpen(false)}>
-                  <Inbox size={16} /> กล่องข้อความ
-                </Link>
               </>
             )}
-            {anySignedIn && (
+            {/* นัดชมห้อง — tenant-only */}
+            {anySignedIn && !landlordUser && (
               <Link className="nav-link py-3 text-base inline-flex items-center gap-2" to="/viewings" onClick={() => setOpen(false)}>
                 <Calendar size={16} /> นัดชมห้อง
               </Link>

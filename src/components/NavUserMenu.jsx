@@ -19,8 +19,6 @@ const TENANT_LINKS = [
 const LANDLORD_LINKS = [
   { to: '/dashboard',   icon: Chart,    label: 'Dashboard' },
   { to: '/my-listings', icon: Home,     label: 'ห้องของฉัน' },
-  { to: '/inquiries',   icon: Inbox,    label: 'กล่องข้อความ' },
-  { to: '/viewings',    icon: Calendar, label: 'นัดชมห้อง' },
 ]
 
 function RoleChip({ label, tone }) {
