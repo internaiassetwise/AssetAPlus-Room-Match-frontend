@@ -10,7 +10,7 @@
 import { useState, useMemo } from 'react'
 import { useApi } from '../../hooks/useApi.js'
 import { api, ApiError } from '../../api/client.js'
-import { Users, Home, Sparkles, Check, X, ArrowRight, Phone, LineChat } from '../icons.jsx'
+import { Users, Home, Sparkles, Check, X, ArrowRight, Phone, LineChat, Pencil } from '../icons.jsx'
 
 const MATCH_STATUS = [
   { value: 'suggested',       label: 'แนะนำ' },
@@ -39,6 +39,8 @@ export default function AdminMatching() {
   const [note, setNote]                     = useState('')
   const [creating, setCreating]             = useState(false)
   const [error, setError]                   = useState('')
+  const [editing, setEditing]               = useState(null)  // tenant being edited { id, fullName, phone }
+  const [savingEdit, setSavingEdit]         = useState(false)
 
   const tenantList = tenants || []
   const roomList   = rooms || []
@@ -84,6 +86,24 @@ export default function AdminMatching() {
       await refetchMatches()
     } catch (err) {
       setError(err instanceof ApiError ? err.message : 'อัปเดตสถานะไม่สำเร็จ')
+    }
+  }
+
+  async function saveTenantEdit() {
+    if (!editing) return
+    setSavingEdit(true)
+    try {
+      await api.updateTenant(editing.id, {
+        fullName: editing.fullName.trim() || undefined,
+        phone:    editing.phone.trim()    || undefined,
+      })
+      setEditing(null)
+      // Refresh tenant list so the updated name/phone shows
+      window.location.reload()
+    } catch (err) {
+      setError(err instanceof ApiError ? err.message : 'บันทึกไม่สำเร็จ')
+    } finally {
+      setSavingEdit(false)
     }
   }
 
@@ -232,36 +252,43 @@ export default function AdminMatching() {
                     <div className="text-sm font-semibold text-navy-700 truncate">
                       {t.full_name || `ผู้เช่า #${t.id}`}
                     </div>
-                    {/* Contact: Line ID is the primary channel. Show as a
-                        copyable badge so the admin can paste it into the
-                        admin inbox search to find + chat with this tenant. */}
-                    <div className="mt-1.5 flex flex-wrap items-center gap-1.5">
-                      {t.line_id && (
-                        <button
-                          type="button"
-                          onClick={(e) => {
-                            e.stopPropagation()
-                            navigator.clipboard?.writeText(t.line_id).catch(() => {})
-                          }}
-                          className="inline-flex items-center gap-1 text-xs font-medium text-[#06C755] bg-[#06C755]/10 hover:bg-[#06C755]/20 rounded-md px-2 py-0.5 transition-colors"
-                          title={`คัดลอก Line ID: ${t.line_id}`}
-                        >
-                          <LineChat size={11} /> Line · {t.line_id.slice(0, 10)}…
-                        </button>
-                      )}
-                      {t.source && (
-                        <span className="text-[10px] font-medium text-muted bg-gray-50 rounded-md px-1.5 py-0.5">
-                          {t.source === 'line-bot' ? 'เข้าผ่านบอท' : t.source}
-                        </span>
-                      )}
-                      {t.created_at && (
-                        <span className="text-[10px] text-muted">
-                          เข้าร่วม {new Date(t.created_at).toLocaleDateString('th-TH', { dateStyle: 'short' })}
-                        </span>
-                      )}
-                      {!t.line_id && !t.phone && !t.email && (
-                        <span className="text-xs text-muted">ไม่มีข้อมูลติดต่อ</span>
-                      )}
+                    <div className="flex items-center gap-2 mt-1">
+                      {/* Contact info display */}
+                      <div className="flex flex-wrap items-center gap-1.5">
+                        {t.phone && (
+                          <span className="inline-flex items-center gap-1 text-xs font-medium text-navy-600 bg-navy-50 rounded-md px-2 py-0.5">
+                            <Phone size={11} /> {t.phone}
+                          </span>
+                        )}
+                        {t.line_id && (
+                          <button
+                            type="button"
+                            onClick={(e) => {
+                              e.stopPropagation()
+                              navigator.clipboard?.writeText(t.line_id).catch(() => {})
+                            }}
+                            className="inline-flex items-center gap-1 text-xs font-medium text-[#06C755] bg-[#06C755]/10 hover:bg-[#06C755]/20 rounded-md px-2 py-0.5 transition-colors"
+                            title={`คัดลอก Line ID: ${t.line_id}`}
+                          >
+                            <LineChat size={11} /> Line
+                          </button>
+                        )}
+                        {!t.phone && !t.line_id && (
+                          <span className="text-xs text-muted">ไม่มีข้อมูลติดต่อ</span>
+                        )}
+                      </div>
+                      {/* Edit button */}
+                      <button
+                        type="button"
+                        onClick={(e) => {
+                          e.stopPropagation()
+                          setEditing({ id: t.id, fullName: t.full_name || '', phone: t.phone || '' })
+                        }}
+                        className="ml-auto inline-flex items-center gap-1 text-xs text-muted hover:text-navy-700 transition-colors shrink-0"
+                        title="แก้ไขข้อมูลติดต่อ"
+                      >
+                        <Pencil size={12} /> แก้ไข
+                      </button>
                     </div>
                   </div>
                   {selectedTenant === String(t.id) && <Check size={16} className="text-navy-600 shrink-0" />}
@@ -305,6 +332,53 @@ export default function AdminMatching() {
           </div>
         </div>
       </div>
+
+      {/* ── Edit tenant contact modal ── */}
+      {editing && (
+        <>
+          <div className="fixed inset-0 bg-navy-900/30 z-40" onClick={() => setEditing(null)} />
+          <div className="fixed top-1/2 left-1/2 -translate-x-1/2 -translate-y-1/2 w-full max-w-sm bg-white rounded-2xl shadow-2xl z-50 p-6">
+            <div className="flex items-center justify-between mb-4">
+              <h3 className="font-bold text-navy-700 text-lg">แก้ไขข้อมูลติดต่อ</h3>
+              <button onClick={() => setEditing(null)} className="btn btn-ghost btn-sm" aria-label="ปิด">
+                <X size={18} />
+              </button>
+            </div>
+            <p className="text-xs text-muted mb-4">
+              ผู้เช่า #${editing.id} — ข้อมูลที่กรอกจะผูกกับ Line ID ของผู้เช่าคนนี้
+            </p>
+            <div className="space-y-3">
+              <div>
+                <label className="label">ชื่อ</label>
+                <input
+                  className="input"
+                  value={editing.fullName}
+                  onChange={(e) => setEditing({ ...editing, fullName: e.target.value })}
+                  placeholder="เช่น คุณสมชาย"
+                />
+              </div>
+              <div>
+                <label className="label">เบอร์โทร</label>
+                <input
+                  className="input"
+                  inputMode="tel"
+                  value={editing.phone}
+                  onChange={(e) => setEditing({ ...editing, phone: e.target.value })}
+                  placeholder="เช่น 081-234-5678"
+                />
+              </div>
+            </div>
+            <button
+              type="button"
+              onClick={saveTenantEdit}
+              disabled={savingEdit}
+              className="btn btn-primary w-full mt-5 disabled:opacity-60"
+            >
+              {savingEdit ? 'กำลังบันทึก…' : 'บันทึก'}
+            </button>
+          </div>
+        </>
+      )}
     </section>
   )
 }

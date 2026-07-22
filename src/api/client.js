@@ -129,6 +129,7 @@ export const api = {
 
   // Tenants (admin-only directory — for the matching panel)
   listTenants:    ()             => request('/tenants'),
+  updateTenant:   (id, body)     => request(`/tenants/${id}`, { method: 'PATCH', body: JSON.stringify(body) }),
 
   // Admin auth + rooms CRUD (requires session cookie)
   adminLogin:     (body)        => request('/auth/login',  { method: 'POST', body: JSON.stringify(body) }),
