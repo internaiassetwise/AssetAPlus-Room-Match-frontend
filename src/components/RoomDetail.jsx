@@ -25,12 +25,11 @@ export default function RoomDetail() {
     [id],
   )
   const [lightboxIndex, setLightboxIndex] = useState(null)
-  // The room's real photos (from room_images via /api/rooms/:id `photos`), then
-  // decorative fallbacks to fill the grid for rooms with few photos (deduped).
-  const realPhotos = Array.isArray(room?.photos) && room.photos.length
+  // Only show the room's REAL photos — no decorative fallbacks mixed in
+  // (the old code merged FALLBACK_IMAGES which caused phantom photos).
+  const photos = Array.isArray(room?.photos) && room.photos.length
     ? room.photos
     : [room?.image || FALLBACK_IMAGES[0]]
-  const photos = Array.from(new Set([...realPhotos, ...FALLBACK_IMAGES]))
 
   return (
     <div className="min-h-screen flex flex-col">
@@ -101,6 +100,11 @@ export default function RoomDetail() {
                 <h1 className="mt-2 font-bold text-navy-700 text-3xl sm:text-4xl tracking-tight">
                   {room.title}
                 </h1>
+                {room.projectName && room.roomCode && (
+                  <p className="mt-1 text-muted text-sm">
+                    {room.projectName} · ห้อง {room.roomCode}
+                  </p>
+                )}
                 <div className="mt-3 flex flex-wrap gap-2">
                   {room.badge && (
                     <span className="inline-flex items-center gap-1 text-xs font-semibold px-3 py-1.5 rounded-full bg-ember-50 text-ember-700 border border-ember-200">
@@ -117,13 +121,18 @@ export default function RoomDetail() {
                 <Spec icon={Bed}   label="ห้องนอน" value={`${room.beds} ห้อง`} />
                 <Spec icon={Bath}  label="ห้องน้ำ"  value={`${room.baths} ห้อง`} />
                 <Spec icon={Ruler} label="ขนาด"     value={`${room.sqm} ตร.ม.`} />
-                <Spec icon={Home}  label="ประเภท"   value={room.propertyType || 'คอนโด'} />
+                <Spec icon={Home}  label="ประเภทห้อง" value={room.roomType || room.propertyType || '—'} />
+                {room.building && <Spec icon={Home} label="ตึก" value={room.building} />}
+                {room.floor != null && <Spec icon={Home} label="ชั้น" value={`${room.floor}`} />}
+                {room.viewType && <Spec icon={Home} label="วิว" value={
+                  room.viewType === 'pool' ? 'วิวสระ' : room.viewType === 'garden' ? 'วิวสวน' : 'วิวนอกโครงการ'
+                } />}
               </div>
 
               {room.description && (
                 <section className="mt-8">
                   <h2 className="font-bold text-navy-700 text-xl">รายละเอียด</h2>
-                  <p className="mt-3 text-navy-700 text-[15px] leading-relaxed">{room.description}</p>
+                  <p className="mt-3 text-navy-700 text-[15px] leading-relaxed whitespace-pre-wrap">{room.description}</p>
                 </section>
               )}
 

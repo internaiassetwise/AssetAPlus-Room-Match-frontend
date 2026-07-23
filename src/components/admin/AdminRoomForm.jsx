@@ -13,6 +13,20 @@ const PROPERTY_TYPES = [
   { value: 'studio',     label: 'สตูดิโอ' },
 ]
 
+const ROOM_TYPES = [
+  'STUDIO',
+  '1 BEDROOM',
+  '1 BEDROOM EXCLUSIVE',
+  '1 BEDROOM EXTRA',
+  '1 BEDROOM PLUS',
+]
+
+const VIEW_TYPES = [
+  { value: 'pool',    label: 'วิวสระ' },
+  { value: 'garden',  label: 'วิวสวน' },
+  { value: 'outside', label: 'วิวนอกโครงการ' },
+]
+
 const STATUSES = [
   { value: 'available', label: 'ว่าง' },
   { value: 'reserved',  label: 'จองแล้ว' },
@@ -22,8 +36,12 @@ const STATUSES = [
 
 const EMPTY_FORM = {
   title: '', description: '',
+  projectName: '', roomCode: '',
   landlordId: '', zoneId: '',
   propertyType: 'condo',
+  roomType: '',
+  building: '', floor: '',
+  viewType: '',
   bedrooms: 1, bathrooms: 1, sizeSqm: '',
   monthlyRent: '',
   status: 'available',
@@ -40,6 +58,7 @@ export default function AdminRoomForm({ mode }) {
 
   const { data: landlords } = useApi(() => api.listLandlords({ limit: 200 }), [])
   const { data: zones }     = useApi(() => api.listZones(), [])
+  const { data: rooms }     = useApi(() => api.listRooms({ limit: 200 }), [])
   const { data: existing, loading: loadingRoom } = useApi(
     () => isEdit ? api.getRoom(roomId) : Promise.resolve(null),
     [roomId],
@@ -64,9 +83,15 @@ export default function AdminRoomForm({ mode }) {
     setForm({
       title: existing.title || '',
       description: existing.description || '',
-      landlordId: existing.landlordId ? String(existing.landlordId) : (landlords?.[0]?.id ? String(landlords[0].id) : ''),
+      projectName: existing.projectName || '',
+      roomCode: existing.roomCode || '',
+      landlordId: existing.landlordId ? String(existing.landlordId) : '',
       zoneId:     existing.zoneId     ? String(existing.zoneId)     : (zones?.[0]?.id     ? String(zones[0].id)     : ''),
       propertyType: existing.propertyType || 'condo',
+      roomType: existing.roomType || '',
+      building: existing.building || '',
+      floor: existing.floor || '',
+      viewType: existing.viewType || '',
       bedrooms:  existing.beds ?? 1,
       bathrooms: existing.baths ?? 1,
       sizeSqm:   existing.sqm ?? '',
@@ -189,8 +214,7 @@ export default function AdminRoomForm({ mode }) {
 
   function validate() {
     const e = {}
-    if (!form.title.trim())              e.title       = 'กรุณากรอกชื่อห้อง'
-    if (!form.landlordId)                e.landlordId  = 'กรุณาเลือกเจ้าของห้อง'
+    if (!form.title.trim() && !form.projectName.trim()) e.title = 'กรุณากรอกชื่อโครงการหรือชื่อห้อง'
     if (!form.zoneId)                    e.zoneId      = 'กรุณาเลือกโซน'
     if (!form.monthlyRent || form.monthlyRent < 1000) e.monthlyRent = 'ค่าเช่าต้องอย่างน้อย 1,000 บาท'
     if (form.availableFrom && !/^\d{4}-\d{2}-\d{2}$/.test(form.availableFrom)) e.availableFrom = 'รูปแบบวันที่ไม่ถูกต้อง'
@@ -204,12 +228,20 @@ export default function AdminRoomForm({ mode }) {
     if (Object.keys(e).length) return
 
     setStatus('sending')
+    // Auto-generate title from project name + room code if title is empty
+    const title = form.title.trim() || [form.projectName.trim(), form.roomCode.trim()].filter(Boolean).join(' - ')
     const body = {
-      title:       form.title.trim(),
+      title,
       description: form.description.trim() || undefined,
-      landlordId:  Number(form.landlordId),
+      landlordId:  form.landlordId ? Number(form.landlordId) : undefined,
       zoneId:      Number(form.zoneId),
       propertyType: form.propertyType,
+      roomType:    form.roomType || undefined,
+      projectName: form.projectName.trim() || undefined,
+      roomCode:    form.roomCode.trim() || undefined,
+      building:    form.building.trim() || undefined,
+      floor:       form.floor ? Number(form.floor) : undefined,
+      viewType:    form.viewType || undefined,
       bedrooms:    Number(form.bedrooms),
       bathrooms:   Number(form.bathrooms),
       sizeSqm:     form.sizeSqm ? Number(form.sizeSqm) : undefined,
@@ -262,11 +294,6 @@ export default function AdminRoomForm({ mode }) {
         </h1>
       </div>
 
-      {landlordsEmpty && (
-        <div className="mb-6 text-ember-700 text-sm bg-ember-50 border border-ember-200 rounded-lg px-4 py-3">
-          ⚠ ยังไม่มีเจ้าของห้องในระบบ — เพิ่มผ่าน <code className="px-1 bg-white rounded">POST /api/preferences</code> ก่อนสร้างห้อง
-        </div>
-      )}
       {zonesEmpty && (
         <div className="mb-6 text-ember-700 text-sm bg-ember-50 border border-ember-200 rounded-lg px-4 py-3">
           ⚠ ยังไม่มีโซนในระบบ — seed ฐานข้อมูลก่อน
@@ -276,23 +303,27 @@ export default function AdminRoomForm({ mode }) {
       <form onSubmit={onSubmit} noValidate className="card p-7 sm:p-8 space-y-6">
         <Header icon={Home} title="รายละเอียดห้อง" sub={isEdit ? 'แก้ไขข้อมูลและบันทึก' : 'กรอกข้อมูลให้ครบก่อนบันทึก'} />
 
-        <Field id="f-title" label="ชื่อห้อง" required error={errors.title}>
-          <input id="f-title" className={inputCls(errors.title)} value={form.title} onChange={update('title')} placeholder="เช่น The Line สาทร, คอนโดทองหล่อ" />
-        </Field>
+        {/* 1. ชื่อโครงการ + รหัสห้อง */}
+        <div className="grid sm:grid-cols-2 gap-5">
+          <Field id="f-project" label="ชื่อโครงการ" required error={errors.title}>
+            <input id="f-project" className={inputCls(errors.title)} value={form.projectName} onChange={update('projectName')} placeholder="เช่น Kave Genesis นครปฐม" list="project-list" />
+            <datalist id="project-list">
+              {(rooms || []).filter((r) => r.projectName).map((r, i) => (
+                <option key={i} value={r.projectName} />
+              ))}
+            </datalist>
+          </Field>
+          <Field id="f-code" label="รหัสห้อง / เลขห้อง">
+            <input id="f-code" className="input" value={form.roomCode} onChange={update('roomCode')} placeholder="เช่น A-301 หรือ 301/1204" />
+          </Field>
+        </div>
 
         <Field id="f-desc" label="คำอธิบาย">
           <textarea id="f-desc" rows={4} className="input resize-none" value={form.description} onChange={update('description')} placeholder="จุดเด่น ทำเล สภาพห้อง ฯลฯ" />
         </Field>
 
+        {/* 2. โซน (dropdown) + ประเภทที่พักอาศัย */}
         <div className="grid sm:grid-cols-2 gap-5">
-          <Field id="f-landlord" label="เจ้าของห้อง" required error={errors.landlordId}>
-            <select id="f-landlord" className={inputCls(errors.landlordId)} value={form.landlordId} onChange={update('landlordId')}>
-              <option value="">— เลือกเจ้าของห้อง —</option>
-              {(landlords || []).map((l) => (
-                <option key={l.id} value={l.id}>{l.fullName} · {l.phone}</option>
-              ))}
-            </select>
-          </Field>
           <Field id="f-zone" label="โซน / ทำเล" required error={errors.zoneId}>
             <select id="f-zone" className={inputCls(errors.zoneId)} value={form.zoneId} onChange={update('zoneId')}>
               <option value="">— เลือกโซน —</option>
@@ -301,13 +332,38 @@ export default function AdminRoomForm({ mode }) {
               ))}
             </select>
           </Field>
+          <Field id="f-prop" label="ประเภทที่พักอาศัย">
+            <select id="f-prop" className="input" value={form.propertyType} onChange={update('propertyType')}>
+              {PROPERTY_TYPES.map((p) => <option key={p.value} value={p.value}>{p.label}</option>)}
+            </select>
+          </Field>
         </div>
 
-        <div>
-          <label className="label">ประเภทห้อง</label>
-          <ChipGroup options={PROPERTY_TYPES} value={form.propertyType} onChange={(v) => setForm((s) => ({ ...s, propertyType: v }))} />
+        {/* 3. ประเภทห้อง (room type) */}
+        <Field id="f-roomtype" label="ประเภทห้อง">
+          <select id="f-roomtype" className="input" value={form.roomType} onChange={update('roomType')}>
+            <option value="">— เลือกประเภทห้อง —</option>
+            {ROOM_TYPES.map((t) => <option key={t} value={t}>{t}</option>)}
+          </select>
+        </Field>
+
+        {/* 4. ตึก + ชั้น + วิว */}
+        <div className="grid sm:grid-cols-3 gap-5">
+          <Field id="f-building" label="ตึก">
+            <input id="f-building" className="input" value={form.building} onChange={update('building')} placeholder="เช่น C" />
+          </Field>
+          <Field id="f-floor" label="ชั้น">
+            <input id="f-floor" type="number" min="0" max="200" className="input" value={form.floor} onChange={update('floor')} placeholder="เช่น 3" />
+          </Field>
+          <Field id="f-view" label="วิว">
+            <select id="f-view" className="input" value={form.viewType} onChange={update('viewType')}>
+              <option value="">— เลือกวิว —</option>
+              {VIEW_TYPES.map((v) => <option key={v.value} value={v.value}>{v.label}</option>)}
+            </select>
+          </Field>
         </div>
 
+        {/* 5. ห้องนอน / ห้องน้ำ / พื้นที่ */}
         <div className="grid sm:grid-cols-3 gap-5">
           <Field id="f-beds" label="ห้องนอน">
             <input id="f-beds" type="number" min="0" max="10" className="input" value={form.bedrooms} onChange={update('bedrooms')} />
@@ -379,7 +435,7 @@ export default function AdminRoomForm({ mode }) {
           <Link to="/admin" className="btn btn-outline">ยกเลิก</Link>
             <button
               type="submit"
-              disabled={status === 'sending' || landlordsEmpty || zonesEmpty}
+              disabled={status === 'sending' || zonesEmpty}
               className="btn btn-primary btn-lg disabled:opacity-60 disabled:cursor-not-allowed"
             >
               {status === 'sending'
