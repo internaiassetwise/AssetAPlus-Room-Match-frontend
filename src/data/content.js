@@ -101,10 +101,11 @@ export const TENANT_ZONES = [
 ]
 
 export const TENANT_PROPERTY_TYPES = [
-  { value: 'studio',     label: 'Studio' },
-  { value: '1bed',       label: '1 ห้องนอน' },
-  { value: '1bed_multi', label: '1 ห้องนอน 1 ห้องเอนกประสงค์' },
-  { value: '2bed',       label: '2 ห้องนอน' },
+  { value: 'STUDIO',             label: 'STUDIO' },
+  { value: '1 BEDROOM',          label: '1 BEDROOM' },
+  { value: '1 BEDROOM EXCLUSIVE',label: '1 BEDROOM EXCLUSIVE' },
+  { value: '1 BEDROOM EXTRA',    label: '1 BEDROOM EXTRA' },
+  { value: '1 BEDROOM PLUS',     label: '1 BEDROOM PLUS' },
 ]
 
 export const TENANT_MOVE_IN_OPTIONS = [
