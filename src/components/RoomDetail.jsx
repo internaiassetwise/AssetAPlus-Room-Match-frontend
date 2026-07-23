@@ -6,7 +6,6 @@ import { MapPin, Bed, Bath, Ruler, Phone, LineChat, ArrowRight, Sparkles, Home, 
 import { useApi } from '../hooks/useApi.js'
 import { api } from '../api/client.js'
 import { LINE_OA_DISPLAY, LINE_OA_URL } from '../config/line.js'
-import AvailableViewingDates from './AvailableViewingDates.jsx'
 import Lightbox from './Lightbox.jsx'
 
 export default function RoomDetail() {
@@ -197,10 +196,12 @@ export default function RoomDetail() {
                     <span className="text-base font-medium text-muted"> / เดือน</span>
                   </div>
                   <div className="mt-1 text-sm text-muted">ค่าเช่ารายเดือน ไม่รวมค่าน้ำค่าไฟ</div>
+                  {room.availableFrom && (
+                    <div className="mt-2 inline-flex items-center gap-1.5 text-sm font-medium text-emerald-700 bg-emerald-50 border border-emerald-200 rounded-lg px-3 py-1.5">
+                      พร้อมให้เช่าวันที่ {new Date(room.availableFrom).toLocaleDateString('th-TH', { dateStyle: 'long' })}
+                    </div>
+                  )}
                 </div>
-
-                {/* Available viewing dates — read-only. Tenant must contact admin via Line. */}
-                <AvailableViewingDates roomId={room.id} room={room} />
 
                 <div className="border-t border-line pt-4 space-y-3">
                   <a href="tel:021680000" className="btn btn-outline w-full">
