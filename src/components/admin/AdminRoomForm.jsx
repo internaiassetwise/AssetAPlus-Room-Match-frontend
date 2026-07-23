@@ -217,6 +217,7 @@ export default function AdminRoomForm({ mode }) {
     const e = {}
     if (!form.title.trim() && !form.projectName.trim()) e.title = 'กรุณากรอกชื่อโครงการหรือชื่อห้อง'
     if (!form.zoneId)                    e.zoneId      = 'กรุณาเลือกโซน'
+    if (!form.roomCode.trim())           e.roomCode    = 'กรุณากรอกเลขห้อง'
     if (!form.monthlyRent || form.monthlyRent < 1000) e.monthlyRent = 'ค่าเช่าต้องอย่างน้อย 1,000 บาท'
     if (form.availableFrom && !/^\d{4}-\d{2}-\d{2}$/.test(form.availableFrom)) e.availableFrom = 'รูปแบบวันที่ไม่ถูกต้อง'
     return e
@@ -229,8 +230,10 @@ export default function AdminRoomForm({ mode }) {
     if (Object.keys(e).length) return
 
     setStatus('sending')
-    // Auto-generate title from project name + room code if title is empty
-    const title = form.title.trim() || [form.projectName.trim(), form.roomCode.trim()].filter(Boolean).join(' - ')
+    // Public title = project name only. The room number (roomCode) is captured
+    // separately and kept off the public site, so it must NOT be baked into the
+    // title. Fall back to roomCode only if no project name was given.
+    const title = form.title.trim() || form.projectName.trim() || form.roomCode.trim()
     const body = {
       title,
       description: form.description.trim() || undefined,
@@ -333,9 +336,9 @@ export default function AdminRoomForm({ mode }) {
           </Field>
         </div>
 
-        {/* รหัสห้อง */}
-        <Field id="f-code" label="รหัสห้อง / เลขห้อง">
-          <input id="f-code" className="input" value={form.roomCode} onChange={update('roomCode')} placeholder="เช่น A-301 หรือ 301/1204" />
+        {/* รหัสห้อง / เลขห้อง — required */}
+        <Field id="f-code" label="รหัสห้อง / เลขห้อง" required error={errors.roomCode}>
+          <input id="f-code" className={inputCls(errors.roomCode)} value={form.roomCode} onChange={update('roomCode')} placeholder="เช่น A-301 หรือ 301/1204" />
         </Field>
 
         <Field id="f-desc" label="คำอธิบาย">

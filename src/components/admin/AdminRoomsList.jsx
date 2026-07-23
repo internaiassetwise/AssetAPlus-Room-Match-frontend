@@ -91,7 +91,12 @@ export default function AdminRoomsList() {
               {!loading && rooms && rooms.map((r) => (
                 <tr key={r.id} className="hover:bg-navy-50/40 transition-colors">
                   <td className="px-5 py-4">
-                    <div className="font-semibold text-navy-700 line-clamp-1">{r.title}</div>
+                    <div className="font-semibold text-navy-700 line-clamp-1">
+                      {r.title}
+                      {r.roomCode && (
+                        <span className="ml-2 font-normal text-muted">· ห้อง {r.roomCode}</span>
+                      )}
+                    </div>
                     <div className="mt-1 flex items-center gap-3 text-xs text-muted">
                       <span className="inline-flex items-center gap-1"><Bed size={12} /> {r.beds}</span>
                       <span className="inline-flex items-center gap-1"><Bath size={12} /> {r.baths}</span>

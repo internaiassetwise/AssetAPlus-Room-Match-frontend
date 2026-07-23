@@ -122,11 +122,8 @@ export default function RoomDetail() {
                 <h1 className="mt-2 font-bold text-navy-700 text-3xl sm:text-4xl tracking-tight">
                   {room.title}
                 </h1>
-                {room.projectName && room.roomCode && (
-                  <p className="mt-1 text-muted text-sm">
-                    {room.projectName} · ห้อง {room.roomCode}
-                  </p>
-                )}
+                {/* Room number (roomCode) is intentionally NOT shown on the public
+                    site — it's an internal identifier used by admins and the LINE bot. */}
                 <div className="mt-3 flex flex-wrap gap-2">
                   {room.badge && (
                     <span className="inline-flex items-center gap-1 text-xs font-semibold px-3 py-1.5 rounded-full bg-ember-50 text-ember-700 border border-ember-200">
