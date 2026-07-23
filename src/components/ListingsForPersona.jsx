@@ -140,10 +140,11 @@ export default function ListingsForPersona({ persona, theme }) {
                 <label className="label">ประเภทห้อง</label>
                 <select className="input" value={propertyType} onChange={(e) => setPropertyType(e.target.value)}>
                   <option value="">ทุกประเภท</option>
-                  <option value="studio">Studio</option>
-                  <option value="1bed">1 ห้องนอน</option>
-                  <option value="1bed_multi">1 ห้องนอน + ห้องเอนกประสงค์</option>
-                  <option value="2bed">2 ห้องนอน</option>
+                  <option value="STUDIO">STUDIO</option>
+                  <option value="1 BEDROOM">1 BEDROOM</option>
+                  <option value="1 BEDROOM EXCLUSIVE">1 BEDROOM EXCLUSIVE</option>
+                  <option value="1 BEDROOM EXTRA">1 BEDROOM EXTRA</option>
+                  <option value="1 BEDROOM PLUS">1 BEDROOM PLUS</option>
                 </select>
               </div>
               <div>

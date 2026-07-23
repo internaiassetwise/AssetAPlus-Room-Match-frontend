@@ -68,11 +68,11 @@ export default function SearchPage() {
             <FilterField label="ประเภทห้อง">
               <select className="input" value={type} onChange={(e) => setType(e.target.value)}>
                 <option value="">ทุกประเภท</option>
-                <option value="condo">คอนโด</option>
-                <option value="house">บ้านเดี่ยว</option>
-                <option value="townhouse">ทาวน์เฮ้าส์</option>
-                <option value="apartment">อพาร์ทเมนท์</option>
-                <option value="studio">สตูดิโอ</option>
+                <option value="STUDIO">STUDIO</option>
+                <option value="1 BEDROOM">1 BEDROOM</option>
+                <option value="1 BEDROOM EXCLUSIVE">1 BEDROOM EXCLUSIVE</option>
+                <option value="1 BEDROOM EXTRA">1 BEDROOM EXTRA</option>
+                <option value="1 BEDROOM PLUS">1 BEDROOM PLUS</option>
               </select>
             </FilterField>
             <FilterField label="ห้องนอน">
