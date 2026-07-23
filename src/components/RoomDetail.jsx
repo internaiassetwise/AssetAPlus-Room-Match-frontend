@@ -9,13 +9,6 @@ import { LINE_OA_DISPLAY, LINE_OA_URL } from '../config/line.js'
 import AvailableViewingDates from './AvailableViewingDates.jsx'
 import Lightbox from './Lightbox.jsx'
 
-const FALLBACK_IMAGES = [
-  '/images/room-navy.jpg',
-  '/images/room-cloud.jpg',
-  '/images/room-modern.jpg',
-  '/images/room-studio.jpg',
-]
-
 export default function RoomDetail() {
   const navigate = useNavigate()
   const { id: idParam } = useParams()
@@ -25,11 +18,10 @@ export default function RoomDetail() {
     [id],
   )
   const [lightboxIndex, setLightboxIndex] = useState(null)
-  // Only show the room's REAL photos — no decorative fallbacks mixed in
-  // (the old code merged FALLBACK_IMAGES which caused phantom photos).
+  // Only show the room's REAL photos — no mock/fallback images.
   const photos = Array.isArray(room?.photos) && room.photos.length
     ? room.photos
-    : [room?.image || FALLBACK_IMAGES[0]]
+    : (room?.image ? [room.image] : [])
 
   return (
     <div className="min-h-screen flex flex-col">
@@ -63,6 +55,7 @@ export default function RoomDetail() {
           <article className="container-page py-10 grid lg:grid-cols-[1.4fr_1fr] gap-10 items-start">
             {/* Left: images + content */}
             <div>
+              {photos.length > 0 ? (
               <div className="grid grid-cols-4 gap-3 rounded-3xl overflow-hidden">
                 <button
                   type="button"
@@ -75,7 +68,6 @@ export default function RoomDetail() {
                     className="w-full h-full object-cover transition-transform duration-300 group-hover:scale-[1.03]"
                     loading="lazy"
                     decoding="async"
-                    onError={(e) => { e.currentTarget.src = FALLBACK_IMAGES[0] }}
                   />
                   <span className="absolute bottom-3 right-3 inline-flex items-center gap-1 text-xs font-medium text-white bg-navy-900/55 backdrop-blur px-2.5 py-1 rounded-full opacity-0 group-hover:opacity-100 transition-opacity">
                     คลิกเพื่อขยาย
@@ -92,6 +84,11 @@ export default function RoomDetail() {
                   </button>
                 ))}
               </div>
+              ) : (
+                <div className="aspect-[4/3] rounded-3xl bg-navy-50 grid place-items-center text-navy-200">
+                  <Home size={64} />
+                </div>
+              )}
 
               <div className="mt-7">
                 <div className="inline-flex items-center gap-1.5 text-sm font-medium text-muted">

@@ -38,8 +38,6 @@ const STATUS_STYLES = {
   inactive:  'bg-rose-50 text-rose-700 border-rose-200',
 }
 
-const FALLBACK_IMG = '/images/room-navy.jpg'
-
 export default function MyListings() {
   const { user, loading } = useUserAuth()
   const { data: rooms, loading: rmLoading, error } = useApi(
@@ -111,19 +109,23 @@ function EmptyState() {
  */
 function RoomCard({ room }) {
   const status = STATUS_STYLES[room.status] || ''
-  const imgSrc = room.image || FALLBACK_IMG
 
   return (
     <article className="card overflow-hidden flex flex-col">
       {/* Thumbnail */}
       <div className="aspect-[4/3] bg-cream-100 relative overflow-hidden">
-        <img
-          src={imgSrc}
-          alt={room.title}
-          className="w-full h-full object-cover"
-          loading="lazy"
-          onError={(e) => { e.currentTarget.src = FALLBACK_IMG }}
-        />
+        {room.image ? (
+          <img
+            src={room.image}
+            alt={room.title}
+            className="w-full h-full object-cover"
+            loading="lazy"
+          />
+        ) : (
+          <div className="w-full h-full grid place-items-center bg-navy-50 text-navy-200">
+            <Home size={48} />
+          </div>
+        )}
         {room.status && (
           <span className={`absolute top-2.5 left-2.5 inline-flex items-center text-[10px] font-semibold uppercase tracking-wider border rounded-full px-2 py-0.5 bg-white/90 backdrop-blur-sm ${status}`}>
             {STATUS_LABEL[room.status] || room.status}

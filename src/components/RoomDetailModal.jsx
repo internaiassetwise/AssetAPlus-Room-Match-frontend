@@ -4,8 +4,6 @@ import Modal from './Modal.jsx'
 import { useApi } from '../hooks/useApi.js'
 import { api } from '../api/client.js'
 
-const FALLBACK_IMAGE = '/images/room-navy.jpg'
-
 function Stat({ icon: Icon, label, value }) {
   return (
     <div className="rounded-xl bg-navy-50 border border-navy-100 p-4">
@@ -46,14 +44,19 @@ export default function RoomDetailModal({ roomId, onClose }) {
         <div className="animate-fade-up max-h-[80vh] overflow-y-auto">
           {/* Image */}
           <div className="relative h-[38vh] max-h-[340px] bg-cream-100 overflow-hidden">
-            <img
-              src={room.image || FALLBACK_IMAGE}
-              alt={room.title}
-              className="w-full h-full object-cover"
-              loading="lazy"
-              decoding="async"
-              onError={(e) => { e.currentTarget.src = FALLBACK_IMAGE }}
-            />
+            {room.image ? (
+              <img
+                src={room.image}
+                alt={room.title}
+                className="w-full h-full object-cover"
+                loading="lazy"
+                decoding="async"
+              />
+            ) : (
+              <div className="w-full h-full grid place-items-center bg-navy-50 text-navy-200">
+                <Home size={56} />
+              </div>
+            )}
             {room.badge && (
               <span className="absolute top-4 left-4 inline-flex items-center gap-1 text-xs font-semibold px-3 py-1.5 rounded-full bg-ember-500 text-white shadow-ember">
                 {room.badge}

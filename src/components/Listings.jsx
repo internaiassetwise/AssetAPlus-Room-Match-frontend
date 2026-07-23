@@ -11,32 +11,8 @@ const BADGE_TONE = {
   navy:  'bg-navy-50 text-navy-700 border-navy-200',
 }
 
-const MOCK_IMAGES = [
-  '/images/room-navy.jpg',
-  '/images/room-cloud.jpg',
-  '/images/room-studio.jpg',
-  '/images/room-modern.jpg',
-  '/images/room-navy-2.jpg',
-  '/images/room-bedroom-1.jpg',
-  '/images/room-bedroom-2.jpg',
-  '/images/rooftop-pool.jpg',
-  '/images/hero-pool.jpg',
-]
-
-function hashId(id) {
-  const s = String(id ?? '0')
-  let n = 0
-  for (let i = 0; i < s.length; i++) n = (n * 31 + s.charCodeAt(i)) >>> 0
-  return n
-}
-
-function pickMockImage(room) {
-  return MOCK_IMAGES[hashId(room.id ?? room.title) % MOCK_IMAGES.length]
-}
-
 function RoomCard({ room, onOpen }) {
   const tone = BADGE_TONE[room.badgeTone] || BADGE_TONE.ember
-  const imgSrc = room.image || pickMockImage(room)
   return (
     <article
       className="card card-hover overflow-hidden group cursor-pointer"
@@ -47,15 +23,18 @@ function RoomCard({ room, onOpen }) {
       aria-label={`ดูรายละเอียด ${room.title}`}
     >
       <div className="relative aspect-[4/3] bg-cream-100 overflow-hidden">
-        <img
-          src={imgSrc}
-          alt={room.title}
-          loading="lazy"
-          className="w-full h-full object-cover transition-transform duration-500 group-hover:scale-105"
-          onError={(e) => {
-            e.currentTarget.src = MOCK_IMAGES[0]
-          }}
-        />
+        {room.image ? (
+          <img
+            src={room.image}
+            alt={room.title}
+            loading="lazy"
+            className="w-full h-full object-cover transition-transform duration-500 group-hover:scale-105"
+          />
+        ) : (
+          <div className="w-full h-full grid place-items-center bg-navy-50 text-navy-200">
+            <Home size={48} />
+          </div>
+        )}
         {room.badge && (
           <span className={`absolute top-3.5 left-3.5 inline-flex items-center gap-1 text-xs font-medium px-3 py-1.5 rounded-full ${tone}`}>
             {room.badgeTone === 'ember' && <Clock size={12} />}
