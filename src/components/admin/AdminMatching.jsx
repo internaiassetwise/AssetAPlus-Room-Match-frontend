@@ -68,7 +68,7 @@ export default function AdminMatching() {
         tenantId: Number(selectedTenant),
         roomId:   Number(selectedRoom),
         status:   'suggested',
-        agentNote: note.trim() || null,
+        agentNote: note.trim() || undefined,
       })
       setSelectedRoom('')
       setNote('')

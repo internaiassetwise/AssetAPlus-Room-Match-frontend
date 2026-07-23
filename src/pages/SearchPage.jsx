@@ -22,7 +22,7 @@ export default function SearchPage() {
   const [bounds, setB]   = useState(null)                  // [swLat,swLng,neLat,neLng]
 
   const params = useMemo(() => {
-    const p = { zone: zone || undefined, type: type || undefined }
+    const p = { zone: zone || undefined, roomType: type || undefined }
     if (minRent !== '') p.minRent = Number(minRent)
     if (maxRent !== '') p.maxRent = Number(maxRent)
     if (bounds) p.bounds = bounds.join(',')

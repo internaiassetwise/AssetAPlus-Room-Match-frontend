@@ -51,7 +51,7 @@ export default function ListingsForPersona({ persona, theme }) {
     ...(maxBudget !== '' ? { maxRent: Number(maxBudget) } : {}),
     ...(minBudget !== '' ? { minRent: Number(minBudget) } : {}),
     ...(bedrooms !== '' ? { bedrooms: Number(bedrooms) } : {}),
-    ...(propertyType ? { propertyType } : {}),
+    ...(propertyType ? { roomType: propertyType } : {}),
   }
   const { data: rooms, loading, error } = useApi(() => api.listRooms(params), [debouncedZone, maxBudget, minBudget, bedrooms, propertyType])
 

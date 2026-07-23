@@ -56,20 +56,20 @@ export default function MyListingForm({ mode = 'create' }) {
     if (!existing) return
     setForm({
       title: existing.title || '',
-      zoneId: existing.zone_id || '',
-      propertyType: existing.property_type || 'condo',
-      bedrooms: existing.bedrooms ?? 1,
-      bathrooms: existing.bathrooms ?? 1,
-      sizeSqm: existing.size_sqm ?? 25,
-      monthlyRent: existing.monthly_rent ?? 15000,
+      zoneId: existing.zoneId || existing.zone_id || '',
+      propertyType: existing.propertyType || existing.property_type || 'condo',
+      bedrooms: existing.beds ?? existing.bedrooms ?? 1,
+      bathrooms: existing.baths ?? existing.bathrooms ?? 1,
+      sizeSqm: existing.sqm ?? existing.size_sqm ?? 25,
+      monthlyRent: existing.price ?? existing.monthly_rent ?? 15000,
       description: existing.description || '',
       status: existing.status || 'available',
-      availableFrom: existing.available_from || '',
+      availableFrom: existing.availableFrom || existing.available_from || '',
       address: existing.address || '',
       lat: existing.lat ?? null,
       lng: existing.lng ?? null,
       amenities: existing.amenities || [],
-      isFeatured: !!existing.is_featured,
+      isFeatured: !!(existing.isFeatured ?? existing.is_featured),
     })
   }, [existing])
 
