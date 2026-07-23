@@ -56,33 +56,59 @@ export default function RoomDetail() {
             {/* Left: images + content */}
             <div>
               {photos.length > 0 ? (
-              <div className="grid grid-cols-4 gap-3 rounded-3xl overflow-hidden">
+              <div className="grid grid-cols-[3fr_2fr] grid-rows-2 gap-2 rounded-3xl overflow-hidden h-[340px] sm:h-[460px]">
+                {/* Cover photo — left column, full height */}
                 <button
                   type="button"
                   onClick={() => setLightboxIndex(0)}
-                  className="col-span-4 sm:col-span-2 sm:row-span-2 aspect-[4/3] bg-cream-100 relative group cursor-zoom-in"
+                  className="row-span-2 relative group cursor-zoom-in bg-cream-100"
                 >
                   <img
                     src={photos[0]}
                     alt={room.title}
-                    className="w-full h-full object-cover transition-transform duration-300 group-hover:scale-[1.03]"
-                    loading="lazy"
+                    className="w-full h-full object-cover transition-transform duration-300 group-hover:scale-[1.02]"
                     decoding="async"
                   />
-                  <span className="absolute bottom-3 right-3 inline-flex items-center gap-1 text-xs font-medium text-white bg-navy-900/55 backdrop-blur px-2.5 py-1 rounded-full opacity-0 group-hover:opacity-100 transition-opacity">
-                    คลิกเพื่อขยาย
-                  </span>
+                  {photos.length > 3 && (
+                    <span className="sm:hidden absolute bottom-3 left-3 inline-flex items-center gap-1 text-xs font-semibold text-white bg-navy-900/65 backdrop-blur px-3 py-1.5 rounded-full">
+                      📷 {photos.length}
+                    </span>
+                  )}
                 </button>
-                {photos.slice(1, 4).map((src, i) => (
-                  <button
-                    key={src}
-                    type="button"
-                    onClick={() => setLightboxIndex(i + 1)}
-                    className="hidden sm:block aspect-square bg-cream-100 relative group cursor-zoom-in"
-                  >
-                    <img src={src} alt="" className="w-full h-full object-cover opacity-90 group-hover:opacity-100 transition-opacity" loading="lazy" decoding="async" />
-                  </button>
-                ))}
+                {/* Right column — up to 2 thumbnails stacked vertically */}
+                {photos.slice(1, 3).map((src, i) => {
+                  const isLast = i === Math.min(photos.length - 2, 1)
+                  const showOverlay = isLast && photos.length > 3
+                  return (
+                    <button
+                      key={src}
+                      type="button"
+                      onClick={() => setLightboxIndex(i + 1)}
+                      className="relative group cursor-zoom-in bg-cream-100"
+                    >
+                      <img
+                        src={src}
+                        alt=""
+                        className="w-full h-full object-cover transition-transform duration-300 group-hover:scale-[1.03]"
+                        loading="lazy"
+                        decoding="async"
+                      />
+                      {showOverlay && (
+                        <div className="absolute inset-0 bg-navy-900/60 grid place-items-center group-hover:bg-navy-900/45 transition-colors">
+                          <span className="text-white font-bold text-lg flex items-center gap-1.5">
+                            📷 {photos.length}
+                          </span>
+                        </div>
+                      )}
+                    </button>
+                  )
+                })}
+                {/* Fill empty right-side slots with placeholder if < 3 photos */}
+                {photos.length === 1 && (
+                  <div className="bg-navy-50 grid place-items-center text-navy-200">
+                    <Home size={32} />
+                  </div>
+                )}
               </div>
               ) : (
                 <div className="aspect-[4/3] rounded-3xl bg-navy-50 grid place-items-center text-navy-200">
