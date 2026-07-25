@@ -1,7 +1,6 @@
 import { useState, useEffect } from 'react'
-import { Link } from 'react-router-dom'
+import { Link, useNavigate } from 'react-router-dom'
 import { MapPin, Bed, Bath, Ruler, Clock, ArrowRight, Home, Search } from './icons.jsx'
-import RoomDetailModal from './RoomDetailModal.jsx'
 import { useApi } from '../hooks/useApi.js'
 import { api } from '../api/client.js'
 
@@ -89,9 +88,9 @@ function SkeletonCard() {
 }
 
 export default function Listings() {
+  const navigate = useNavigate()
   const [activeZone, setActiveZone] = useState(null)
   const [debouncedZone, setDebouncedZone] = useState(null)
-  const [selectedRoomId, setSelectedRoomId] = useState(null)
 
   const { data: zones } = useApi(() => api.listZones(), [])
   const zonesDisplay = zones && zones.length ? zones : []
@@ -104,8 +103,8 @@ export default function Listings() {
   const params = debouncedZone ? { zone: debouncedZone } : {}
   const { data: rooms, loading, error } = useApi(() => api.listRooms(params), [debouncedZone])
 
-  const openRoom  = (id) => setSelectedRoomId(id)
-  const closeRoom = ()  => setSelectedRoomId(null)
+  // Clicking a room card goes straight to its detail page (no intermediate modal).
+  const openRoom = (id) => navigate(`/rooms/${id}`)
 
   return (
     <section id="listings" className="section bg-cream-50">
@@ -154,8 +153,6 @@ export default function Listings() {
             )}
           </div>
         )}
-
-        <RoomDetailModal roomId={selectedRoomId} onClose={closeRoom} />
 
         {!loading && rooms && rooms.length === 0 && (
           <div className="text-center py-16">

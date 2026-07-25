@@ -215,6 +215,7 @@ export default function AdminRoomForm({ mode }) {
 
   function validate() {
     const e = {}
+    if (!form.landlordId)                e.landlordId  = 'กรุณาเลือกเจ้าของห้อง'
     if (!form.title.trim() && !form.projectName.trim()) e.title = 'กรุณากรอกชื่อโครงการหรือชื่อห้อง'
     if (!form.zoneId)                    e.zoneId      = 'กรุณาเลือกโซน'
     if (!form.roomCode.trim())           e.roomCode    = 'กรุณากรอกเลขห้อง'
@@ -306,6 +307,27 @@ export default function AdminRoomForm({ mode }) {
 
       <form onSubmit={onSubmit} noValidate className="card p-7 sm:p-8 space-y-6">
         <Header icon={Home} title="รายละเอียดห้อง" sub={isEdit ? 'แก้ไขข้อมูลและบันทึก' : 'กรอกข้อมูลให้ครบก่อนบันทึก'} />
+
+        {/* 0. เจ้าของห้อง — every room belongs to a landlord. For the pre-webapp
+            ("legacy") rooms, admin first adds the owner in Inbox → รายชื่อ →
+            เจ้าของห้อง, then selects them here. */}
+        <Field id="f-landlord" label="เจ้าของห้อง" required error={errors.landlordId}>
+          {landlordsEmpty ? (
+            <div className="text-sm text-muted bg-cream-50 border border-line rounded-lg px-3 py-2.5">
+              ยังไม่มีเจ้าของห้องในระบบ — เพิ่มก่อนได้ที่{' '}
+              <Link to="/admin/inbox" className="text-navy-700 font-medium underline">Inbox → รายชื่อ → เจ้าของห้อง</Link>
+            </div>
+          ) : (
+            <select id="f-landlord" className={inputCls(errors.landlordId)} value={form.landlordId} onChange={update('landlordId')}>
+              <option value="">— เลือกเจ้าของห้อง —</option>
+              {(landlords || []).map((l) => (
+                <option key={l.id} value={l.id}>
+                  {l.fullName || `เจ้าของห้อง #${l.id}`}{l.phone ? ` · ${l.phone}` : ''}
+                </option>
+              ))}
+            </select>
+          )}
+        </Field>
 
         {/* 1. โซน + โครงการ (cascading: เลือกโซนก่อน → เห็นโครงการในโซนนั้น) */}
         <div className="grid sm:grid-cols-2 gap-5">
