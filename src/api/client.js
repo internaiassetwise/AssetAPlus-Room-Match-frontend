@@ -125,6 +125,7 @@ export const api = {
   // Landlords
   listLandlords:  (params = {}) => request(`/landlords${qs(params)}`),
   getLandlord:    (id)          => request(`/landlords/${id}`),
+  createLandlord: (body)        => request('/landlords', { method: 'POST', body: JSON.stringify(body) }),
   updateLandlord: (id, body)    => request(`/landlords/${id}`, { method: 'PATCH', body: JSON.stringify(body) }),
 
   // Tenants (admin-only directory — for the matching panel)

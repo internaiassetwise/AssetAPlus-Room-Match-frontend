@@ -86,7 +86,7 @@ export default function AdminLayout() {
             </div>
             <NavLink to="/admin/inbox" className={navItem}>
               <span className="inline-flex items-center gap-2">
-                <Inbox size={16} /> Inbox ข้อความจากบอท
+                <Inbox size={16} /> Inbox · ข้อความ & รายชื่อ
               </span>
               <ChevronRight size={16} className="text-muted" />
             </NavLink>
@@ -108,12 +108,6 @@ export default function AdminLayout() {
             <NavLink to="/admin/matching" className={navItem}>
               <span className="inline-flex items-center gap-2">
                 <Users size={16} /> จับคู่ ผู้เช่า × ห้อง
-              </span>
-              <ChevronRight size={16} className="text-muted" />
-            </NavLink>
-            <NavLink to="/admin/tenants" className={navItem}>
-              <span className="inline-flex items-center gap-2">
-                <Users size={16} /> รายชื่อผู้เช่า
               </span>
               <ChevronRight size={16} className="text-muted" />
             </NavLink>
