@@ -60,8 +60,10 @@ export default function ListingsForPersona({ persona, theme }) {
   const thaiMonths = ['มกราคม','กุมภาพันธ์','มีนาคม','เมษายน','พฤษภาคม','มิถุนายน','กรกฎาคม','สิงหาคม','กันยายน','ตุลาคม','พฤศจิกายน','ธันวาคม']
   const lastUpdatedText = `${today.getDate()} ${thaiMonths[today.getMonth()]} ${today.getFullYear() + 543}`
 
-  // Clicking a room card goes straight to its detail page (no intermediate modal).
-  const openRoom = (id) => navigate(`/rooms/${id}`)
+  // Clicking a room card goes straight to its detail page (no intermediate
+  // modal). Hand the room object along as router state so the detail page can
+  // render instantly instead of flashing a loading screen.
+  const openRoom = (room) => navigate(`/rooms/${room.id}`, { state: { room } })
 
   const accent = persona === 'tenant' ? 'text-navy-600' : 'text-ember-600'
   const headerText = (

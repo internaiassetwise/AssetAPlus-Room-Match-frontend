@@ -1,5 +1,5 @@
 import { useState, useEffect } from 'react'
-import { useNavigate, useParams } from 'react-router-dom'
+import { useNavigate, useParams, useLocation } from 'react-router-dom'
 import Navbar from './Navbar.jsx'
 import Footer from './Footer.jsx'
 import { MapPin, Bed, Bath, Ruler, Phone, LineChat, ArrowRight, Sparkles, Home, ChevronRight, Shield } from './icons.jsx'
@@ -12,13 +12,19 @@ export default function RoomDetail() {
   const navigate = useNavigate()
   const { id: idParam } = useParams()
   const id = Number(idParam)
-  const { data: room, loading, error } = useApi(
+  const { state } = useLocation()
+  // Seed data handed over from the listing card via router state. Lets the page
+  // render instantly on click-through — no empty "loading" screen flashing the
+  // footer up before the room arrives. The fetch still runs to fill in the full
+  // photo gallery and any field the card didn't carry.
+  const seed = state?.room && state.room.id === id ? state.room : null
+  const { data, loading, error } = useApi(
     () => api.getRoom(id),
     [id],
   )
+  const room = data || seed
   // Land at the top of the detail page. Without this, navigating from a
-  // scrolled-down listing keeps the old scroll offset, which reads as a flash
-  // /jump before the content settles.
+  // scrolled-down listing keeps the old scroll offset, which reads as a jump.
   useEffect(() => { window.scrollTo(0, 0) }, [id])
   const [lightboxIndex, setLightboxIndex] = useState(null)
   // Only show the room's REAL photos — no mock/fallback images.
@@ -42,16 +48,16 @@ export default function RoomDetail() {
           </nav>
         </div>
 
-        {loading && (
-          <div className="container-page py-24 text-center text-muted">กำลังโหลดข้อมูลห้อง…</div>
+        {loading && !room && (
+          <div className="container-page min-h-[60vh] grid place-items-center text-center text-muted">กำลังโหลดข้อมูลห้อง…</div>
         )}
 
-        {error && (
-          <div className="container-page py-24 text-center">
+        {error && !room && (
+          <div className="container-page min-h-[60vh] grid place-items-center text-center"><div>
             <div className="font-bold text-navy-700 text-xl">โหลดข้อมูลไม่สำเร็จ</div>
             <div className="text-muted text-base mt-2">กรุณาลองใหม่อีกครั้ง</div>
             <button onClick={() => navigate('/')} className="btn btn-outline mt-6">กลับหน้าแรก</button>
-          </div>
+          </div></div>
         )}
 
         {room && (

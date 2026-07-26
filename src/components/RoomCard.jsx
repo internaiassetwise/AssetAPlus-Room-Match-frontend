@@ -15,10 +15,10 @@ export function RoomCard({ room, onOpen }) {
   return (
     <article
       className="card card-hover overflow-hidden group cursor-pointer"
-      onClick={() => onOpen?.(room.id)}
+      onClick={() => onOpen?.(room)}
       role="button"
       tabIndex={0}
-      onKeyDown={(e) => { if (e.key === 'Enter' || e.key === ' ') { e.preventDefault(); onOpen?.(room.id) } }}
+      onKeyDown={(e) => { if (e.key === 'Enter' || e.key === ' ') { e.preventDefault(); onOpen?.(room) } }}
       aria-label={`ดูรายละเอียด ${room.title}`}
     >
       <div className="relative aspect-[4/3] bg-cream-100 overflow-hidden">
@@ -59,7 +59,7 @@ export function RoomCard({ room, onOpen }) {
           <button
             type="button"
             className="btn btn-ember btn-sm"
-            onClick={(e) => { e.stopPropagation(); onOpen?.(room.id) }}
+            onClick={(e) => { e.stopPropagation(); onOpen?.(room) }}
           >
             ดูห้อง <ArrowRight size={16} />
           </button>
