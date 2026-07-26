@@ -136,6 +136,7 @@ export const api = {
   createLandlord: (body)        => request('/landlords', { method: 'POST', body: JSON.stringify(body) }),
   updateLandlord: (id, body)    => request(`/landlords/${id}`, { method: 'PATCH', body: JSON.stringify(body) }),
   deleteLandlord: (id)          => request(`/landlords/${id}`, { method: 'DELETE' }),
+  createLandlordClaimLink: (id, force = false) => request(`/landlords/${id}/claim-link${force ? '?force=true' : ''}`, { method: 'POST' }),
 
   // Tenants (admin-only directory — for the matching panel)
   listTenants:    ()             => request('/tenants'),

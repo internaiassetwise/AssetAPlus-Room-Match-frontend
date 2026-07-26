@@ -265,6 +265,26 @@ function LandlordDirectory({ filter }) {
     } finally { setDeletingId(null) }
   }
 
+  const [linkingId, setLinkingId] = useState(null)
+  const [claimLink, setClaimLink] = useState(null)  // { url, expiresAt, name, relink }
+  const [copied, setCopied] = useState(false)
+
+  async function generateClaimLink(l, relink = false) {
+    setLinkingId(l.id); setError('')
+    try {
+      const res = await api.createLandlordClaimLink(l.id, relink)
+      setClaimLink({ ...res, name: l.fullName || `เจ้าของห้อง #${l.id}`, relink })
+      setCopied(false)
+    } catch (err) {
+      setError(err instanceof ApiError ? err.message : 'สร้างลิงก์ไม่สำเร็จ')
+    } finally { setLinkingId(null) }
+  }
+
+  function copyLink() {
+    if (!claimLink?.url) return
+    navigator.clipboard?.writeText(claimLink.url).then(() => setCopied(true)).catch(() => {})
+  }
+
   async function save() {
     if (!form) return
     setSaving(true); setError('')
@@ -359,6 +379,11 @@ function LandlordDirectory({ filter }) {
                   </td>
                   <td className="px-5 py-4">
                     <div className="flex items-center gap-3">
+                      <button onClick={() => generateClaimLink(l, !!l.lineId)} disabled={linkingId === l.id}
+                        className="inline-flex items-center gap-1 text-xs font-medium text-[#06C755] hover:text-[#05a648] transition-colors disabled:opacity-50"
+                        title={l.lineId ? 'ออกลิงก์เชื่อม LINE ใหม่ (เปลี่ยนบัญชี)' : 'สร้างลิงก์ให้เจ้าของห้องเชื่อม LINE'}>
+                        <LineChat size={12} /> {linkingId === l.id ? 'กำลังสร้าง…' : (l.lineId ? 'ออกลิงก์ใหม่' : 'ลิงก์เชื่อม')}
+                      </button>
                       <button onClick={() => openEdit(l)}
                         className="inline-flex items-center gap-1 text-xs text-muted hover:text-navy-700 transition-colors">
                         <Pencil size={12} /> แก้ไข
@@ -406,6 +431,25 @@ function LandlordDirectory({ filter }) {
             className="btn btn-primary w-full mt-5 disabled:opacity-60">
             {saving ? 'กำลังบันทึก…' : (form.mode === 'create' ? 'เพิ่มเจ้าของห้อง' : 'บันทึก')} {saving ? '' : <Check size={16} />}
           </button>
+        </Modal>
+      )}
+
+      {claimLink && (
+        <Modal title="ลิงก์เชื่อมบัญชี LINE" onClose={() => setClaimLink(null)}>
+          <p className="text-sm text-muted mb-3">
+            ส่งลิงก์นี้ให้ <b className="text-navy-700">{claimLink.name}</b> — เมื่อกดและล็อกอิน LINE
+            บัญชีจะเชื่อมกับข้อมูลนี้ทันที {claimLink.relink && '(ลิงก์ใหม่นี้จะเปลี่ยนบัญชี LINE ที่เชื่อมไว้เดิม)'}
+          </p>
+          <div className="flex items-stretch gap-2">
+            <input readOnly value={claimLink.url} className="input flex-1 text-xs font-mono"
+              onFocus={(e) => e.target.select()} />
+            <button type="button" onClick={copyLink} className="btn btn-primary btn-sm whitespace-nowrap">
+              {copied ? <>คัดลอกแล้ว <Check size={14} /></> : 'คัดลอก'}
+            </button>
+          </div>
+          <div className="mt-3 text-xs text-muted">
+            ⏱ ลิงก์หมดอายุ {claimLink.expiresAt ? new Date(claimLink.expiresAt).toLocaleString('th-TH', { dateStyle: 'medium', timeStyle: 'short' }) : '—'} · ใช้ได้ครั้งเดียว · ระบบแสดงลิงก์นี้ครั้งเดียว
+          </div>
         </Modal>
       )}
     </>
