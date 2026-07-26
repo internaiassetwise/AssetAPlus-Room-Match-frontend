@@ -1,4 +1,4 @@
-import { useState } from 'react'
+import { useState, useEffect } from 'react'
 import { useNavigate, useParams } from 'react-router-dom'
 import Navbar from './Navbar.jsx'
 import Footer from './Footer.jsx'
@@ -16,6 +16,10 @@ export default function RoomDetail() {
     () => api.getRoom(id),
     [id],
   )
+  // Land at the top of the detail page. Without this, navigating from a
+  // scrolled-down listing keeps the old scroll offset, which reads as a flash
+  // /jump before the content settles.
+  useEffect(() => { window.scrollTo(0, 0) }, [id])
   const [lightboxIndex, setLightboxIndex] = useState(null)
   // Only show the room's REAL photos — no mock/fallback images.
   const photos = Array.isArray(room?.photos) && room.photos.length
