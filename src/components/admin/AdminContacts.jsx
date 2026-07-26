@@ -11,7 +11,7 @@
 import { useState, useMemo } from 'react'
 import { useApi } from '../../hooks/useApi.js'
 import { api, ApiError } from '../../api/client.js'
-import { Search, Users, Home, X, Check, Phone, LineChat, Pencil, Plus } from '../icons.jsx'
+import { Search, Users, Home, X, Check, Phone, LineChat, Pencil, Plus, Trash } from '../icons.jsx'
 
 // Copy a LINE id to the clipboard on click (same affordance as the old tenant table).
 function LineBadge({ lineId }) {
@@ -93,6 +93,8 @@ function TenantDirectory({ filter }) {
     )
   }, [list, filter])
 
+  const [deletingId, setDeletingId] = useState(null)
+
   async function saveEdit() {
     if (!editing) return
     setSaving(true); setError('')
@@ -106,6 +108,18 @@ function TenantDirectory({ filter }) {
     } catch (err) {
       setError(err instanceof ApiError ? err.message : 'บันทึกไม่สำเร็จ')
     } finally { setSaving(false) }
+  }
+
+  async function removeTenant(t) {
+    const who = t.full_name || `ผู้เช่า #${t.id}`
+    if (!window.confirm(`ลบบัญชีผู้เช่า “${who}” ?\n\nการนัดชม/การจับคู่ของผู้เช่ารายนี้จะถูกลบไปด้วย และกู้คืนไม่ได้`)) return
+    setDeletingId(t.id); setError('')
+    try {
+      await api.deleteTenant(t.id)
+      await refetch()
+    } catch (err) {
+      setError(err instanceof ApiError ? err.message : 'ลบไม่สำเร็จ')
+    } finally { setDeletingId(null) }
   }
 
   return (
@@ -160,12 +174,22 @@ function TenantDirectory({ filter }) {
                     </span>
                   </td>
                   <td className="px-5 py-4">
-                    <button
-                      onClick={() => setEditing({ id: t.id, fullName: t.full_name || '', phone: t.phone || '' })}
-                      className="inline-flex items-center gap-1 text-xs text-muted hover:text-navy-700 transition-colors"
-                    >
-                      <Pencil size={12} /> แก้ไข
-                    </button>
+                    <div className="flex items-center gap-3">
+                      <button
+                        onClick={() => setEditing({ id: t.id, fullName: t.full_name || '', phone: t.phone || '' })}
+                        className="inline-flex items-center gap-1 text-xs text-muted hover:text-navy-700 transition-colors"
+                      >
+                        <Pencil size={12} /> แก้ไข
+                      </button>
+                      <button
+                        onClick={() => removeTenant(t)}
+                        disabled={deletingId === t.id}
+                        className="inline-flex items-center gap-1 text-xs text-muted hover:text-ember-600 transition-colors disabled:opacity-50"
+                        title="ลบบัญชีผู้เช่า"
+                      >
+                        <Trash size={12} />
+                      </button>
+                    </div>
                   </td>
                 </tr>
               ))}
@@ -219,11 +243,26 @@ function LandlordDirectory({ filter }) {
     )
   }, [list, filter])
 
+  const [deletingId, setDeletingId] = useState(null)
+
   function openCreate() { setError(''); setForm({ mode: 'create', ...EMPTY_LANDLORD }) }
   function openEdit(l) {
     setError('')
     setForm({ mode: 'edit', id: l.id, fullName: l.fullName || '', phone: l.phone || '',
               email: l.email || '', lineId: l.lineId || '', note: l.note || '' })
+  }
+
+  async function removeLandlord(l) {
+    const who = l.fullName || `เจ้าของห้อง #${l.id}`
+    if (!window.confirm(`ลบบัญชีเจ้าของห้อง “${who}” ?\n\nกู้คืนไม่ได้`)) return
+    setDeletingId(l.id); setError('')
+    try {
+      await api.deleteLandlord(l.id)
+      await refetch()
+    } catch (err) {
+      // 409 = still owns rooms; show the server's Thai message.
+      setError(err instanceof ApiError ? err.message : 'ลบไม่สำเร็จ')
+    } finally { setDeletingId(null) }
   }
 
   async function save() {
@@ -319,10 +358,17 @@ function LandlordDirectory({ filter }) {
                     )}
                   </td>
                   <td className="px-5 py-4">
-                    <button onClick={() => openEdit(l)}
-                      className="inline-flex items-center gap-1 text-xs text-muted hover:text-navy-700 transition-colors">
-                      <Pencil size={12} /> แก้ไข
-                    </button>
+                    <div className="flex items-center gap-3">
+                      <button onClick={() => openEdit(l)}
+                        className="inline-flex items-center gap-1 text-xs text-muted hover:text-navy-700 transition-colors">
+                        <Pencil size={12} /> แก้ไข
+                      </button>
+                      <button onClick={() => removeLandlord(l)} disabled={deletingId === l.id}
+                        className="inline-flex items-center gap-1 text-xs text-muted hover:text-ember-600 transition-colors disabled:opacity-50"
+                        title="ลบบัญชีเจ้าของห้อง">
+                        <Trash size={12} />
+                      </button>
+                    </div>
                   </td>
                 </tr>
               ))}

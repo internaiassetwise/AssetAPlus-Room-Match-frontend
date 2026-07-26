@@ -72,6 +72,12 @@ async function rawRequest(path, opts = {}, { timeoutMs = DEFAULT_TIMEOUT_MS } = 
 }
 
 async function request(path, opts = {}, requestOpts = {}) {
+  // Only auto-retry SAFE/idempotent methods. A POST create that "times out" may
+  // already have succeeded on the server (the abort only cancels our wait, not
+  // the server's work) — retrying it duplicates the row. That was creating two
+  // landlords per submit. GET/HEAD carry no such risk.
+  const method = (opts.method || 'GET').toUpperCase()
+  const idempotent = method === 'GET' || method === 'HEAD'
   let attempt = 0
   let lastErr
   while (attempt <= MAX_RETRIES) {
@@ -79,7 +85,7 @@ async function request(path, opts = {}, requestOpts = {}) {
       return await rawRequest(path, opts, requestOpts)
     } catch (err) {
       lastErr = err
-      const retriable = err instanceof ApiError
+      const retriable = idempotent && err instanceof ApiError
         && (err.code === 'NETWORK' || err.code === 'TIMEOUT' || (err.status >= 500 && err.status < 600))
       if (!retriable || attempt === MAX_RETRIES) throw err
       attempt++
@@ -129,10 +135,12 @@ export const api = {
   getLandlord:    (id)          => request(`/landlords/${id}`),
   createLandlord: (body)        => request('/landlords', { method: 'POST', body: JSON.stringify(body) }),
   updateLandlord: (id, body)    => request(`/landlords/${id}`, { method: 'PATCH', body: JSON.stringify(body) }),
+  deleteLandlord: (id)          => request(`/landlords/${id}`, { method: 'DELETE' }),
 
   // Tenants (admin-only directory — for the matching panel)
   listTenants:    ()             => request('/tenants'),
   updateTenant:   (id, body)     => request(`/tenants/${id}`, { method: 'PATCH', body: JSON.stringify(body) }),
+  deleteTenant:   (id)           => request(`/tenants/${id}`, { method: 'DELETE' }),
 
   // Admin auth + rooms CRUD (requires session cookie)
   adminLogin:     (body)        => request('/auth/login',  { method: 'POST', body: JSON.stringify(body) }),
