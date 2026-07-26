@@ -6,10 +6,10 @@
 // Eyebrow + title swapped to "ห้องว่างพร้อมอยู่" + "ห้องในระบบ ตอนนี้".
 
 import { useEffect, useState } from 'react'
+import { useNavigate } from 'react-router-dom'
 import { MapPin, Home, Clock, Search, Filter, ChevronDown, X } from './icons.jsx'
 import { useApi } from '../hooks/useApi.js'
 import { api } from '../api/client.js'
-import RoomDetailModal from './RoomDetailModal.jsx'
 import { RoomCard } from './RoomCard.jsx'
 import { LISTINGS_SECTION } from '../data/content.js'
 
@@ -36,7 +36,7 @@ export default function ListingsForPersona({ persona, theme }) {
   const [bedrooms, setBedrooms]             = useState('')
   const [propertyType, setPropertyType]     = useState('')
   const [showFilters, setShowFilters]       = useState(false)
-  const [selectedRoomId, setSelectedRoomId] = useState(null)
+  const navigate = useNavigate()
 
   const { data: zones } = useApi(() => api.listZones(), [])
   const zonesDisplay = zones && zones.length ? zones : []
@@ -60,8 +60,8 @@ export default function ListingsForPersona({ persona, theme }) {
   const thaiMonths = ['มกราคม','กุมภาพันธ์','มีนาคม','เมษายน','พฤษภาคม','มิถุนายน','กรกฎาคม','สิงหาคม','กันยายน','ตุลาคม','พฤศจิกายน','ธันวาคม']
   const lastUpdatedText = `${today.getDate()} ${thaiMonths[today.getMonth()]} ${today.getFullYear() + 543}`
 
-  const openRoom  = (id) => setSelectedRoomId(id)
-  const closeRoom = ()  => setSelectedRoomId(null)
+  // Clicking a room card goes straight to its detail page (no intermediate modal).
+  const openRoom = (id) => navigate(`/rooms/${id}`)
 
   const accent = persona === 'tenant' ? 'text-navy-600' : 'text-ember-600'
   const headerText = (
@@ -191,8 +191,6 @@ export default function ListingsForPersona({ persona, theme }) {
             )}
           </div>
         )}
-
-        <RoomDetailModal roomId={selectedRoomId} onClose={closeRoom} />
 
         {!loading && rooms && rooms.length === 0 && (
           <div className="text-center py-16">
