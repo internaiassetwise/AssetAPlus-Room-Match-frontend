@@ -55,7 +55,11 @@ function payloadText(reason, p) {
     case 'view-a-room':
       return `ห้อง #${p.roomId ?? '—'}${p.scheduledAt ? `\nวันที่อยากนัด: ${p.scheduledAt}` : ''}`
     default:
-      return p.message || JSON.stringify(p, null, 2)
+      if (p.message) return p.message
+      // A message-only payload with no captured text (older escalations) — show
+      // nothing here rather than dumping {"message": null}; the summary covers it.
+      { const keys = Object.keys(p); if (keys.length === 0 || (keys.length === 1 && keys[0] === 'message')) return '' }
+      return JSON.stringify(p, null, 2)
   }
 }
 
