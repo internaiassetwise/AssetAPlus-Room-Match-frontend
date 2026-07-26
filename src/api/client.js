@@ -120,6 +120,8 @@ export const api = {
   listMatches:    (params = {}) => request(`/matches${qs(params)}`),
   createMatch:    (body)        => request('/matches',     { method: 'POST', body: JSON.stringify(body) }),
   updateMatch:    (id, body)    => request(`/matches/${id}`, { method: 'PATCH', body: JSON.stringify(body) }),
+  notifyMatch:    (id)          => request(`/matches/${id}/notify`, { method: 'POST' }),
+  deleteMatch:    (id)          => request(`/matches/${id}`, { method: 'DELETE' }),
   suggestMatches: (tenantId, limit) => request(`/matches/suggest?tenant_id=${tenantId}${qs({ limit })}`),
 
   // Landlords

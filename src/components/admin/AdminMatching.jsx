@@ -10,7 +10,7 @@
 import { useState, useMemo } from 'react'
 import { useApi } from '../../hooks/useApi.js'
 import { api, ApiError } from '../../api/client.js'
-import { Users, Home, Sparkles, Check, X, ArrowRight, Phone, LineChat, Pencil } from '../icons.jsx'
+import { Users, Home, Sparkles, Check, X, ArrowRight, Phone, LineChat, Pencil, Trash } from '../icons.jsx'
 
 const MATCH_STATUS = [
   { value: 'suggested',       label: 'แนะนำ' },
@@ -41,6 +41,9 @@ export default function AdminMatching() {
   const [error, setError]                   = useState('')
   const [editing, setEditing]               = useState(null)  // tenant being edited { id, fullName, phone }
   const [savingEdit, setSavingEdit]         = useState(false)
+  const [notifyingId, setNotifyingId]       = useState(null)  // match id currently sending a LINE notify
+  const [sentIds, setSentIds]               = useState(() => new Set()) // matches notified this session
+  const [deletingId, setDeletingId]         = useState(null)  // match id currently being deleted
 
   const tenantList = tenants || []
   const roomList   = rooms || []
@@ -86,6 +89,39 @@ export default function AdminMatching() {
       await refetchMatches()
     } catch (err) {
       setError(err instanceof ApiError ? err.message : 'อัปเดตสถานะไม่สำเร็จ')
+    }
+  }
+
+  // Manual LINE notify — send the tenant a message about this match. Only
+  // enabled when the tenant has a linked LINE id (m.tenantLineId).
+  async function notifyTenant(m) {
+    setNotifyingId(m.id)
+    setError('')
+    try {
+      await api.notifyMatch(m.id)
+      setSentIds((s) => new Set(s).add(m.id))
+    } catch (err) {
+      setError(err instanceof ApiError ? err.message : 'ส่งแจ้งเตือนไม่สำเร็จ')
+    } finally {
+      setNotifyingId(null)
+    }
+  }
+
+  // Hard-delete — for admin mistakes. For a tenant who simply passed on the
+  // room, the '' ไม่สนใจ '' status is the better tool (keeps the record).
+  async function removeMatch(m) {
+    const who  = m.tenantName || `ผู้เช่า #${m.tenantId}`
+    const what = m.roomTitle  || `ห้อง #${m.roomId}`
+    if (!window.confirm(`ลบการจับคู่ “${who} × ${what}” ?\n\nถ้าผู้เช่าแค่ไม่สนใจ ให้เปลี่ยนสถานะเป็น “ไม่สนใจ” แทนจะดีกว่า (เก็บประวัติไว้)`)) return
+    setDeletingId(m.id)
+    setError('')
+    try {
+      await api.deleteMatch(m.id)
+      await refetchMatches()
+    } catch (err) {
+      setError(err instanceof ApiError ? err.message : 'ลบไม่สำเร็จ')
+    } finally {
+      setDeletingId(null)
     }
   }
 
@@ -183,14 +219,15 @@ export default function AdminMatching() {
                 <th className="px-5 py-3 font-semibold">ห้อง</th>
                 <th className="px-5 py-3 font-semibold">สถานะ</th>
                 <th className="px-5 py-3 font-semibold">หมายเหตุ</th>
+                <th className="px-5 py-3 font-semibold">จัดการ</th>
               </tr>
             </thead>
             <tbody className="divide-y divide-line">
               {loadingMatches && (
-                <tr><td colSpan={4} className="px-5 py-8 text-center text-muted text-sm">กำลังโหลด…</td></tr>
+                <tr><td colSpan={5} className="px-5 py-8 text-center text-muted text-sm">กำลังโหลด…</td></tr>
               )}
               {!loadingMatches && matchList.length === 0 && (
-                <tr><td colSpan={4} className="px-5 py-8 text-center text-muted text-sm">ยังไม่มีการจับคู่</td></tr>
+                <tr><td colSpan={5} className="px-5 py-8 text-center text-muted text-sm">ยังไม่มีการจับคู่</td></tr>
               )}
               {matchList.map((m) => (
                 <tr key={m.id} className="hover:bg-cream-50/40">
@@ -220,6 +257,34 @@ export default function AdminMatching() {
                   </td>
                   <td className="px-5 py-4 text-xs text-muted max-w-xs">
                     {m.agentNote || '—'}
+                  </td>
+                  <td className="px-5 py-4">
+                    <div className="flex items-center gap-2 whitespace-nowrap">
+                      {m.tenantLineId ? (
+                        <button
+                          type="button"
+                          onClick={() => notifyTenant(m)}
+                          disabled={notifyingId === m.id}
+                          className="inline-flex items-center gap-1 text-xs font-medium text-[#06C755] bg-[#06C755]/10 hover:bg-[#06C755]/20 rounded-md px-2 py-1 transition-colors disabled:opacity-50"
+                          title="ส่งข้อความแจ้งเตือนห้องนี้ให้ผู้เช่าทาง LINE"
+                        >
+                          <LineChat size={12} />
+                          {notifyingId === m.id ? 'กำลังส่ง…' : sentIds.has(m.id) ? 'ส่งแล้ว ✓' : 'แจ้งเตือน'}
+                        </button>
+                      ) : (
+                        <span className="text-xs text-muted" title="ผู้เช่ายังไม่ได้เชื่อม LINE — โทรแจ้งแทน">ไม่มี LINE</span>
+                      )}
+                      <button
+                        type="button"
+                        onClick={() => removeMatch(m)}
+                        disabled={deletingId === m.id}
+                        className="text-muted hover:text-ember-600 transition-colors disabled:opacity-50"
+                        title="ลบการจับคู่ (สำหรับกรณีจับคู่ผิด)"
+                        aria-label="ลบการจับคู่"
+                      >
+                        <Trash size={15} />
+                      </button>
+                    </div>
                   </td>
                 </tr>
               ))}
