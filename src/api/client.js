@@ -247,6 +247,7 @@ export const api = {
   // Admin — viewing confirmations (tenant bookings via the bot). A tenant taps a
   // bookable slot in Line → a 'requested' viewing; admin confirms/declines here.
   listAdminViewings: (params = {}) => request(`/admin/viewings${qs(params)}`),
+  createAdminViewing:(body)        => request('/admin/viewings', { method: 'POST', body: JSON.stringify(body) }),
   confirmViewing:    (id)          => request(`/admin/viewings/${id}/confirm`, { method: 'POST' }),
   declineViewing:    (id)          => request(`/admin/viewings/${id}/decline`, { method: 'POST' }),
   cancelAdminViewing:(id)          => request(`/admin/viewings/${id}/cancel`,  { method: 'POST' }),

@@ -9,10 +9,21 @@
 // The status tabs let admin see every viewing, not just the pending ones.
 
 import { useState } from 'react'
-import { Check, X } from '../icons.jsx'
+import { Check, X, Plus } from '../icons.jsx'
 import { ConfirmDialog } from '../Modal.jsx'
 import { useApi } from '../../hooks/useApi.js'
 import { api, ApiError } from '../../api/client.js'
+
+// datetime-local gives "YYYY-MM-DDTHH:MM" with no zone. The admin enters Bangkok
+// (ICT) time, so stamp +07:00 explicitly — otherwise the server (UTC) would read
+// it as UTC and the appointment would land 7h off.
+function toICT(local) {
+  if (!local) return ''
+  const withSecs = local.length === 16 ? `${local}:00` : local
+  return `${withSecs}+07:00`
+}
+
+const EMPTY_FORM = { tenantId: '', roomId: '', scheduledFor: '', note: '' }
 
 const TABS = [
   { value: 'requested', label: 'รอยืนยัน' },
@@ -50,6 +61,35 @@ export default function AdminViewings() {
   const [actingId, setActingId] = useState(null)      // viewing id with an in-flight action
   const [pending, setPending]   = useState(null)      // { type:'decline'|'cancel', viewing } awaiting confirm
   const [actionError, setActionError] = useState('')
+
+  // Admin-books-for-tenant form.
+  const { data: tenants } = useApi(() => api.listTenants(), [])
+  const { data: rooms }   = useApi(() => api.listRooms({ limit: 200 }), [])
+  const [showCreate, setShowCreate] = useState(false)
+  const [form, setForm]       = useState(EMPTY_FORM)
+  const [creating, setCreating] = useState(false)
+  const [createError, setCreateError] = useState('')
+
+  async function createAppointment() {
+    if (!form.tenantId || !form.roomId || !form.scheduledFor) return
+    setCreating(true); setCreateError('')
+    try {
+      await api.createAdminViewing({
+        tenantId:     Number(form.tenantId),
+        roomId:       Number(form.roomId),
+        scheduledFor: toICT(form.scheduledFor),
+        note:         form.note.trim() || undefined,
+      })
+      setForm(EMPTY_FORM)
+      setShowCreate(false)
+      setStatus('confirmed')   // jump to where the new (confirmed) appointment shows
+      await refetch()
+    } catch (err) {
+      setCreateError(err instanceof ApiError ? err.message : 'สร้างนัดชมไม่สำเร็จ')
+    } finally {
+      setCreating(false)
+    }
+  }
 
   async function confirm(id) {
     setActingId(id); setActionError('')
@@ -97,6 +137,68 @@ export default function AdminViewings() {
           ผู้เช่าจองเวลานัดชมผ่านแชทบอท แอดมินเป็นคนยืนยัน/ปฏิเสธ และยกเลิกได้หากผู้เช่านัดไม่ได้แล้ว
           — ทุกการเปลี่ยนสถานะ บอทจะแจ้งผู้เช่าทาง Line ให้อัตโนมัติ
         </p>
+      </div>
+
+      {/* Admin books an appointment for a tenant (on request) */}
+      <div className="mb-6">
+        {!showCreate ? (
+          <button type="button" onClick={() => { setShowCreate(true); setCreateError('') }} className="btn btn-outline btn-sm">
+            <Plus size={16} /> สร้างนัดชมให้ผู้เช่า
+          </button>
+        ) : (
+          <div className="card p-5">
+            <div className="flex items-center justify-between mb-4">
+              <h2 className="font-semibold text-navy-700 text-base">สร้างนัดชมให้ผู้เช่า</h2>
+              <button type="button" onClick={() => { setShowCreate(false); setForm(EMPTY_FORM); setCreateError('') }} className="btn btn-ghost btn-sm" aria-label="ปิด">
+                <X size={16} />
+              </button>
+            </div>
+            <p className="text-xs text-muted mb-4">
+              ใช้เมื่อผู้เช่าขอให้แอดมินนัดให้ — ระบบจะสร้างเป็น “ยืนยันแล้ว” และแจ้งผู้เช่าทาง Line ทันที
+            </p>
+            <div className="grid sm:grid-cols-2 gap-4">
+              <div>
+                <label className="label">ผู้เช่า</label>
+                <select className="input" value={form.tenantId} onChange={(e) => setForm({ ...form, tenantId: e.target.value })}>
+                  <option value="">— เลือกผู้เช่า —</option>
+                  {(tenants || []).map((t) => (
+                    <option key={t.id} value={t.id}>
+                      {t.full_name || `ผู้เช่า #${t.id}`}{t.phone ? ` · ${t.phone}` : ''}{t.line_id ? '' : ' · (ไม่มี Line)'}
+                    </option>
+                  ))}
+                </select>
+              </div>
+              <div>
+                <label className="label">ห้อง</label>
+                <select className="input" value={form.roomId} onChange={(e) => setForm({ ...form, roomId: e.target.value })}>
+                  <option value="">— เลือกห้อง —</option>
+                  {(rooms || []).map((r) => (
+                    <option key={r.id} value={r.id}>
+                      {r.title} · ฿{Number(r.price || r.monthlyRent || 0).toLocaleString('en-US')}
+                    </option>
+                  ))}
+                </select>
+              </div>
+              <div>
+                <label className="label">วันและเวลา</label>
+                <input type="datetime-local" className="input" value={form.scheduledFor} onChange={(e) => setForm({ ...form, scheduledFor: e.target.value })} />
+              </div>
+              <div>
+                <label className="label">หมายเหตุ (ไม่บังคับ)</label>
+                <input className="input" value={form.note} onChange={(e) => setForm({ ...form, note: e.target.value })} placeholder="เช่น ลูกค้าขอนัดช่วงเย็น" />
+              </div>
+            </div>
+            {createError && <div className="mt-3 text-ember-700 text-sm">{createError}</div>}
+            <button
+              type="button"
+              onClick={createAppointment}
+              disabled={creating || !form.tenantId || !form.roomId || !form.scheduledFor}
+              className="btn btn-primary mt-4 disabled:opacity-50"
+            >
+              <Check size={16} /> {creating ? 'กำลังสร้าง…' : 'สร้างนัดชม (ยืนยันเลย)'}
+            </button>
+          </div>
+        )}
       </div>
 
       {/* Status filter tabs */}
