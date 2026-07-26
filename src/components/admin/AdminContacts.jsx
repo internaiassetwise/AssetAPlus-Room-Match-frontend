@@ -330,8 +330,8 @@ function LandlordDirectory({ filter }) {
                 <th className="px-5 py-3.5 font-semibold">เบอร์โทร</th>
                 <th className="px-5 py-3.5 font-semibold">Line</th>
                 <th className="px-5 py-3.5 font-semibold">ห้อง</th>
-                <th className="px-5 py-3.5 font-semibold">สถานะเชื่อม</th>
-                <th className="px-5 py-3.5 font-semibold w-20"></th>
+                <th className="px-5 py-3.5 font-semibold whitespace-nowrap">สถานะเชื่อม</th>
+                <th className="px-5 py-3.5 font-semibold text-right">จัดการ</th>
               </tr>
             </thead>
             <tbody className="divide-y divide-line">
@@ -364,7 +364,7 @@ function LandlordDirectory({ filter }) {
                     ) : <span className="text-xs text-muted">—</span>}
                   </td>
                   <td className="px-5 py-4"><LineBadge lineId={l.lineId} /></td>
-                  <td className="px-5 py-4 text-sm text-navy-700">
+                  <td className="px-5 py-4 text-sm text-navy-700 whitespace-nowrap">
                     {l.roomCount ?? 0}
                     {(l.availableRoomCount ?? 0) > 0 && (
                       <span className="text-xs text-emerald-600"> ({l.availableRoomCount} ว่าง)</span>
@@ -372,26 +372,27 @@ function LandlordDirectory({ filter }) {
                   </td>
                   <td className="px-5 py-4">
                     {l.lineId ? (
-                      <span className="inline-block px-2 py-0.5 text-xs rounded-full border bg-emerald-50 text-emerald-700 border-emerald-200">เชื่อมแล้ว</span>
+                      <span className="inline-block whitespace-nowrap px-2 py-0.5 text-xs rounded-full border bg-emerald-50 text-emerald-700 border-emerald-200">เชื่อมแล้ว</span>
                     ) : (
-                      <span className="inline-block px-2 py-0.5 text-xs rounded-full border bg-amber-50 text-amber-700 border-amber-200">ยังไม่เชื่อม</span>
+                      <span className="inline-block whitespace-nowrap px-2 py-0.5 text-xs rounded-full border bg-amber-50 text-amber-700 border-amber-200">ยังไม่เชื่อม</span>
                     )}
                   </td>
                   <td className="px-5 py-4">
-                    <div className="flex items-center gap-3">
+                    <div className="flex items-center justify-end gap-4 whitespace-nowrap">
                       <button onClick={() => generateClaimLink(l, !!l.lineId)} disabled={linkingId === l.id}
-                        className="inline-flex items-center gap-1 text-xs font-medium text-[#06C755] hover:text-[#05a648] transition-colors disabled:opacity-50"
+                        className="inline-flex items-center gap-1 text-xs font-medium text-[#06C755] hover:text-[#05a648] transition-colors disabled:opacity-50 whitespace-nowrap"
                         title={l.lineId ? 'ออกลิงก์เชื่อม LINE ใหม่ (เปลี่ยนบัญชี)' : 'สร้างลิงก์ให้เจ้าของห้องเชื่อม LINE'}>
-                        <LineChat size={12} /> {linkingId === l.id ? 'กำลังสร้าง…' : (l.lineId ? 'ออกลิงก์ใหม่' : 'ลิงก์เชื่อม')}
+                        <LineChat size={12} /> {linkingId === l.id ? 'กำลังสร้าง…' : (l.lineId ? 'ลิงก์ใหม่' : 'ลิงก์เชื่อม')}
                       </button>
                       <button onClick={() => openEdit(l)}
-                        className="inline-flex items-center gap-1 text-xs text-muted hover:text-navy-700 transition-colors">
+                        className="inline-flex items-center gap-1 text-xs text-muted hover:text-navy-700 transition-colors whitespace-nowrap"
+                        title="แก้ไขข้อมูล">
                         <Pencil size={12} /> แก้ไข
                       </button>
                       <button onClick={() => removeLandlord(l)} disabled={deletingId === l.id}
-                        className="inline-flex items-center gap-1 text-xs text-muted hover:text-ember-600 transition-colors disabled:opacity-50"
-                        title="ลบบัญชีเจ้าของห้อง">
-                        <Trash size={12} />
+                        className="text-muted hover:text-ember-600 transition-colors disabled:opacity-50 shrink-0"
+                        title="ลบบัญชีเจ้าของห้อง" aria-label="ลบบัญชีเจ้าของห้อง">
+                        <Trash size={14} />
                       </button>
                     </div>
                   </td>
