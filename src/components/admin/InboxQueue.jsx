@@ -88,6 +88,7 @@ export default function InboxQueue() {
     const f = filter.trim().toLowerCase()
     if (!f) return items
     return items.filter((it) => {
+      if ((it.userName || '').toLowerCase().includes(f)) return true
       if ((it.lineUserId || '').toLowerCase().includes(f)) return true
       if ((it.summary || '').toLowerCase().includes(f)) return true
       const body = payloadText(it.reason, it.originalPayload).toLowerCase()
@@ -199,7 +200,7 @@ export default function InboxQueue() {
           <Search size={18} className="text-muted shrink-0" />
           <input
             value={filter} onChange={(e) => setFilter(e.target.value)}
-            placeholder="ค้นหาจาก Line ID / เนื้อหา"
+            placeholder="ค้นหาจากชื่อ / Line ID / เนื้อหา"
             className="bg-transparent outline-none text-sm w-full placeholder:text-muted"
           />
         </div>
@@ -218,7 +219,7 @@ export default function InboxQueue() {
             <thead className="bg-navy-50/60 border-b border-line text-xs uppercase tracking-wider text-muted">
               <tr>
                 <th className="px-5 py-3.5 font-semibold">ประเภท</th>
-                <th className="px-5 py-3.5 font-semibold">Line ID</th>
+                <th className="px-5 py-3.5 font-semibold">ผู้ใช้</th>
                 <th className="px-5 py-3.5 font-semibold">เนื้อหา</th>
                 <th className="px-5 py-3.5 font-semibold">สถานะ</th>
                 <th className="px-5 py-3.5 font-semibold">เวลา</th>
@@ -252,8 +253,8 @@ export default function InboxQueue() {
                       {REASON_LABEL[it.reason] || it.reason}
                     </span>
                   </td>
-                  <td className="px-5 py-4 text-xs font-mono text-navy-700 whitespace-nowrap">
-                    {(it.lineUserId || '').slice(0, 8)}…
+                  <td className="px-5 py-4 text-sm text-navy-700 whitespace-nowrap">
+                    {it.userName || <span className="text-muted">{`${(it.lineUserId || '').slice(0, 8)}…`}</span>}
                   </td>
                   <td className="px-5 py-4 text-sm text-navy-700 max-w-md">
                     <span className="line-clamp-2">{it.summary || payloadText(it.reason, it.originalPayload) || '—'}</span>
@@ -308,8 +309,9 @@ export default function InboxQueue() {
             <div className="flex-1 overflow-y-auto p-6 space-y-4">
               <div className="grid grid-cols-2 gap-4">
                 <div>
-                  <div className="text-xs uppercase text-muted mb-1">Line user id</div>
-                  <div className="font-mono text-xs text-navy-700 break-all">{selected.lineUserId}</div>
+                  <div className="text-xs uppercase text-muted mb-1">ผู้ใช้</div>
+                  <div className="text-sm font-medium text-navy-700">{selected.userName || 'ไม่ทราบชื่อ'}</div>
+                  <div className="font-mono text-[11px] text-muted break-all mt-0.5">{selected.lineUserId}</div>
                 </div>
                 <div>
                   <div className="text-xs uppercase text-muted mb-1">ส่งเมื่อ</div>
