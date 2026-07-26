@@ -23,7 +23,25 @@ function toICT(local) {
   return `${withSecs}+07:00`
 }
 
-const EMPTY_FORM = { tenantId: '', roomId: '', scheduledFor: '', note: '' }
+const EMPTY_FORM = { tenantId: '', roomId: '', slotId: '', customDate: '', customTime: '', note: '' }
+
+// Sales hours Mon–Sat 09:00–18:00 → bookable start times, on the hour.
+const HOUR_CHIPS = ['09:00', '10:00', '11:00', '12:00', '13:00', '14:00', '15:00', '16:00', '17:00']
+
+// Today (Bangkok) as YYYY-MM-DD, for the custom date input's min.
+function todayICT() {
+  return new Date().toLocaleDateString('en-CA', { timeZone: 'Asia/Bangkok' })
+}
+// True if the given YYYY-MM-DD is a Sunday (sales closed).
+function isSunday(ymd) {
+  if (!ymd) return false
+  // Parse as local midday to avoid tz roll; weekday is date-only so it's stable.
+  return new Date(`${ymd}T12:00:00`).getDay() === 0
+}
+function fmtSlot(iso) {
+  const d = new Date(iso)
+  return isNaN(d.getTime()) ? iso : d.toLocaleString('th-TH', { weekday: 'short', day: 'numeric', month: 'short', hour: '2-digit', minute: '2-digit' })
+}
 
 const TABS = [
   { value: 'requested', label: 'รอยืนยัน' },
@@ -69,18 +87,29 @@ export default function AdminViewings() {
   const [form, setForm]       = useState(EMPTY_FORM)
   const [creating, setCreating] = useState(false)
   const [createError, setCreateError] = useState('')
+  const [useCustom, setUseCustom] = useState(false)
+
+  // Open slots for the selected room — the easy click-to-pick path.
+  const { data: roomSlots, loading: slotsLoading } = useApi(
+    () => (form.roomId ? api.listRoomSlots(form.roomId) : Promise.resolve([])),
+    [form.roomId],
+  )
+  const slots = Array.isArray(roomSlots) ? roomSlots : []
+  const customReady = form.customDate && form.customTime && !isSunday(form.customDate)
+  const canCreate = !!(form.tenantId && form.roomId && (form.slotId || (useCustom && customReady)))
+
+  function pickSlot(id) { setForm((f) => ({ ...f, slotId: id, customDate: '', customTime: '' })); setUseCustom(false) }
+  function resetCreate() { setForm(EMPTY_FORM); setUseCustom(false); setCreateError('') }
 
   async function createAppointment() {
-    if (!form.tenantId || !form.roomId || !form.scheduledFor) return
+    if (!canCreate) return
     setCreating(true); setCreateError('')
     try {
-      await api.createAdminViewing({
-        tenantId:     Number(form.tenantId),
-        roomId:       Number(form.roomId),
-        scheduledFor: toICT(form.scheduledFor),
-        note:         form.note.trim() || undefined,
-      })
-      setForm(EMPTY_FORM)
+      const body = { tenantId: Number(form.tenantId), roomId: Number(form.roomId), note: form.note.trim() || undefined }
+      if (form.slotId) body.slotId = Number(form.slotId)
+      else body.scheduledFor = toICT(`${form.customDate}T${form.customTime}`)
+      await api.createAdminViewing(body)
+      resetCreate()
       setShowCreate(false)
       setStatus('confirmed')   // jump to where the new (confirmed) appointment shows
       await refetch()
@@ -149,7 +178,7 @@ export default function AdminViewings() {
           <div className="card p-5">
             <div className="flex items-center justify-between mb-4">
               <h2 className="font-semibold text-navy-700 text-base">สร้างนัดชมให้ผู้เช่า</h2>
-              <button type="button" onClick={() => { setShowCreate(false); setForm(EMPTY_FORM); setCreateError('') }} className="btn btn-ghost btn-sm" aria-label="ปิด">
+              <button type="button" onClick={() => { setShowCreate(false); resetCreate() }} className="btn btn-ghost btn-sm" aria-label="ปิด">
                 <X size={16} />
               </button>
             </div>
@@ -170,7 +199,11 @@ export default function AdminViewings() {
               </div>
               <div>
                 <label className="label">ห้อง</label>
-                <select className="input" value={form.roomId} onChange={(e) => setForm({ ...form, roomId: e.target.value })}>
+                <select
+                  className="input"
+                  value={form.roomId}
+                  onChange={(e) => { setForm({ ...EMPTY_FORM, tenantId: form.tenantId, roomId: e.target.value, note: form.note }); setUseCustom(false) }}
+                >
                   <option value="">— เลือกห้อง —</option>
                   {(rooms || []).map((r) => (
                     <option key={r.id} value={r.id}>
@@ -179,20 +212,96 @@ export default function AdminViewings() {
                   ))}
                 </select>
               </div>
-              <div>
-                <label className="label">วันและเวลา</label>
-                <input type="datetime-local" className="input" value={form.scheduledFor} onChange={(e) => setForm({ ...form, scheduledFor: e.target.value })} />
-              </div>
-              <div>
-                <label className="label">หมายเหตุ (ไม่บังคับ)</label>
-                <input className="input" value={form.note} onChange={(e) => setForm({ ...form, note: e.target.value })} placeholder="เช่น ลูกค้าขอนัดช่วงเย็น" />
-              </div>
             </div>
+
+            {/* Time picker — click an open slot, or type a custom time (9:00-18:00) */}
+            <div className="mt-4">
+              <label className="label">เลือกเวลานัด</label>
+              {!form.roomId ? (
+                <div className="text-sm text-muted">เลือกห้องก่อนเพื่อดูช่วงเวลาที่เปิดจอง</div>
+              ) : slotsLoading ? (
+                <div className="text-sm text-muted">กำลังโหลดช่วงเวลา…</div>
+              ) : (
+                <>
+                  {slots.length > 0 ? (
+                    <div className="flex flex-wrap gap-2">
+                      {slots.map((s) => {
+                        const active = String(form.slotId) === String(s.id)
+                        return (
+                          <button
+                            key={s.id}
+                            type="button"
+                            onClick={() => pickSlot(s.id)}
+                            className={`px-3 py-2 rounded-lg text-sm font-medium border transition-colors ${
+                              active ? 'bg-navy-700 text-white border-navy-700' : 'bg-white text-navy-700 border-line hover:bg-navy-50'
+                            }`}
+                          >
+                            {fmtSlot(s.startsAt)}
+                          </button>
+                        )
+                      })}
+                    </div>
+                  ) : (
+                    <div className="text-sm text-muted">ห้องนี้ยังไม่มีช่วงเวลาที่เปิดจอง — ระบุเวลาเองได้ด้านล่าง</div>
+                  )}
+
+                  <button
+                    type="button"
+                    onClick={() => { setUseCustom((v) => !v); setForm((f) => ({ ...f, slotId: '' })) }}
+                    className="mt-3 text-xs font-medium text-navy-600 hover:text-navy-800 underline"
+                  >
+                    {useCustom ? 'ใช้ช่วงเวลาที่เปิดจองแทน' : 'หรือระบุเวลาเอง (จันทร์-เสาร์ 9:00-18:00)'}
+                  </button>
+
+                  {useCustom && (
+                    <div className="mt-3 grid sm:grid-cols-2 gap-3">
+                      <div>
+                        <label className="label">วันที่</label>
+                        <input
+                          type="date"
+                          className="input"
+                          min={todayICT()}
+                          value={form.customDate}
+                          onChange={(e) => setForm({ ...form, customDate: e.target.value, slotId: '' })}
+                        />
+                        {isSunday(form.customDate) && <div className="mt-1 text-xs text-ember-700">ปิดทำการวันอาทิตย์</div>}
+                      </div>
+                      <div>
+                        <label className="label">เวลา</label>
+                        <div className="flex flex-wrap gap-2">
+                          {HOUR_CHIPS.map((h) => {
+                            const active = form.customTime === h
+                            return (
+                              <button
+                                key={h}
+                                type="button"
+                                onClick={() => setForm({ ...form, customTime: h, slotId: '' })}
+                                className={`px-2.5 py-1.5 rounded-lg text-sm font-medium border transition-colors ${
+                                  active ? 'bg-navy-700 text-white border-navy-700' : 'bg-white text-navy-700 border-line hover:bg-navy-50'
+                                }`}
+                              >
+                                {h}
+                              </button>
+                            )
+                          })}
+                        </div>
+                      </div>
+                    </div>
+                  )}
+                </>
+              )}
+            </div>
+
+            <div className="mt-4">
+              <label className="label">หมายเหตุ (ไม่บังคับ)</label>
+              <input className="input" value={form.note} onChange={(e) => setForm({ ...form, note: e.target.value })} placeholder="เช่น ลูกค้าขอนัดช่วงเย็น" />
+            </div>
+
             {createError && <div className="mt-3 text-ember-700 text-sm">{createError}</div>}
             <button
               type="button"
               onClick={createAppointment}
-              disabled={creating || !form.tenantId || !form.roomId || !form.scheduledFor}
+              disabled={creating || !canCreate}
               className="btn btn-primary mt-4 disabled:opacity-50"
             >
               <Check size={16} /> {creating ? 'กำลังสร้าง…' : 'สร้างนัดชม (ยืนยันเลย)'}
