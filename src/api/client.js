@@ -249,4 +249,5 @@ export const api = {
   listAdminViewings: (params = {}) => request(`/admin/viewings${qs(params)}`),
   confirmViewing:    (id)          => request(`/admin/viewings/${id}/confirm`, { method: 'POST' }),
   declineViewing:    (id)          => request(`/admin/viewings/${id}/decline`, { method: 'POST' }),
+  cancelAdminViewing:(id)          => request(`/admin/viewings/${id}/cancel`,  { method: 'POST' }),
 }

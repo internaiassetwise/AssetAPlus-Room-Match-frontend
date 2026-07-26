@@ -105,11 +105,12 @@ export default function ViewingCard({ viewing, role, onUpdate }) {
           </button>
         </div>
       )}
+      {/* Tenants no longer self-cancel — cancellations go through admin (Line).
+          A tenant who needs to cancel contacts admin, who cancels it in
+          /admin/viewings. Landlord confirm/decline above is unchanged. */}
       {role === 'tenant' && (viewing.status === 'requested' || viewing.status === 'confirmed') && (
-        <div className="mt-4">
-          <button onClick={() => patch({ status: 'cancelled' })} disabled={busy} className="btn btn-outline btn-sm w-full disabled:opacity-60">
-            <X size={14} /> ยกเลิกการนัด
-          </button>
+        <div className="mt-4 text-xs text-muted">
+          ต้องการยกเลิกหรือเลื่อนนัด? ทักหาแอดมินทาง Line ได้เลยค่ะ
         </div>
       )}
     </div>
