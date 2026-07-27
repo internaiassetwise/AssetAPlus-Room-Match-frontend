@@ -44,6 +44,13 @@ export function RoomCard({ room, onOpen }) {
         <h3 className="mt-2 font-bold text-navy-700 text-xl leading-tight">
           {room.title}
         </h3>
+        {/* Building / floor — distinguishes rooms in the same project without
+            exposing the internal room code. */}
+        {(room.building || room.floor != null) && (
+          <div className="mt-1 text-xs text-muted">
+            {[room.building && `อาคาร ${room.building}`, room.floor != null && `ชั้น ${room.floor}`].filter(Boolean).join(' · ')}
+          </div>
+        )}
         <div className="mt-4 flex items-center gap-5 text-sm text-muted">
           <span className="inline-flex items-center gap-1.5"><Bed size={16} /> {room.beds} นอน</span>
           <span className="inline-flex items-center gap-1.5"><Bath size={16} /> {room.baths} น้ำ</span>
