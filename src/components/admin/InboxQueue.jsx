@@ -44,6 +44,18 @@ function fmtDate(iso) {
   return isNaN(d.getTime()) ? iso : d.toLocaleString('th-TH', { dateStyle: 'short', timeStyle: 'short' })
 }
 
+// Bubble stamp inside a transcript. Same-day messages read better as just the
+// clock; anything older still needs its date.
+function fmtTime(iso) {
+  if (!iso) return ''
+  const d = new Date(iso)
+  if (isNaN(d.getTime())) return ''
+  const sameDay = d.toDateString() === new Date().toDateString()
+  return d.toLocaleString('th-TH', sameDay
+    ? { timeStyle: 'short' }
+    : { dateStyle: 'short', timeStyle: 'short' })
+}
+
 // Render the escalated payload as a readable block by reason.
 function payloadText(reason, p) {
   if (!p || typeof p !== 'object') return ''
@@ -95,17 +107,18 @@ export default function InboxQueue() {
       (it.summary    || '').toLowerCase().includes(f))
   }, [items, filter])
 
-  // selected = { lineUserId, userName, history, ticket|null }
-  // history = the bot transcript; ticket = the admin_queue row once one exists.
+  // selected = { lineUserId, userName, transcript, ticket|null }
+  // transcript = every message in/out, rebuilt from the LINE logs (see the
+  // server's loadTranscript); ticket = the admin_queue row once one exists.
   const selectedUserRef = useRef(null)
   selectedUserRef.current = selected?.lineUserId ?? null
 
   async function openConversation(c) {
     setReplyText(''); setSendError('')
-    setSelected({ lineUserId: c.lineUserId, userName: c.userName, history: [], ticket: null })
+    setSelected({ lineUserId: c.lineUserId, userName: c.userName, transcript: [], ticket: null })
     try {
       const d = await api.getConversation(c.lineUserId)
-      setSelected({ lineUserId: c.lineUserId, userName: c.userName, history: d.history || [], ticket: d.ticket || null })
+      setSelected({ lineUserId: c.lineUserId, userName: c.userName, transcript: d.transcript || [], ticket: d.ticket || null })
     } catch { /* keep the shell open; the panel shows an empty transcript */ }
   }
 
@@ -115,7 +128,7 @@ export default function InboxQueue() {
     try {
       const d = await api.getConversation(uid)
       setSelected((s) => (s && s.lineUserId === uid
-        ? { ...s, history: d.history || [], ticket: d.ticket || null }
+        ? { ...s, transcript: d.transcript || [], ticket: d.ticket || null }
         : s))
     } catch { /* keep last */ }
   }
@@ -189,7 +202,6 @@ export default function InboxQueue() {
     return () => window.removeEventListener('keydown', onKey)
   }, [selected])
 
-  const thread = selected?.ticket?.thread ?? []
   const busy = sending || takingOver || releasing || resolving || claiming
   const isLive = !!selected?.ticket?.isLive
 
@@ -347,48 +359,31 @@ export default function InboxQueue() {
                 </div>
               )}
 
-              {/* Bot transcript — what the customer and the bot already said. */}
+              {/* One merged thread — every message in and out, exactly as the
+                  customer sees it in LINE. Bot replies, admin replies, stickers
+                  and the takeover notices all come from the same source, so the
+                  panel can no longer disagree with the customer's screen. */}
               <div>
-                <div className="text-xs uppercase text-muted mb-2">บทสนทนากับบอท</div>
-                {selected.history.length === 0 ? (
-                  <div className="text-sm text-muted">ยังไม่มีบทสนทนา หรือเลย 24 ชม. แล้ว</div>
+                <div className="text-xs uppercase text-muted mb-2">บทสนทนาทั้งหมด</div>
+                {selected.transcript.length === 0 ? (
+                  <div className="text-sm text-muted">ยังไม่มีบทสนทนา</div>
                 ) : (
                   <div className="space-y-2">
-                    {selected.history.map((m, i) => (
-                      <div key={i} className={`flex ${m.role === 'assistant' ? 'justify-end' : 'justify-start'}`}>
+                    {selected.transcript.map((m, i) => (
+                      <div key={i} className={`flex ${m.direction === 'out' ? 'justify-end' : 'justify-start'}`}>
                         <div className={`max-w-[80%] px-3 py-2 rounded-2xl text-sm whitespace-pre-wrap ${
-                          m.role === 'assistant'
+                          m.direction === 'out'
                             ? 'bg-navy-50 text-navy-700 rounded-br-sm border border-navy-100'
                             : 'bg-cream-50 text-navy-700 rounded-bl-sm border border-line'
                         }`}>
-                          {m.content}
+                          {m.text}
+                          <div className="text-[10px] mt-1 text-muted">{fmtTime(m.ts)}</div>
                         </div>
                       </div>
                     ))}
                   </div>
                 )}
               </div>
-
-              {/* Live thread — messages exchanged after admin stepped in. */}
-              {thread.length > 0 && (
-                <div>
-                  <div className="text-xs uppercase text-muted mb-2">หลังแอดมินรับเรื่อง</div>
-                  <div className="space-y-2">
-                    {thread.map((m, i) => (
-                      <div key={i} className={`flex ${m.role === 'admin' ? 'justify-end' : 'justify-start'}`}>
-                        <div className={`max-w-[80%] px-3 py-2 rounded-2xl text-sm whitespace-pre-wrap ${
-                          m.role === 'admin'
-                            ? 'bg-navy-600 text-white rounded-br-sm'
-                            : 'bg-cream-50 text-navy-700 rounded-bl-sm border border-line'
-                        }`}>
-                          {m.text}
-                          <div className={`text-[10px] mt-1 ${m.role === 'admin' ? 'text-navy-100' : 'text-muted'}`}>{fmtDate(m.ts)}</div>
-                        </div>
-                      </div>
-                    ))}
-                  </div>
-                </div>
-              )}
 
               {sendError && <div className="text-sm text-ember-700">{sendError}</div>}
             </div>
