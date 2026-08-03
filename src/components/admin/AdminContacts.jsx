@@ -235,7 +235,21 @@ function TenantDirectory({ filter }) {
 
 // ─────────────────────────────── Landlords ──────────────────────────────────
 
-const EMPTY_LANDLORD = { fullName: '', phone: '', email: '', lineId: '', note: '' }
+// contact* = who to actually call, when that is not the owner (a child
+// registering for a parent, a spouse, an agent). Blank = owner is the contact.
+const EMPTY_LANDLORD = {
+  fullName: '', phone: '', email: '', lineId: '', note: '',
+  contactName: '', contactPhone: '', contactRelation: '',
+}
+
+const RELATIONS = [
+  ['',         '— เจ้าของห้องติดต่อเอง —'],
+  ['child',    'ลูก'],
+  ['spouse',   'คู่สมรส'],
+  ['relative', 'ญาติ'],
+  ['agent',    'นายหน้า'],
+  ['other',    'อื่นๆ'],
+]
 
 function LandlordDirectory({ filter }) {
   const { data: landlords, loading, refetch } = useApi(() => api.listLandlords(), [])
@@ -261,7 +275,9 @@ function LandlordDirectory({ filter }) {
   function openEdit(l) {
     setError('')
     setForm({ mode: 'edit', id: l.id, fullName: l.fullName || '', phone: l.phone || '',
-              email: l.email || '', lineId: l.lineId || '', note: l.note || '' })
+              email: l.email || '', lineId: l.lineId || '', note: l.note || '',
+              contactName: l.contactName || '', contactPhone: l.contactPhone || '',
+              contactRelation: l.contactRelation || '' })
   }
 
   async function removeLandlord(l) {
@@ -308,6 +324,10 @@ function LandlordDirectory({ filter }) {
       email:    form.email.trim()  || null,
       lineId:   form.lineId.trim() || null,
       note:     form.note.trim()   || null,
+      // '' would fail the server's enum/length checks — null clears the field.
+      contactName:     form.contactName.trim()  || null,
+      contactPhone:    form.contactPhone.trim() || null,
+      contactRelation: form.contactRelation     || null,
     }
     try {
       if (form.mode === 'create') await api.createLandlord(payload)
@@ -438,6 +458,36 @@ function LandlordDirectory({ filter }) {
               <textarea className="input resize-none" rows={2} value={form.note}
                 onChange={(e) => setForm({ ...form, note: e.target.value })} placeholder="ไม่บังคับ" />
             </Field>
+
+            {/* Contact person. Folded away because most owners are their own
+                contact — three always-visible fields would push the save button
+                below the fold on a phone for the common case. */}
+            <details className="rounded-lg border border-dashed border-line bg-cream-50/60 px-3 py-2">
+              <summary className="cursor-pointer text-sm font-semibold text-navy-700 min-h-11 flex items-center">
+                ผู้ติดต่อแทน {form.contactName && <span className="ml-2 font-normal text-muted">· {form.contactName}</span>}
+              </summary>
+              <p className="mt-1 mb-2 text-xs text-muted">
+                กรอกเมื่อคนที่รับสายไม่ใช่เจ้าของห้อง เช่น ลูกลงทะเบียนให้พ่อแม่ — เว้นว่างได้ถ้าเจ้าของติดต่อเอง
+              </p>
+              <div className="space-y-3">
+                <Field label="ชื่อผู้ติดต่อ">
+                  <input className="input" value={form.contactName}
+                    onChange={(e) => setForm({ ...form, contactName: e.target.value })}
+                    placeholder="ชื่อคนที่ให้ติดต่อกลับ" />
+                </Field>
+                <Field label="เบอร์ผู้ติดต่อ">
+                  <input className="input" inputMode="tel" value={form.contactPhone}
+                    onChange={(e) => setForm({ ...form, contactPhone: e.target.value })}
+                    placeholder="เบอร์ที่โทรติดจริง" />
+                </Field>
+                <Field label="ความสัมพันธ์กับเจ้าของห้อง">
+                  <select className="input" value={form.contactRelation}
+                    onChange={(e) => setForm({ ...form, contactRelation: e.target.value })}>
+                    {RELATIONS.map(([v, label]) => <option key={v} value={v}>{label}</option>)}
+                  </select>
+                </Field>
+              </div>
+            </details>
           </div>
           {error && <div className="mt-3 text-ember-700 text-sm">{error}</div>}
           <button type="button" onClick={save} disabled={saving || !canSave}
