@@ -19,6 +19,7 @@ import AdminRoomSlots     from './components/admin/AdminRoomSlots.jsx'
 import AdminInbox from './components/admin/AdminInbox.jsx'
 import AdminMatching from './components/admin/AdminMatching.jsx'
 import AdminContacts from './components/admin/AdminContacts.jsx'
+import AdminDashboard from './components/admin/AdminDashboard.jsx'
 import StickyLineCTA    from './components/StickyLineCTA.jsx'
 
 // Public-facing user pages
@@ -77,7 +78,8 @@ export default function App() {
 
             <Route path="/admin/login" element={<AdminLogin />} />
             <Route element={<RequireAuth><AdminLayout /></RequireAuth>}>
-              <Route path="/admin"               element={<AdminRoomsList />} />
+              <Route path="/admin"               element={<AdminDashboard />} />
+              <Route path="/admin/rooms"         element={<AdminRoomsList />} />
               <Route path="/admin/rooms/new"     element={<AdminRoomForm mode="create" />} />
               <Route path="/admin/rooms/:id/edit" element={<AdminRoomForm mode="edit" />} />
               <Route path="/admin/rooms/:id/slots" element={<AdminRoomSlots />} />

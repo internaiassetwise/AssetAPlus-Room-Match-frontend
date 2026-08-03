@@ -13,7 +13,7 @@
 // twice the viewport wide on a phone, sidebar included.
 
 import { Outlet, NavLink, Link, useNavigate } from 'react-router-dom'
-import { Plus, LogOut, ChevronRight, Bot, Inbox, Chart, Users } from '../icons.jsx'
+import { Plus, LogOut, ChevronRight, Bot, Inbox, Chart, Users, Home } from '../icons.jsx'
 import Logo from '../Logo.jsx'
 import { useAuth } from '../../contexts/AuthContext.jsx'
 import { useApi } from '../../hooks/useApi.js'
@@ -22,9 +22,15 @@ import { api } from '../../api/client.js'
 /** Nav model — rendered as a sidebar on desktop and as chips on mobile. */
 const SECTIONS = [
   {
+    title: 'ภาพรวม',
+    items: [
+      { to: '/admin', end: true, label: 'ภาพรวม', short: 'ภาพรวม', Icon: Chart },
+    ],
+  },
+  {
     title: 'ห้องเช่า',
     items: [
-      { to: '/admin', end: true, label: 'ห้องทั้งหมด', short: 'ห้องทั้งหมด', Icon: null },
+      { to: '/admin/rooms', label: 'ห้องทั้งหมด', short: 'ห้องทั้งหมด', Icon: Home },
       { to: '/admin/rooms/new', label: 'เพิ่มห้องใหม่', short: 'เพิ่มห้อง', Icon: Plus },
       { to: '/admin/pending-listings', label: 'รออนุมัติ', short: 'รออนุมัติ', emoji: '⏳', badge: 'pending' },
       { to: '/admin/viewings', label: 'นัดชมรอยืนยัน', short: 'นัดชม', emoji: '📅' },
