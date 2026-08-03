@@ -1,7 +1,7 @@
 // src/components/admin/AdminRoomForm.jsx — Create + edit a single room.
 import { useState, useEffect, useMemo, useRef } from 'react'
 import { useNavigate, useParams, Link } from 'react-router-dom'
-import { ArrowRight, Home, ImagePlus, Trash, Camera } from '../icons.jsx'
+import { ArrowRight, Home, ImagePlus, Trash, Camera, CheckCircle2, X } from '../icons.jsx'
 import { useApi } from '../../hooks/useApi.js'
 import { api, ApiError } from '../../api/client.js'
 import { ZONE_NAMES, projectsForZone } from '../../data/projects.js'
@@ -67,6 +67,10 @@ export default function AdminRoomForm({ mode }) {
 
   const [form, setForm]     = useState(EMPTY_FORM)
   const [status, setStatus] = useState('idle')    // idle | sending | sent | error
+  // What to say once the save lands. Null until then. Saving used to redirect
+  // silently, so there was no moment that confirmed the edit actually went
+  // through — the admin just found themselves on another page.
+  const [saved, setSaved] = useState(null)   // { id, title, photoFailures }
   const [errors, setErrors] = useState({})
 
   // ── Photo manager state ────────────────────────────────────────────────
@@ -284,14 +288,20 @@ export default function AdminRoomForm({ mode }) {
       // 2. Upload any staged photos. Failures are surfaced but don't roll
       //    back the room write — the room exists either way, and the user
       //    can re-add photos via the edit page.
+      let photoFailures = 0
       if (stagedPhotos.length > 0 && targetId) {
-        const failures = await uploadStagedPhotos(targetId)
-        if (failures > 0) {
-          window.alert(`บันทึกห้องแล้ว แต่อัปโหลดรูปไม่สำเร็จ ${failures} จาก ${stagedPhotos.length} รูป — สามารถแก้ไขห้องเพื่อเพิ่มรูปใหม่ได้`)
-        }
+        photoFailures = await uploadStagedPhotos(targetId)
       }
       setStatus('sent')
-      navigate('/admin', { replace: true })
+      // Confirm, then let the admin choose where to go. Photo failures are
+      // reported here too rather than in a separate alert() that the redirect
+      // used to fire behind — one place, one message.
+      setSaved({
+        id: targetId,
+        title: body.projectName || body.title || 'ห้องนี้',
+        photoFailures,
+        photoTotal: stagedPhotos.length,
+      })
     } catch (err) {
       if (err instanceof ApiError && err.code === 'VALIDATION_ERROR' && Array.isArray(err.details)) {
         const fe = {}
@@ -308,8 +318,18 @@ export default function AdminRoomForm({ mode }) {
 
   return (
     <section>
+      {saved && (
+        <SavedModal
+          saved={saved}
+          isEdit={isEdit}
+          onBackToList={() => navigate('/admin/rooms', { replace: true })}
+          onViewRoom={() => navigate(`/rooms/${saved.id}`)}
+          onKeepEditing={() => setSaved(null)}
+        />
+      )}
+
       <div className="mb-7">
-        <Link to="/admin" className="text-sm text-muted hover:text-navy-700">← กลับไปรายการห้อง</Link>
+        <Link to="/admin/rooms" className="text-sm text-muted hover:text-navy-700">← กลับไปรายการห้อง</Link>
         <h1 className="mt-3 font-bold text-navy-700 text-3xl sm:text-4xl tracking-tight">
           {isEdit ? 'แก้ไขห้อง' : 'เพิ่มห้องใหม่'}
         </h1>
@@ -707,5 +727,62 @@ function Spinner() {
       className="inline-block w-3 h-3 mr-1 align-middle border-2 border-white/40 border-t-white rounded-full animate-spin"
       aria-hidden="true"
     />
+  )
+}
+
+/**
+ * Confirms a room save and asks where to go next.
+ *
+ * Saving used to redirect straight to the list, which left no moment that said
+ * "this worked" — and any photo failure arrived as a separate alert() fired
+ * behind the redirect. Both live here now, in one place.
+ */
+function SavedModal({ saved, isEdit, onBackToList, onViewRoom, onKeepEditing }) {
+  const partial = saved.photoFailures > 0
+  return (
+    <>
+      {/* Not dismissible by clicking away: this carries the only report of a
+          failed photo upload, so it should be read, not swiped past. */}
+      <div className="fixed inset-0 bg-navy-900/40 z-40" />
+      <div
+        role="dialog" aria-modal="true" aria-labelledby="saved-title"
+        className="fixed top-1/2 left-1/2 -translate-x-1/2 -translate-y-1/2 w-[calc(100%-2rem)] max-w-sm bg-white rounded-2xl shadow-2xl z-50 p-6"
+      >
+        <div className="flex items-start gap-3">
+          <span className={partial ? 'text-amber-500' : 'text-emerald-600'}>
+            <CheckCircle2 size={26} />
+          </span>
+          <div className="min-w-0">
+            <h3 id="saved-title" className="font-bold text-navy-700 text-lg">
+              {isEdit ? 'บันทึกการแก้ไขแล้ว' : 'เพิ่มห้องใหม่แล้ว'}
+            </h3>
+            <p className="mt-1 text-sm text-muted break-words">{saved.title}</p>
+          </div>
+        </div>
+
+        {partial && (
+          <div className="mt-4 rounded-lg bg-amber-50 border border-amber-200 px-3 py-2.5 text-sm text-amber-800">
+            ข้อมูลห้องบันทึกเรียบร้อย แต่อัปโหลดรูปไม่สำเร็จ {saved.photoFailures} จาก {saved.photoTotal} รูป
+            <div className="mt-1 text-xs">กด “แก้ไขต่อ” แล้วลองเพิ่มรูปใหม่อีกครั้งได้เลย</div>
+          </div>
+        )}
+
+        <div className="mt-5 space-y-2">
+          <button type="button" onClick={onBackToList} className="btn btn-primary w-full">
+            กลับไปรายการห้อง
+          </button>
+          <div className="flex gap-2">
+            <button type="button" onClick={onKeepEditing} className="btn btn-outline flex-1">
+              แก้ไขต่อ
+            </button>
+            {saved.id && (
+              <button type="button" onClick={onViewRoom} className="btn btn-outline flex-1">
+                ดูหน้าห้อง
+              </button>
+            )}
+          </div>
+        </div>
+      </div>
+    </>
   )
 }

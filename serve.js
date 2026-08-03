@@ -148,8 +148,19 @@ const server = http.createServer((req, res) => {
   }
 
   // API — proxied so the session cookie stays first-party (see header comment).
-  if (API_URL && (url.pathname === '/api' || url.pathname.startsWith('/api/'))) {
-    return proxyApi(req, res)
+  if (url.pathname === '/api' || url.pathname.startsWith('/api/')) {
+    if (API_URL) return proxyApi(req, res)
+    // No proxy target. Say so, loudly. Falling through to the SPA fallback
+    // below would answer every API call with 200 + index.html, so the app
+    // fails as "logged in but no data anywhere" with nothing in any log
+    // pointing at the cause — which is exactly how this was found.
+    return send(res, 502, JSON.stringify({
+      ok: false,
+      error: {
+        code: 'API_PROXY_NOT_CONFIGURED',
+        message: 'API_ORIGIN is not set on the frontend service, so /api is not proxied.',
+      },
+    }), { 'Content-Type': 'application/json; charset=utf-8' })
   }
 
   // Static asset?
