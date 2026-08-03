@@ -253,8 +253,17 @@ export default function InboxQueue() {
                       {REASON_LABEL[it.reason] || it.reason}
                     </span>
                   </td>
-                  <td className="px-5 py-4 text-sm text-navy-700 whitespace-nowrap">
-                    {it.userName || <span className="text-muted">{`${(it.lineUserId || '').slice(0, 8)}…`}</span>}
+                  <td className="px-5 py-4 whitespace-nowrap">
+                    {it.userName ? (
+                      <span className="text-sm text-navy-700">{it.userName}</span>
+                    ) : (
+                      // No name resolves when the user has blocked/removed the bot —
+                      // LINE answers 404 for their profile, so the id is all we have.
+                      <>
+                        <div className="text-sm text-muted">ไม่ทราบชื่อ</div>
+                        <div className="text-[11px] font-mono text-navy-300">{`${(it.lineUserId || '').slice(0, 10)}…`}</div>
+                      </>
+                    )}
                   </td>
                   <td className="px-5 py-4 text-sm text-navy-700 max-w-md">
                     <span className="line-clamp-2">{it.summary || payloadText(it.reason, it.originalPayload) || '—'}</span>
