@@ -145,6 +145,9 @@ export const api = {
 
   // Admin auth + rooms CRUD (requires session cookie)
   adminLogin:     (body)        => request('/auth/login',  { method: 'POST', body: JSON.stringify(body) }),
+  // Exchange the one-time code an SSO callback handed us for a session cookie on
+  // THIS origin — see server/src/auth/loginHandoff.js.
+  redeemLoginHandoff: (code)     => request('/auth/handoff', { method: 'POST', body: JSON.stringify({ code }) }),
   adminLogout:    ()            => request('/auth/logout', { method: 'POST' }),
   adminMe:        ()            => request('/auth/me'),
   createRoom:     (body)        => request('/rooms',       { method: 'POST', body: JSON.stringify(body) }),

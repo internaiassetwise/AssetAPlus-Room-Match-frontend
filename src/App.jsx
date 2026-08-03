@@ -28,6 +28,7 @@ import MyListingForm     from './pages/MyListingForm.jsx'
 import Inquiries         from './pages/Inquiries.jsx'
 import Viewings          from './pages/Viewings.jsx'
 import Dashboard         from './pages/Dashboard.jsx'
+import AuthHandoff       from './pages/AuthHandoff.jsx'
 import LoginPage         from './pages/LoginPage.jsx'
 import ContactAdminPage  from './pages/ContactAdminPage.jsx'
 
@@ -70,6 +71,9 @@ export default function App() {
             <Route path="/inquiries" element={
               <RequireLandlord><Inquiries /></RequireLandlord>
             } />
+
+            {/* Lands here straight after SSO — see pages/AuthHandoff.jsx */}
+            <Route path="/auth/handoff" element={<AuthHandoff />} />
 
             <Route path="/admin/login" element={<AdminLogin />} />
             <Route element={<RequireAuth><AdminLayout /></RequireAuth>}>
