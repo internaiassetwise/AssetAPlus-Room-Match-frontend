@@ -126,6 +126,9 @@ const qs = (params) => {
 export const api = {
   listRooms:    (params = {}) => request(`/rooms${qs(params)}`),
   getRoom:      (id)         => request(`/rooms/${id}`),
+  // The "ask about this room" LINE link — carries a signed tag so the message
+  // the customer sends arrives attached to this room. Public.
+  getRoomAskLink: (id)       => request(`/rooms/${id}/ask-link`),
   listZones:    ()           => request('/zones'),
   listReviews:  ()           => request('/reviews'),
   listStats:    ()           => request('/stats'),

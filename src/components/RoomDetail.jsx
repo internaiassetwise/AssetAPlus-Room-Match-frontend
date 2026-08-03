@@ -23,6 +23,11 @@ export default function RoomDetail() {
     [id],
   )
   const room = data || seed
+
+  // The room-specific LINE link. Null while loading or when LINE isn't
+  // configured; the button falls back to the plain OA link in both cases.
+  const { data: ask } = useApi(() => api.getRoomAskLink(id).catch(() => null), [id])
+  const askLink = ask?.available ? ask.url : null
   // Land at the top of the detail page. Without this, navigating from a
   // scrolled-down listing keeps the old scroll offset, which reads as a jump.
   useEffect(() => { window.scrollTo(0, 0) }, [id])
@@ -214,13 +219,18 @@ export default function RoomDetail() {
                   <a href="tel:021680000" className="btn btn-outline w-full">
                     <Phone size={16} /> โทร 02-168-0000
                   </a>
+                  {/* Opens LINE with the question already typed, carrying a
+                      signed tag for THIS room — so admin picks the chat up
+                      knowing which room it's about instead of having to ask.
+                      Falls back to the plain OA link if the server can't mint
+                      one (LINE unconfigured), never to a dead button. */}
                   <a
-                    href={LINE_OA_URL}
+                    href={askLink || LINE_OA_URL}
                     target="_blank"
                     rel="noreferrer noopener"
                     className="btn w-full bg-[#06C755] text-white hover:bg-[#05b34c]"
                   >
-                    <LineChat size={16} /> แชท Line {LINE_OA_DISPLAY}
+                    <LineChat size={16} /> {askLink ? 'สอบถามห้องนี้ทาง Line' : `แชท Line ${LINE_OA_DISPLAY}`}
                   </a>
                   <button onClick={() => navigate('/contact-admin?intent=list-a-room')} className="btn btn-ghost w-full">
                     อยากลงประกาศห้อง? <ArrowRight size={16} />

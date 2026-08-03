@@ -140,10 +140,10 @@ export default function InboxQueue() {
 
   async function openConversation(c) {
     setReplyText(''); setSendError('')
-    setSelected({ lineUserId: c.lineUserId, userName: c.userName, transcript: [], ticket: null })
+    setSelected({ lineUserId: c.lineUserId, userName: c.userName, transcript: [], ticket: null, room: null })
     try {
       const d = await api.getConversation(c.lineUserId)
-      setSelected({ lineUserId: c.lineUserId, userName: c.userName, transcript: d.transcript || [], ticket: d.ticket || null })
+      setSelected({ lineUserId: c.lineUserId, userName: c.userName, transcript: d.transcript || [], ticket: d.ticket || null, room: d.room || null })
     } catch { /* keep the shell open; the panel shows an empty transcript */ }
   }
 
@@ -153,7 +153,7 @@ export default function InboxQueue() {
     try {
       const d = await api.getConversation(uid)
       setSelected((s) => (s && s.lineUserId === uid
-        ? { ...s, transcript: d.transcript || [], ticket: d.ticket || null }
+        ? { ...s, transcript: d.transcript || [], ticket: d.ticket || null, room: d.room || null }
         : s))
     } catch { /* keep last */ }
   }
@@ -396,6 +396,28 @@ export default function InboxQueue() {
             </header>
 
             <div className="flex-1 overflow-y-auto p-6 space-y-4">
+              {/* Which room they tapped "สอบถามห้องนี้" on. The single most
+                  useful thing to know before replying, so it sits above
+                  everything else. Full room number here — this is admin-only. */}
+              {selected.room && (
+                <a
+                  href={`/admin/rooms/${selected.room.roomId}/edit`}
+                  target="_blank" rel="noreferrer"
+                  className="block rounded-lg border border-navy-200 bg-navy-50 px-3 py-2.5 hover:bg-navy-100 transition-colors"
+                >
+                  <div className="text-[11px] uppercase tracking-wider text-muted">สนใจห้องนี้</div>
+                  <div className="mt-0.5 text-sm font-semibold text-navy-700">
+                    {selected.room.title}
+                    {selected.room.roomCode && <span className="font-normal text-muted"> · ห้อง {selected.room.roomCode}</span>}
+                  </div>
+                  <div className="mt-0.5 text-xs text-muted">
+                    ฿{Number(selected.room.monthlyRent || 0).toLocaleString()}/เดือน
+                    {selected.room.zone && ` · ย่าน${selected.room.zone}`}
+                    {selected.room.status !== 'available' && ` · ${selected.room.status}`}
+                  </div>
+                </a>
+              )}
+
               {selected.ticket?.summary && (
                 <div>
                   <div className="text-xs uppercase text-muted mb-1">สรุปจากบอท</div>
