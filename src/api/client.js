@@ -245,6 +245,9 @@ export const api = {
 
   // Phase 5 — admin inbox over admin_queue (bot escalations). Reply is pushed
   // to the user's Line in-process by the server (no separate bot hop).
+  listConversations:   (params = {}) => request(`/admin/inbox/conversations${qs(params)}`),
+  getConversation:     (lineUserId)  => request(`/admin/inbox/conversations/${encodeURIComponent(lineUserId)}`),
+  claimConversation:   (lineUserId)  => request(`/admin/inbox/conversations/${encodeURIComponent(lineUserId)}/claim`, { method: 'POST' }),
   listAdminQueue:    (params = {}) => request(`/admin/inbox${qs(params)}`),
   getAdminQueue:     (id)          => request(`/admin/inbox/${id}`),
   replyAdminQueue:   (id, body)    => request(`/admin/inbox/${id}/reply`,   { method: 'POST', body: JSON.stringify(body) }),

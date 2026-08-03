@@ -64,8 +64,11 @@ function payloadText(reason, p) {
 }
 
 export default function InboxQueue() {
-  const [status, setStatus] = useState('open')
+  // 'all' | 'needs_admin' | 'bot' — the inbox now lists EVERY conversation, not
+  // just escalated tickets, because customers rarely know to press ติดต่อแอดมิน.
+  const [status, setStatus] = useState('all')
   const [filter, setFilter] = useState('')
+  const [claiming, setClaiming] = useState(false)
   const [selected, setSelected] = useState(null)
   const [replyText, setReplyText] = useState('')
   const [sending, setSending] = useState(false)
@@ -74,51 +77,67 @@ export default function InboxQueue() {
   const [resolving, setResolving] = useState(false)
   const [sendError, setSendError] = useState('')
 
-  const apiStatus = status === 'all' ? undefined : status
   const { data, loading, error, refetch } = useApi(
-    () => api.listAdminQueue({ status: apiStatus, limit: 100 }),
-    [apiStatus],
+    () => api.listConversations({ filter: status, limit: 150 }),
+    [status],
   )
 
   const items   = data?.items ?? []
-  const summary = data?.summary ?? { open: 0, replied: 0, resolved: 0 }
-  const total   = (summary.open || 0) + (summary.replied || 0) + (summary.resolved || 0)
+  const summary = data?.summary ?? { total: 0, needsAdmin: 0, bot: 0 }
 
   const visible = useMemo(() => {
     const f = filter.trim().toLowerCase()
     if (!f) return items
-    return items.filter((it) => {
-      if ((it.userName || '').toLowerCase().includes(f)) return true
-      if ((it.lineUserId || '').toLowerCase().includes(f)) return true
-      if ((it.summary || '').toLowerCase().includes(f)) return true
-      const body = payloadText(it.reason, it.originalPayload).toLowerCase()
-      return body.includes(f)
-    })
+    return items.filter((it) =>
+      (it.userName   || '').toLowerCase().includes(f) ||
+      (it.lineUserId || '').toLowerCase().includes(f) ||
+      (it.lastText   || '').toLowerCase().includes(f) ||
+      (it.summary    || '').toLowerCase().includes(f))
   }, [items, filter])
 
-  // Always-current selected id, so the poll interval (set up once per live
-  // ticket) never reads a stale closure.
-  const selectedIdRef = useRef(null)
-  selectedIdRef.current = selected?.id ?? null
+  // selected = { lineUserId, userName, history, ticket|null }
+  // history = the bot transcript; ticket = the admin_queue row once one exists.
+  const selectedUserRef = useRef(null)
+  selectedUserRef.current = selected?.lineUserId ?? null
 
-  async function refreshSelected() {
-    const id = selectedIdRef.current
-    if (!id) return
-    try { setSelected(await api.getAdminQueue(id)) } catch { /* keep last */ }
+  async function openConversation(c) {
+    setReplyText(''); setSendError('')
+    setSelected({ lineUserId: c.lineUserId, userName: c.userName, history: [], ticket: null })
+    try {
+      const d = await api.getConversation(c.lineUserId)
+      setSelected({ lineUserId: c.lineUserId, userName: c.userName, history: d.history || [], ticket: d.ticket || null })
+    } catch { /* keep the shell open; the panel shows an empty transcript */ }
   }
 
-  // While viewing a live ticket, poll for the user's incoming messages.
+  async function refreshSelected() {
+    const uid = selectedUserRef.current
+    if (!uid) return
+    try {
+      const d = await api.getConversation(uid)
+      setSelected((s) => (s && s.lineUserId === uid
+        ? { ...s, history: d.history || [], ticket: d.ticket || null }
+        : s))
+    } catch { /* keep last */ }
+  }
+
+  // While a human owns the chat, poll so the customer's replies stream in.
   useEffect(() => {
-    if (!selected?.isLive) return
+    if (!selected?.ticket?.isLive) return
     const t = setInterval(refreshSelected, 3000)
     return () => clearInterval(t)
-  }, [selected?.id, selected?.isLive])
+  }, [selected?.lineUserId, selected?.ticket?.isLive])
 
+  // Step in. A conversation that never escalated has no ticket yet, so claim
+  // creates one first — that is what lets admin reach a customer who never
+  // pressed ติดต่อแอดมิน.
   async function takeover() {
     if (!selected) return
     setTakingOver(true); setSendError('')
     try {
-      setSelected(await api.takeoverAdminQueue(selected.id))
+      const ticket = selected.ticket
+        ? await api.takeoverAdminQueue(selected.ticket.id)
+        : await api.claimConversation(selected.lineUserId)
+      setSelected((s) => ({ ...s, ticket }))
       setReplyText('')
       await refetch()
     } catch (err) {
@@ -127,10 +146,11 @@ export default function InboxQueue() {
   }
 
   async function release() {
-    if (!selected) return
+    if (!selected?.ticket) return
     setReleasing(true); setSendError('')
     try {
-      setSelected(await api.releaseAdminQueue(selected.id))
+      const ticket = await api.releaseAdminQueue(selected.ticket.id)
+      setSelected((s) => ({ ...s, ticket }))
       await refetch()
     } catch (err) {
       setSendError(err instanceof ApiError ? err.message : 'ปิดเรื่องไม่สำเร็จ')
@@ -138,23 +158,23 @@ export default function InboxQueue() {
   }
 
   async function sendReply() {
-    if (!selected || !replyText.trim()) return
+    if (!selected?.ticket || !replyText.trim()) return
     setSending(true); setSendError('')
     try {
-      // Live ticket: reply appends to the thread + pushes to Line; keep the panel
-      // open so the conversation continues.
-      setSelected(await api.replyAdminQueue(selected.id, { reply: replyText.trim() }))
+      const ticket = await api.replyAdminQueue(selected.ticket.id, { reply: replyText.trim() })
+      setSelected((s) => ({ ...s, ticket }))
       setReplyText('')
+      await refreshSelected()
     } catch (err) {
       setSendError(err instanceof ApiError ? err.message : 'ส่งคำตอบไม่สำเร็จ')
     } finally { setSending(false) }
   }
 
   async function resolve() {
-    if (!selected) return
+    if (!selected?.ticket) return
     setResolving(true)
     try {
-      await api.resolveAdminQueue(selected.id)
+      await api.resolveAdminQueue(selected.ticket.id)
       setSelected(null)
       await refetch()
     } catch (err) {
@@ -169,18 +189,18 @@ export default function InboxQueue() {
     return () => window.removeEventListener('keydown', onKey)
   }, [selected])
 
-  const thread = selected?.thread ?? []
-  const busy = sending || takingOver || releasing || resolving
+  const thread = selected?.ticket?.thread ?? []
+  const busy = sending || takingOver || releasing || resolving || claiming
+  const isLive = !!selected?.ticket?.isLive
 
   return (
     <div>
       {/* Summary cards — also serve as the status filter. */}
-      <div className="grid grid-cols-2 sm:grid-cols-4 gap-3 mb-6">
+      <div className="grid grid-cols-3 gap-3 mb-6">
         {[
-          { key: 'open',     label: 'รอตอบ',   value: summary.open     ?? 0 },
-          { key: 'replied',  label: 'ตอบแล้ว', value: summary.replied  ?? 0 },
-          { key: 'resolved', label: 'ปิดแล้ว', value: summary.resolved ?? 0 },
-          { key: 'all',      label: 'ทั้งหมด', value: total },
+          { key: 'all',         label: 'ทุกแชท',     value: summary.total      ?? 0 },
+          { key: 'needs_admin', label: 'รอแอดมิน',   value: summary.needsAdmin ?? 0 },
+          { key: 'bot',         label: 'บอทดูแลอยู่', value: summary.bot        ?? 0 },
         ].map((s) => {
           const active = status === s.key
           return (
@@ -218,44 +238,37 @@ export default function InboxQueue() {
           <table className="w-full text-left">
             <thead className="bg-navy-50/60 border-b border-line text-xs uppercase tracking-wider text-muted">
               <tr>
-                <th className="px-5 py-3.5 font-semibold">ประเภท</th>
                 <th className="px-5 py-3.5 font-semibold">ผู้ใช้</th>
-                <th className="px-5 py-3.5 font-semibold">เนื้อหา</th>
+                <th className="px-5 py-3.5 font-semibold">ข้อความล่าสุด</th>
                 <th className="px-5 py-3.5 font-semibold">สถานะ</th>
                 <th className="px-5 py-3.5 font-semibold">เวลา</th>
               </tr>
             </thead>
             <tbody className="divide-y divide-line">
               {loading && (
-                <tr><td colSpan={5} className="px-5 py-8 text-center text-muted text-sm">กำลังโหลด…</td></tr>
+                <tr><td colSpan={4} className="px-5 py-8 text-center text-muted text-sm">กำลังโหลด…</td></tr>
               )}
               {!loading && !error && visible.length === 0 && (
                 <tr>
-                  <td colSpan={5} className="px-5 py-12 text-center text-muted">
+                  <td colSpan={4} className="px-5 py-12 text-center text-muted">
                     <Inbox size={32} className="mx-auto mb-2 text-navy-200" />
                     <div className="text-sm">
-                      {status === 'open'     && 'ไม่มีคำถามรอตอบ'}
-                      {status === 'replied'  && 'ยังไม่มีรายการที่ตอบแล้ว'}
-                      {status === 'resolved' && 'ยังไม่มีรายการที่ปิดแล้ว'}
-                      {status === 'all'      && 'ยังไม่มีรายการในกล่องข้อความ'}
+                      {status === 'needs_admin' && 'ไม่มีแชทที่รอแอดมิน'}
+                      {status === 'bot'         && 'ไม่มีแชทที่บอทดูแลอยู่'}
+                      {status === 'all'         && 'ยังไม่มีใครทักเข้ามา'}
                     </div>
                   </td>
                 </tr>
               )}
               {visible.map((it) => (
                 <tr
-                  key={it.id}
-                  onClick={() => { setSelected(it); setReplyText(''); setSendError('') }}
-                  className={`hover:bg-cream-50/40 cursor-pointer ${it.isLive ? 'bg-emerald-50/40' : (it.status === 'open' ? '' : 'opacity-70')}`}
+                  key={it.lineUserId}
+                  onClick={() => openConversation(it)}
+                  className={`hover:bg-cream-50/40 cursor-pointer ${it.isLive ? 'bg-emerald-50/40' : ''}`}
                 >
                   <td className="px-5 py-4 whitespace-nowrap">
-                    <span className={`inline-block px-2 py-0.5 text-xs rounded-full border ${REASON_BADGE[it.reason] || 'bg-navy-50 text-navy-700 border-navy-200'}`}>
-                      {REASON_LABEL[it.reason] || it.reason}
-                    </span>
-                  </td>
-                  <td className="px-5 py-4 whitespace-nowrap">
                     {it.userName ? (
-                      <span className="text-sm text-navy-700">{it.userName}</span>
+                      <span className="text-sm font-medium text-navy-700">{it.userName}</span>
                     ) : (
                       // No name resolves when the user has blocked/removed the bot —
                       // LINE answers 404 for their profile, so the id is all we have.
@@ -266,21 +279,26 @@ export default function InboxQueue() {
                     )}
                   </td>
                   <td className="px-5 py-4 text-sm text-navy-700 max-w-md">
-                    <span className="line-clamp-2">{it.summary || payloadText(it.reason, it.originalPayload) || '—'}</span>
+                    <span className="line-clamp-2">{it.lastText || it.summary || '—'}</span>
                   </td>
                   <td className="px-5 py-4 whitespace-nowrap">
                     {it.isLive ? (
                       <span className="inline-flex items-center gap-1.5 px-2 py-0.5 text-xs rounded-full border bg-emerald-50 text-emerald-700 border-emerald-200">
                         <span className="w-1.5 h-1.5 rounded-full bg-emerald-500 animate-pulse" />
-                        กำลังตอบอยู่
+                        แอดมินกำลังตอบ
+                      </span>
+                    ) : it.needsAdmin ? (
+                      <span className="inline-flex items-center gap-1.5 px-2 py-0.5 text-xs rounded-full border bg-amber-50 text-amber-700 border-amber-200">
+                        รอแอดมิน
+                        {it.reason && <span className="text-amber-600/70">· {REASON_LABEL[it.reason] || it.reason}</span>}
                       </span>
                     ) : (
-                      <span className={`inline-block px-2 py-0.5 text-xs rounded-full border ${STATUS_BADGE[it.status] || ''}`}>
-                        {STATUS_LABEL[it.status] || it.status}
+                      <span className="inline-block px-2 py-0.5 text-xs rounded-full border bg-navy-50 text-muted border-navy-200">
+                        บอทดูแลอยู่
                       </span>
                     )}
                   </td>
-                  <td className="px-5 py-4 text-xs text-muted whitespace-nowrap">{fmtDate(it.createdAt)}</td>
+                  <td className="px-5 py-4 text-xs text-muted whitespace-nowrap">{fmtDate(it.lastAt)}</td>
                 </tr>
               ))}
             </tbody>
@@ -294,56 +312,67 @@ export default function InboxQueue() {
           <div className="fixed inset-0 bg-navy-900/30 z-40" onClick={() => { setSelected(null); setReplyText('') }} />
           <aside className="fixed top-0 right-0 bottom-0 w-full max-w-lg bg-white shadow-2xl z-50 flex flex-col">
             <header className="px-6 py-4 border-b border-line flex items-center justify-between">
-              <div>
+              <div className="min-w-0">
                 <div className="flex items-center gap-2 flex-wrap">
-                  <span className={`inline-block px-2 py-0.5 text-xs rounded-full border ${REASON_BADGE[selected.reason] || ''}`}>
-                    {REASON_LABEL[selected.reason] || selected.reason}
-                  </span>
-                  {selected.isLive && (
+                  {isLive ? (
                     <span className="inline-flex items-center gap-1.5 px-2 py-0.5 text-xs rounded-full border bg-emerald-50 text-emerald-700 border-emerald-200">
                       <span className="w-1.5 h-1.5 rounded-full bg-emerald-500 animate-pulse" />
-                      กำลังตอบอยู่
+                      แอดมินกำลังตอบ
+                    </span>
+                  ) : selected.ticket ? (
+                    <span className={`inline-block px-2 py-0.5 text-xs rounded-full border ${REASON_BADGE[selected.ticket.reason] || ''}`}>
+                      {REASON_LABEL[selected.ticket.reason] || selected.ticket.reason}
+                    </span>
+                  ) : (
+                    <span className="inline-block px-2 py-0.5 text-xs rounded-full border bg-navy-50 text-muted border-navy-200">
+                      บอทดูแลอยู่
                     </span>
                   )}
                 </div>
-                <h2 className="mt-2 font-bold text-navy-700 text-lg">
-                  {selected.isLive ? 'แชทสดกับลูกค้า' : (selected.status === 'open' ? 'รอแอดมินรับเรื่อง' : 'รายละเอียด')}
+                <h2 className="mt-2 font-bold text-navy-700 text-lg truncate">
+                  {selected.userName || 'ไม่ทราบชื่อ'}
                 </h2>
+                <div className="font-mono text-[11px] text-muted break-all">{selected.lineUserId}</div>
               </div>
-              <button onClick={() => { setSelected(null); setReplyText('') }} className="btn btn-ghost btn-sm" aria-label="ปิด">
+              <button onClick={() => { setSelected(null); setReplyText('') }} className="btn btn-ghost btn-sm shrink-0" aria-label="ปิด">
                 <X size={18} />
               </button>
             </header>
 
             <div className="flex-1 overflow-y-auto p-6 space-y-4">
-              <div className="grid grid-cols-2 gap-4">
-                <div>
-                  <div className="text-xs uppercase text-muted mb-1">ผู้ใช้</div>
-                  <div className="text-sm font-medium text-navy-700">{selected.userName || 'ไม่ทราบชื่อ'}</div>
-                  <div className="font-mono text-[11px] text-muted break-all mt-0.5">{selected.lineUserId}</div>
-                </div>
-                <div>
-                  <div className="text-xs uppercase text-muted mb-1">ส่งเมื่อ</div>
-                  <div className="text-sm text-navy-700">{fmtDate(selected.createdAt)}</div>
-                </div>
-              </div>
-              {selected.summary && (
+              {selected.ticket?.summary && (
                 <div>
                   <div className="text-xs uppercase text-muted mb-1">สรุปจากบอท</div>
-                  <div className="text-sm text-navy-700">{selected.summary}</div>
+                  <div className="text-sm text-navy-700">{selected.ticket.summary}</div>
                 </div>
               )}
+
+              {/* Bot transcript — what the customer and the bot already said. */}
               <div>
-                <div className="text-xs uppercase text-muted mb-1">รายละเอียดจากผู้ใช้</div>
-                <div className="card p-4 bg-cream-50 text-sm text-navy-700 whitespace-pre-wrap">
-                  {payloadText(selected.reason, selected.originalPayload) || '—'}
-                </div>
+                <div className="text-xs uppercase text-muted mb-2">บทสนทนากับบอท</div>
+                {selected.history.length === 0 ? (
+                  <div className="text-sm text-muted">ยังไม่มีบทสนทนา หรือเลย 24 ชม. แล้ว</div>
+                ) : (
+                  <div className="space-y-2">
+                    {selected.history.map((m, i) => (
+                      <div key={i} className={`flex ${m.role === 'assistant' ? 'justify-end' : 'justify-start'}`}>
+                        <div className={`max-w-[80%] px-3 py-2 rounded-2xl text-sm whitespace-pre-wrap ${
+                          m.role === 'assistant'
+                            ? 'bg-navy-50 text-navy-700 rounded-br-sm border border-navy-100'
+                            : 'bg-cream-50 text-navy-700 rounded-bl-sm border border-line'
+                        }`}>
+                          {m.content}
+                        </div>
+                      </div>
+                    ))}
+                  </div>
+                )}
               </div>
 
-              {/* Live chat thread */}
+              {/* Live thread — messages exchanged after admin stepped in. */}
               {thread.length > 0 && (
                 <div>
-                  <div className="text-xs uppercase text-muted mb-2">แชท</div>
+                  <div className="text-xs uppercase text-muted mb-2">หลังแอดมินรับเรื่อง</div>
                   <div className="space-y-2">
                     {thread.map((m, i) => (
                       <div key={i} className={`flex ${m.role === 'admin' ? 'justify-end' : 'justify-start'}`}>
@@ -364,7 +393,7 @@ export default function InboxQueue() {
               {sendError && <div className="text-sm text-ember-700">{sendError}</div>}
             </div>
 
-            {selected.isLive ? (
+            {isLive ? (
               <footer className="px-6 py-4 border-t border-line bg-cream-50 space-y-3">
                 <textarea
                   value={replyText} onChange={(e) => setReplyText(e.target.value)}
@@ -386,7 +415,7 @@ export default function InboxQueue() {
                 <button onClick={takeover} disabled={busy} className="btn btn-primary w-full">
                   <MessageSquare size={16} /> {takingOver ? 'กำลังรับเรื่อง…' : 'รับเรื่อง · แชทกับลูกค้า'}
                 </button>
-                {selected.status !== 'resolved' && (
+                {selected.ticket && selected.ticket.status !== 'resolved' && (
                   <button onClick={resolve} disabled={busy} className="btn btn-ghost w-full">
                     <CheckCircle2 size={16} /> {resolving ? 'กำลังปิด…' : 'ปิดเรื่องโดยไม่รับ'}
                   </button>
