@@ -61,6 +61,13 @@
   .btn-sm  { @apply px-4 py-2 text-sm; min-height: 36px; }
   .btn-xs  { @apply px-3 py-1.5 text-xs; min-height: 28px; }
 
+  /* A finger is not a mouse pointer: the compact sizes above are comfortable to
+     click and easy to miss with a thumb. Restore the 44px minimum wherever the
+     primary input is touch, and leave desktop density alone. */
+  @media (pointer: coarse) {
+    .btn-sm, .btn-xs, .chip { min-height: 44px; }
+  }
+
   /* ── Chips & Pills ───────────────────────────────── */
   .chip {
     @apply inline-flex items-center gap-1.5 rounded-full px-4 py-2

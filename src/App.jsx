@@ -18,6 +18,7 @@ import AdminViewings     from './components/admin/AdminViewings.jsx'
 import AdminRoomSlots     from './components/admin/AdminRoomSlots.jsx'
 import AdminInbox from './components/admin/AdminInbox.jsx'
 import AdminMatching from './components/admin/AdminMatching.jsx'
+import AdminContacts from './components/admin/AdminContacts.jsx'
 import StickyLineCTA    from './components/StickyLineCTA.jsx'
 
 // Public-facing user pages
@@ -83,9 +84,10 @@ export default function App() {
               <Route path="/admin/viewings" element={<AdminViewings />} />
               <Route path="/admin/inbox" element={<AdminInbox />} />
               <Route path="/admin/matching" element={<AdminMatching />} />
-              {/* Tenant directory folded into the Inbox "รายชื่อ" tab. Keep the old
-                  path as a redirect so bookmarks / deep links still resolve. */}
-              <Route path="/admin/tenants" element={<Navigate to="/admin/inbox" replace />} />
+              <Route path="/admin/contacts" element={<AdminContacts />} />
+              {/* The directory used to be a tab inside the Inbox, and before that
+                  lived at /admin/tenants. Keep the oldest path resolving. */}
+              <Route path="/admin/tenants" element={<Navigate to="/admin/contacts" replace />} />
               <Route path="/admin/bot-inquiries" element={<AdminInquiriesList />} />
             </Route>
 

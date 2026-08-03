@@ -44,6 +44,31 @@ function fmtDate(iso) {
   return isNaN(d.getTime()) ? iso : d.toLocaleString('th-TH', { dateStyle: 'short', timeStyle: 'short' })
 }
 
+/** Where a conversation stands. Shared by the mobile cards and the desktop table. */
+function StatusBadge({ it }) {
+  if (it.isLive) {
+    return (
+      <span className="inline-flex items-center gap-1.5 px-2 py-0.5 text-xs rounded-full border bg-emerald-50 text-emerald-700 border-emerald-200">
+        <span className="w-1.5 h-1.5 rounded-full bg-emerald-500 animate-pulse" />
+        แอดมินกำลังตอบ
+      </span>
+    )
+  }
+  if (it.needsAdmin) {
+    return (
+      <span className="inline-flex items-center gap-1.5 px-2 py-0.5 text-xs rounded-full border bg-amber-50 text-amber-700 border-amber-200">
+        รอแอดมิน
+        {it.reason && <span className="text-amber-600/70">· {REASON_LABEL[it.reason] || it.reason}</span>}
+      </span>
+    )
+  }
+  return (
+    <span className="inline-block px-2 py-0.5 text-xs rounded-full border bg-navy-50 text-muted border-navy-200">
+      บอทดูแลอยู่
+    </span>
+  )
+}
+
 // Bubble stamp inside a transcript. Same-day messages read better as just the
 // clock; anything older still needs its date.
 function fmtTime(iso) {
@@ -227,15 +252,14 @@ export default function InboxQueue() {
         })}
       </div>
 
-      <div className="flex flex-wrap items-center gap-3 mb-4">
-        <div className="card px-3 py-2 flex items-center gap-2 flex-1 max-w-md min-w-[260px]">
-          <Search size={18} className="text-muted shrink-0" />
-          <input
-            value={filter} onChange={(e) => setFilter(e.target.value)}
-            placeholder="ค้นหาจากชื่อ / Line ID / เนื้อหา"
-            className="bg-transparent outline-none text-sm w-full placeholder:text-muted"
-          />
-        </div>
+      <div className="card px-3 py-2 flex items-center gap-2 w-full sm:max-w-md min-w-0 mb-4">
+        <Search size={18} className="text-muted shrink-0" />
+        <input
+          value={filter} onChange={(e) => setFilter(e.target.value)}
+          placeholder="ค้นหาจากชื่อ / Line ID / เนื้อหา"
+          aria-label="ค้นหาแชท"
+          className="bg-transparent outline-none text-base w-full min-w-0 py-1.5 placeholder:text-muted"
+        />
       </div>
 
       {error && (
@@ -245,7 +269,43 @@ export default function InboxQueue() {
         </div>
       )}
 
-      <div className="card overflow-hidden">
+      {/* Phones get cards. A four-column table on a 375px screen pushed the
+          status and time columns off-screen entirely — the two things that tell
+          an admin whether a chat needs them. */}
+      <div className="sm:hidden space-y-2">
+        {loading && <div className="card p-6 text-center text-muted text-sm">กำลังโหลด…</div>}
+        {!loading && !error && visible.length === 0 && (
+          <div className="card p-10 text-center text-muted">
+            <Inbox size={32} className="mx-auto mb-2 text-navy-200" />
+            <div className="text-sm">
+              {status === 'needs_admin' && 'ไม่มีแชทที่รอแอดมิน'}
+              {status === 'bot'         && 'ไม่มีแชทที่บอทดูแลอยู่'}
+              {status === 'all'         && 'ยังไม่มีใครทักเข้ามา'}
+            </div>
+          </div>
+        )}
+        {visible.map((it) => (
+          <button
+            key={it.lineUserId}
+            type="button"
+            onClick={() => openConversation(it)}
+            className={`card w-full text-left p-4 active:bg-cream-50 transition-colors ${it.isLive ? 'ring-1 ring-emerald-200 bg-emerald-50/40' : ''}`}
+          >
+            <div className="flex items-start justify-between gap-3">
+              <div className="min-w-0 flex-1">
+                {it.userName
+                  ? <div className="text-[15px] font-semibold text-navy-700 truncate">{it.userName}</div>
+                  : <div className="text-[15px] text-muted truncate">ไม่ทราบชื่อ</div>}
+                <div className="mt-1 text-sm text-navy-700 line-clamp-2">{it.lastText || it.summary || '—'}</div>
+              </div>
+              <span className="text-[11px] text-muted shrink-0 tabular-nums">{fmtTime(it.lastAt)}</span>
+            </div>
+            <div className="mt-2.5"><StatusBadge it={it} /></div>
+          </button>
+        ))}
+      </div>
+
+      <div className="card overflow-hidden hidden sm:block">
         <div className="overflow-x-auto">
           <table className="w-full text-left">
             <thead className="bg-navy-50/60 border-b border-line text-xs uppercase tracking-wider text-muted">
@@ -293,23 +353,7 @@ export default function InboxQueue() {
                   <td className="px-5 py-4 text-sm text-navy-700 max-w-md">
                     <span className="line-clamp-2">{it.lastText || it.summary || '—'}</span>
                   </td>
-                  <td className="px-5 py-4 whitespace-nowrap">
-                    {it.isLive ? (
-                      <span className="inline-flex items-center gap-1.5 px-2 py-0.5 text-xs rounded-full border bg-emerald-50 text-emerald-700 border-emerald-200">
-                        <span className="w-1.5 h-1.5 rounded-full bg-emerald-500 animate-pulse" />
-                        แอดมินกำลังตอบ
-                      </span>
-                    ) : it.needsAdmin ? (
-                      <span className="inline-flex items-center gap-1.5 px-2 py-0.5 text-xs rounded-full border bg-amber-50 text-amber-700 border-amber-200">
-                        รอแอดมิน
-                        {it.reason && <span className="text-amber-600/70">· {REASON_LABEL[it.reason] || it.reason}</span>}
-                      </span>
-                    ) : (
-                      <span className="inline-block px-2 py-0.5 text-xs rounded-full border bg-navy-50 text-muted border-navy-200">
-                        บอทดูแลอยู่
-                      </span>
-                    )}
-                  </td>
+                  <td className="px-5 py-4 whitespace-nowrap"><StatusBadge it={it} /></td>
                   <td className="px-5 py-4 text-xs text-muted whitespace-nowrap">{fmtDate(it.lastAt)}</td>
                 </tr>
               ))}

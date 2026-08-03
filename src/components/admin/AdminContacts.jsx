@@ -1,6 +1,6 @@
 // src/components/admin/AdminContacts.jsx — Contact directory (tenants + landlords).
 //
-// Rendered as the "รายชื่อ" tab inside AdminInbox. A role toggle switches between
+// Its own page at /admin/contacts. A role toggle switches between
 // the tenant directory and the landlord directory:
 //   • Tenants  — read + inline edit of name/phone (info collected via Line chat).
 //   • Landlords — read + edit, PLUS create. Creating a landlord is how the
@@ -48,28 +48,40 @@ export default function AdminContacts() {
   }
 
   return (
-    <div>
+    <section>
+      <div className="mb-5 sm:mb-6">
+        <span className="eyebrow-navy">แอดมิน</span>
+        <h1 className="mt-3 font-bold text-navy-700 text-2xl sm:text-4xl tracking-tight">
+          รายชื่อลูกค้า
+        </h1>
+        <p className="mt-2 text-muted max-w-2xl text-sm sm:text-base">
+          ผู้เช่าและเจ้าของห้องทั้งหมด — แก้ชื่อ/เบอร์ได้ในหน้านี้ และเพิ่มเจ้าของห้องใหม่ได้ในแท็บเจ้าของห้อง
+        </p>
+      </div>
+
       <div className="flex flex-wrap items-center gap-2 mb-4">
         {roleTab('tenant', 'ผู้เช่า', Users)}
         {roleTab('landlord', 'เจ้าของห้อง', Home)}
       </div>
 
-      <div className="flex flex-wrap items-center gap-3 mb-4">
-        <div className="card px-3 py-2 flex items-center gap-2 flex-1 max-w-md min-w-[260px]">
-          <Search size={18} className="text-muted shrink-0" />
-          <input
-            value={filter}
-            onChange={(e) => setFilter(e.target.value)}
-            placeholder="ค้นหาจากชื่อ / เบอร์ / Line ID"
-            className="bg-transparent outline-none text-sm w-full placeholder:text-muted"
-          />
-        </div>
+      {/* min-w-0 (not a px floor) so the search box shrinks with a 375px screen
+          instead of forcing the row to scroll sideways. text-base keeps iOS from
+          zooming the page in when the field takes focus. */}
+      <div className="card px-3 py-2 flex items-center gap-2 w-full sm:max-w-md min-w-0 mb-4">
+        <Search size={18} className="text-muted shrink-0" />
+        <input
+          value={filter}
+          onChange={(e) => setFilter(e.target.value)}
+          placeholder="ค้นหาจากชื่อ / เบอร์ / Line ID"
+          aria-label="ค้นหารายชื่อ"
+          className="bg-transparent outline-none text-base w-full min-w-0 py-1.5 placeholder:text-muted"
+        />
       </div>
 
       {role === 'tenant'
         ? <TenantDirectory filter={filter} />
         : <LandlordDirectory filter={filter} />}
-    </div>
+    </section>
   )
 }
 
