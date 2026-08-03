@@ -2,9 +2,26 @@
 //
 // Base URL precedence:
 //   1. VITE_API_BASE   — explicit backend URL (use in production deploys)
-//   2. /api            — Vite dev-server proxy → localhost:4000
+//   2. /api            — dev proxy, or the same-origin /api proxy in serve.js
 
-const BASE = import.meta.env.VITE_API_BASE || '/api'
+/**
+ * Normalise VITE_API_BASE so it always ends at the API mount point.
+ *
+ * The server mounts every route under /api. Setting VITE_API_BASE to the bare
+ * host — an easy thing to do, and it looks right — produced URLs like
+ * `https://api.example/auth/azure/start`, which 404s. Worse, the SSO links are
+ * plain <a href> full-page navigations, so the failure surfaced as a raw
+ * "Cannot GET /auth/azure/start" rather than anything this client could report.
+ * Append the missing segment instead of letting a trailing-slash-level mistake
+ * take down login.
+ */
+function normaliseBase(raw) {
+  const v = String(raw || '').trim().replace(/\/+$/, '')
+  if (!v) return '/api'
+  return /\/api$/i.test(v) ? v : `${v}/api`
+}
+
+const BASE = normaliseBase(import.meta.env.VITE_API_BASE)
 const DEFAULT_TIMEOUT_MS = 8_000
 const MAX_RETRIES = 1            // one retry on network / 5xx failure
 
