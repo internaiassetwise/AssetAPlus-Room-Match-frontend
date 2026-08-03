@@ -5,10 +5,11 @@
 // Dropdown reveals ทำเล / ประเภทห้อง / งบขั้นต่ำ / งบสูงสุด + Apply button.
 // Eyebrow + title swapped to "ห้องว่างพร้อมอยู่" + "ห้องในระบบ ตอนนี้".
 
-import { useEffect, useState } from 'react'
+import { useEffect, useState, useMemo } from 'react'
 import { useNavigate } from 'react-router-dom'
-import { MapPin, Home, Clock, Search, Filter, ChevronDown, X } from './icons.jsx'
+import { MapPin, Home, Clock, Search, Filter, ChevronDown, X, Check } from './icons.jsx'
 import { useApi } from '../hooks/useApi.js'
+import { useSearchParams } from 'react-router-dom'
 import { api } from '../api/client.js'
 import { RoomCard } from './RoomCard.jsx'
 import { LISTINGS_SECTION } from '../data/content.js'
@@ -29,13 +30,50 @@ function SkeletonCard() {
 export default function ListingsForPersona({ persona, theme }) {
   const copy = LISTINGS_SECTION[persona]
 
-  const [activeZone, setActiveZone]         = useState(null)
-  const [debouncedZone, setDebouncedZone]   = useState(null)
-  const [maxBudget, setMaxBudget]           = useState('')
-  const [minBudget, setMinBudget]           = useState('')
-  const [bedrooms, setBedrooms]             = useState('')
-  const [propertyType, setPropertyType]     = useState('')
+  // Filters live in the URL, not in component state alone. A filtered view is
+  // something admins send to a customer ("here are the 3 rooms in ศาลายา under
+  // 15k") and something a customer wants to bookmark or come back to via the
+  // back button — none of which worked while the filters were invisible to the
+  // address bar.
+  const [sp, setSp] = useSearchParams()
+  const activeZone   = sp.get('zone') || null
+  const maxBudget    = sp.get('max')  || ''
+  const minBudget    = sp.get('min')  || ''
+  const bedrooms     = sp.get('beds') || ''
+  const propertyType = sp.get('type') || ''
+
+  /** Write one filter to the URL. Empty/null removes the key so links stay clean. */
+  const setFilter = (key, value) => {
+    setSp((prev) => {
+      const next = new URLSearchParams(prev)
+      if (value === '' || value === null || value === undefined) next.delete(key)
+      else next.set(key, String(value))
+      return next
+    }, { replace: true })   // replace: typing in a budget box shouldn't fill history
+  }
+  const setActiveZone   = (v) => setFilter('zone', v)
+  const setMaxBudget    = (v) => setFilter('max',  v)
+  const setMinBudget    = (v) => setFilter('min',  v)
+  const setBedrooms     = (v) => setFilter('beds', v)
+  const setPropertyType = (v) => setFilter('type', v)
+
+  const [debouncedZone, setDebouncedZone]   = useState(activeZone)
   const [showFilters, setShowFilters]       = useState(false)
+  const [copiedLink, setCopiedLink]         = useState(false)
+
+  const hasFilters = Boolean(activeZone || maxBudget || minBudget || bedrooms || propertyType)
+
+  async function copyLink() {
+    try {
+      await navigator.clipboard.writeText(window.location.href)
+      setCopiedLink(true)
+      setTimeout(() => setCopiedLink(false), 2000)
+    } catch {
+      // clipboard is blocked outside a secure context / without permission —
+      // select the URL so the user can copy it by hand rather than nothing.
+      window.prompt('คัดลอกลิงก์นี้', window.location.href)
+    }
+  }
   const navigate = useNavigate()
 
   const { data: zones } = useApi(() => api.listZones(), [])
@@ -73,7 +111,14 @@ export default function ListingsForPersona({ persona, theme }) {
   )
 
   const clearAll = () => {
-    setActiveZone(null); setMaxBudget(''); setMinBudget(''); setBedrooms(''); setPropertyType('')
+    // One write, not five: each setFilter reads the CURRENT params, so five
+    // calls in a row would all start from the same snapshot and only the last
+    // would land — the other four filters would silently stay applied.
+    setSp((prev) => {
+      const next = new URLSearchParams(prev)
+      for (const k of ['zone', 'max', 'min', 'beds', 'type']) next.delete(k)
+      return next
+    }, { replace: true })
   }
 
   return (
@@ -114,14 +159,27 @@ export default function ListingsForPersona({ persona, theme }) {
             <Filter size={16} /> ตัวกรอง
             <ChevronDown size={14} className={`transition-transform ${showFilters ? 'rotate-180' : ''}`} />
           </button>
-          {(activeZone || maxBudget || minBudget || bedrooms || propertyType) && (
-            <button
-              type="button"
-              onClick={clearAll}
-              className="text-xs text-muted hover:text-navy-700 inline-flex items-center gap-1"
-            >
-              <X size={14} /> ล้างตัวกรอง
-            </button>
+          {hasFilters && (
+            <>
+              {/* Now that the filters live in the URL, the current view IS a
+                  link — this just saves admins selecting the address bar on a
+                  phone, which is the whole reason they couldn't share it. */}
+              <button
+                type="button"
+                onClick={copyLink}
+                className="btn btn-outline btn-sm inline-flex items-center gap-1.5"
+                aria-label="คัดลอกลิงก์ผลการค้นหานี้"
+              >
+                {copiedLink ? <>คัดลอกแล้ว <Check size={14} /></> : <>คัดลอกลิงก์</>}
+              </button>
+              <button
+                type="button"
+                onClick={clearAll}
+                className="text-xs text-muted hover:text-navy-700 inline-flex items-center gap-1"
+              >
+                <X size={14} /> ล้างตัวกรอง
+              </button>
+            </>
           )}
         </div>
 

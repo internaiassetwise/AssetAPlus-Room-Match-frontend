@@ -178,6 +178,22 @@ export default function AdminRoomForm({ mode }) {
     })
   }
 
+  /** Move a saved photo one slot; first position is the cover. */
+  async function moveSaved(from, to) {
+    if (!roomId || to < 0 || to >= savedPhotos.length) return
+    const next = [...savedPhotos]
+    const [moved] = next.splice(from, 1)
+    next.splice(to, 0, moved)
+    const prev = savedPhotos
+    setSavedPhotos(next)              // optimistic — reordering should feel instant
+    try {
+      await api.reorderRoomPhotos(roomId, next.map((p) => p.id))
+    } catch (err) {
+      setSavedPhotos(prev)
+      window.alert(`เรียงลำดับไม่สำเร็จ${err?.message ? ` (${err.message})` : ''}`)
+    }
+  }
+
   async function removeSaved(photoId) {
     if (!roomId) return
     if (!window.confirm('ลบรูปภาพนี้?')) return
@@ -456,6 +472,7 @@ export default function AdminRoomForm({ mode }) {
             onPickFiles={onPickFiles}
             onRemoveStaged={removeStaged}
             onRemoveSaved={removeSaved}
+            onMoveSaved={moveSaved}
             max={MAX_PHOTOS}
             disabled={status === 'sending'}
           />
@@ -558,7 +575,7 @@ function inputCls(errored) {
 // mobile browsers it offers a choice of gallery or camera, satisfying the
 // "works on PC, Mac, and phone" requirement without a separate capture path.
 
-function PhotoPicker({ stagedPhotos, savedPhotos, fileInputRef, onPickFiles, onRemoveStaged, onRemoveSaved, max, disabled }) {
+function PhotoPicker({ stagedPhotos, savedPhotos, fileInputRef, onPickFiles, onRemoveStaged, onRemoveSaved, onMoveSaved, max, disabled }) {
   const total = stagedPhotos.length + savedPhotos.length
   const remaining = Math.max(0, max - total)
 
@@ -600,9 +617,29 @@ function PhotoPicker({ stagedPhotos, savedPhotos, fileInputRef, onPickFiles, onR
       {/* Gallery — saved first (the existing photos), then staged. */}
       {(savedPhotos.length > 0 || stagedPhotos.length > 0) && (
         <ul className="grid grid-cols-3 sm:grid-cols-4 gap-2.5">
-          {savedPhotos.map((p) => (
-            <li key={`s-${p.id}`} className="group relative aspect-square rounded-lg overflow-hidden border border-line bg-navy-50">
+          {savedPhotos.map((p, i) => (
+            <li key={`s-${p.id}`} className={`group relative aspect-square rounded-lg overflow-hidden border bg-navy-50 ${i === 0 ? 'border-navy-600 ring-1 ring-navy-600' : 'border-line'}`}>
               <img src={p.url} alt="" className="w-full h-full object-cover" loading="lazy" />
+              {i === 0 && (
+                <span className="absolute top-1 left-1 px-1.5 py-0.5 rounded bg-navy-700 text-white text-[10px] font-semibold">
+                  รูปปก
+                </span>
+              )}
+              {/* Arrows, not drag-and-drop: HTML5 drag doesn't fire on touch,
+                  and admins are mostly on phones. 44px targets, always visible —
+                  a hover-only control is invisible on a touchscreen. */}
+              {onMoveSaved && savedPhotos.length > 1 && (
+                <div className="absolute inset-x-0 bottom-0 flex justify-between bg-navy-900/55">
+                  <button type="button" disabled={disabled || i === 0}
+                    onClick={() => onMoveSaved(i, i - 1)}
+                    aria-label={`ย้ายรูปที่ ${i + 1} ไปก่อนหน้า`}
+                    className="w-11 h-9 grid place-items-center text-white text-lg disabled:opacity-30">‹</button>
+                  <button type="button" disabled={disabled || i === savedPhotos.length - 1}
+                    onClick={() => onMoveSaved(i, i + 1)}
+                    aria-label={`ย้ายรูปที่ ${i + 1} ไปถัดไป`}
+                    className="w-11 h-9 grid place-items-center text-white text-lg disabled:opacity-30">›</button>
+                </div>
+              )}
               <RemoveButton onClick={() => onRemoveSaved(p.id)} disabled={disabled} />
             </li>
           ))}

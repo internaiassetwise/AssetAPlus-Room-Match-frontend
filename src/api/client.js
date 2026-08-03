@@ -187,6 +187,8 @@ export const api = {
     }, { timeoutMs: 30_000 })
   },
   deleteRoomPhoto: (id, photoId)   => request(`/rooms/${id}/photos/${photoId}`, { method: 'DELETE' }),
+  // ids in the desired order, first = cover photo.
+  reorderRoomPhotos: (id, ids)     => request(`/rooms/${id}/photos/order`, { method: 'PUT', body: JSON.stringify({ ids }) }),
 
   // Admin viewing-slots manager — open/cancel bookable viewing time-slots.
   //   listRoomSlots(id)       → GET    /rooms/:id/slots   (public; open future slots)
