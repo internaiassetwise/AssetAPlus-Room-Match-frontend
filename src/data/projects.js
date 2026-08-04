@@ -31,7 +31,9 @@ export const ZONE_PROJECTS = {
     'Kave Pop Salaya',
   ],
   'นครปฐม': [
-    'Kave Genesis Nakorn Pathom',
+    // Thai spelling is canonical — the English one drifted into the data and
+    // split this building in two on the dashboard.
+    'Kave Genesis นครปฐม',
   ],
 }
 
