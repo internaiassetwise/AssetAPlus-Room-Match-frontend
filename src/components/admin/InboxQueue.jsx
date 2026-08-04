@@ -114,10 +114,23 @@ export default function InboxQueue() {
   const [resolving, setResolving] = useState(false)
   const [sendError, setSendError] = useState('')
 
-  const { data, loading, error, refetch } = useApi(
+  const { data, loading, error, refetch, refresh } = useApi(
     () => api.listConversations({ filter: status, limit: 150 }),
     [status],
   )
+
+  // The inbox is a screen people leave open and glance at, so it keeps itself
+  // current. refresh() (not refetch) swaps the rows in silently — refetch would
+  // flash "กำลังโหลด…" over the table every tick.
+  useEffect(() => {
+    const tick = () => { if (!document.hidden) refresh() }
+    const id = setInterval(tick, 10_000)
+    // A backgrounded tab stops polling; coming back should show the truth
+    // immediately rather than after up to another ten seconds.
+    const onVisible = () => { if (!document.hidden) refresh() }
+    document.addEventListener('visibilitychange', onVisible)
+    return () => { clearInterval(id); document.removeEventListener('visibilitychange', onVisible) }
+  }, [refresh])
 
   const items   = data?.items ?? []
   const summary = data?.summary ?? { total: 0, needsAdmin: 0, bot: 0 }
@@ -170,10 +183,10 @@ export default function InboxQueue() {
 
   async function openConversation(c) {
     setReplyText(''); setSendError('')
-    setSelected({ lineUserId: c.lineUserId, userName: c.userName, transcript: [], ticket: null, room: null })
+    setSelected({ lineUserId: c.lineUserId, userName: c.userName, transcript: [], ticket: null, rooms: [] })
     try {
       const d = await api.getConversation(c.lineUserId)
-      setSelected({ lineUserId: c.lineUserId, userName: c.userName, transcript: d.transcript || [], ticket: d.ticket || null, room: d.room || null })
+      setSelected({ lineUserId: c.lineUserId, userName: c.userName, transcript: d.transcript || [], ticket: d.ticket || null, rooms: d.rooms || [] })
     } catch { /* keep the shell open; the panel shows an empty transcript */ }
   }
 
@@ -183,15 +196,18 @@ export default function InboxQueue() {
     try {
       const d = await api.getConversation(uid)
       setSelected((s) => (s && s.lineUserId === uid
-        ? { ...s, transcript: d.transcript || [], ticket: d.ticket || null, room: d.room || null }
+        ? { ...s, transcript: d.transcript || [], ticket: d.ticket || null, rooms: d.rooms || [] }
         : s))
     } catch { /* keep last */ }
   }
 
-  // While a human owns the chat, poll so the customer's replies stream in.
+  // Poll the open conversation too. Fast during a live takeover (admin is
+  // typing back and forth); slower otherwise, where it just needs to notice a
+  // customer message arriving while the panel sits open.
   useEffect(() => {
-    if (!selected?.ticket?.isLive) return
-    const t = setInterval(refreshSelected, 3000)
+    if (!selected?.lineUserId) return
+    const every = selected?.ticket?.isLive ? 3000 : 10_000
+    const t = setInterval(() => { if (!document.hidden) refreshSelected() }, every)
     return () => clearInterval(t)
   }, [selected?.lineUserId, selected?.ticket?.isLive])
 
@@ -426,26 +442,40 @@ export default function InboxQueue() {
             </header>
 
             <div ref={scrollRef} className="flex-1 overflow-y-auto p-6 space-y-4">
-              {/* Which room they tapped "สอบถามห้องนี้" on. The single most
-                  useful thing to know before replying, so it sits above
-                  everything else. Full room number here — this is admin-only. */}
-              {selected.room && (
-                <a
-                  href={`/admin/rooms/${selected.room.roomId}/edit`}
-                  target="_blank" rel="noreferrer"
-                  className="block rounded-lg border border-navy-200 bg-navy-50 px-3 py-2.5 hover:bg-navy-100 transition-colors"
-                >
-                  <div className="text-[11px] uppercase tracking-wider text-muted">สนใจห้องนี้</div>
-                  <div className="mt-0.5 text-sm font-semibold text-navy-700">
-                    {selected.room.title}
-                    {selected.room.roomCode && <span className="font-normal text-muted"> · ห้อง {selected.room.roomCode}</span>}
+              {/* Every room they asked about, with the FULL unit number — the
+                  cards in the transcript are masked for the customer, so this is
+                  the only place admin can tell two units of the same project
+                  apart. Times let admin line each one up with the conversation. */}
+              {selected.rooms?.length > 0 && (
+                <div>
+                  <div className="text-xs uppercase text-muted mb-2">
+                    ห้องที่ลูกค้าสอบถาม {selected.rooms.length > 1 && <span className="text-navy-700 font-semibold">({selected.rooms.length} ห้อง)</span>}
                   </div>
-                  <div className="mt-0.5 text-xs text-muted">
-                    ฿{Number(selected.room.monthlyRent || 0).toLocaleString()}/เดือน
-                    {selected.room.zone && ` · ย่าน${selected.room.zone}`}
-                    {selected.room.status !== 'available' && ` · ${selected.room.status}`}
-                  </div>
-                </a>
+                  <ul className="space-y-1.5">
+                    {selected.rooms.map((r) => (
+                      <li key={r.roomId}>
+                        <a
+                          href={`/admin/rooms/${r.roomId}/edit`}
+                          target="_blank" rel="noreferrer"
+                          className="block rounded-lg border border-navy-200 bg-navy-50 px-3 py-2 hover:bg-navy-100 transition-colors"
+                        >
+                          <div className="flex items-baseline justify-between gap-2">
+                            <span className="text-sm font-semibold text-navy-700 truncate">{r.title}</span>
+                            <span className="text-[11px] text-muted shrink-0">{fmtTime(r.askedAt)}</span>
+                          </div>
+                          <div className="text-xs text-muted">
+                            {r.roomCode
+                              ? <span className="font-mono font-semibold text-navy-700">ห้อง {r.roomCode}</span>
+                              : <span>ยังไม่มีเลขห้อง</span>}
+                            {' · '}฿{Number(r.monthlyRent || 0).toLocaleString()}/เดือน
+                            {r.zone && ` · ย่าน${r.zone}`}
+                            {r.status !== 'available' && ` · ${r.status}`}
+                          </div>
+                        </a>
+                      </li>
+                    ))}
+                  </ul>
+                </div>
               )}
 
               {selected.ticket?.summary && (
