@@ -441,43 +441,48 @@ export default function InboxQueue() {
               </button>
             </header>
 
-            <div ref={scrollRef} className="flex-1 overflow-y-auto p-6 space-y-4">
-              {/* Every room they asked about, with the FULL unit number — the
-                  cards in the transcript are masked for the customer, so this is
-                  the only place admin can tell two units of the same project
-                  apart. Times let admin line each one up with the conversation. */}
-              {selected.rooms?.length > 0 && (
-                <div>
-                  <div className="text-xs uppercase text-muted mb-2">
-                    ห้องที่ลูกค้าสอบถาม {selected.rooms.length > 1 && <span className="text-navy-700 font-semibold">({selected.rooms.length} ห้อง)</span>}
-                  </div>
-                  <ul className="space-y-1.5">
-                    {selected.rooms.map((r) => (
-                      <li key={r.roomId}>
-                        <a
-                          href={`/admin/rooms/${r.roomId}/edit`}
-                          target="_blank" rel="noreferrer"
-                          className="block rounded-lg border border-navy-200 bg-navy-50 px-3 py-2 hover:bg-navy-100 transition-colors"
-                        >
-                          <div className="flex items-baseline justify-between gap-2">
-                            <span className="text-sm font-semibold text-navy-700 truncate">{r.title}</span>
-                            <span className="text-[11px] text-muted shrink-0">{fmtTime(r.askedAt)}</span>
-                          </div>
-                          <div className="text-xs text-muted">
-                            {r.roomCode
-                              ? <span className="font-mono font-semibold text-navy-700">ห้อง {r.roomCode}</span>
-                              : <span>ยังไม่มีเลขห้อง</span>}
-                            {' · '}฿{Number(r.monthlyRent || 0).toLocaleString()}/เดือน
-                            {r.zone && ` · ย่าน${r.zone}`}
-                            {r.status !== 'available' && ` · ${r.status}`}
-                          </div>
-                        </a>
-                      </li>
-                    ))}
-                  </ul>
-                </div>
-              )}
+            {/* Every room they asked about, with the FULL unit number — the cards
+                in the transcript are masked for the customer, so this is the only
+                place admin can tell two units of the same project apart.
 
+                PINNED here, outside the scroll container, on purpose: it used to
+                sit at the top of the transcript, which auto-scrolls to the bottom
+                on open — so the one thing admin needed while reading was the one
+                thing permanently scrolled out of view. Capped in height so a
+                customer who browsed a dozen rooms can't push the chat off-screen. */}
+            {selected.rooms?.length > 0 && (
+              <div className="shrink-0 border-b border-line bg-navy-50/40 px-6 py-3 max-h-44 overflow-y-auto">
+                <div className="text-xs uppercase text-muted mb-2">
+                  ห้องที่ลูกค้าสอบถาม {selected.rooms.length > 1 && <span className="text-navy-700 font-semibold">({selected.rooms.length} ห้อง)</span>}
+                </div>
+                <ul className="space-y-1.5">
+                  {selected.rooms.map((r) => (
+                    <li key={r.roomId}>
+                      <a
+                        href={`/admin/rooms/${r.roomId}/edit`}
+                        target="_blank" rel="noreferrer"
+                        className="block rounded-lg border border-navy-200 bg-white px-3 py-2 hover:bg-navy-100 transition-colors"
+                      >
+                        <div className="flex items-baseline justify-between gap-2">
+                          <span className="text-sm font-semibold text-navy-700 truncate">{r.title}</span>
+                          <span className="text-[11px] text-muted shrink-0">{fmtTime(r.askedAt)}</span>
+                        </div>
+                        <div className="text-xs text-muted">
+                          {r.roomCode
+                            ? <span className="font-mono font-semibold text-navy-700">ห้อง {r.roomCode}</span>
+                            : <span>ยังไม่มีเลขห้อง</span>}
+                          {' · '}฿{Number(r.monthlyRent || 0).toLocaleString()}/เดือน
+                          {r.zone && ` · ย่าน${r.zone}`}
+                          {r.status !== 'available' && ` · ${r.status}`}
+                        </div>
+                      </a>
+                    </li>
+                  ))}
+                </ul>
+              </div>
+            )}
+
+            <div ref={scrollRef} className="flex-1 overflow-y-auto p-6 space-y-4">
               {selected.ticket?.summary && (
                 <div>
                   <div className="text-xs uppercase text-muted mb-1">สรุปจากบอท</div>
