@@ -138,6 +138,36 @@ export default function InboxQueue() {
   const selectedUserRef = useRef(null)
   selectedUserRef.current = selected?.lineUserId ?? null
 
+  // The transcript reads oldest-first, so opening a chat on the newest message
+  // is what admin needs — the top is history they have usually already seen.
+  const scrollRef = useRef(null)
+  const msgCount = selected?.transcript?.length ?? 0
+
+  // Which conversation we've already jumped to the bottom for. The panel opens
+  // with an EMPTY transcript and fills it a moment later, so jumping on
+  // lineUserId alone would scroll an empty box and leave the real content at
+  // the top once it arrived.
+  const jumpedForRef = useRef(null)
+
+  useEffect(() => {
+    const el = scrollRef.current
+    const uid = selected?.lineUserId
+    if (!el || !uid || msgCount === 0) return
+
+    if (jumpedForRef.current !== uid) {
+      // First paint of this conversation — land on the newest message with no
+      // animation; smooth-scrolling through a long history is just a delay.
+      jumpedForRef.current = uid
+      el.scrollTop = el.scrollHeight
+      return
+    }
+    // A message arrived while the panel was open. Follow it only if admin was
+    // already at the bottom — yanking the view while they read back is worse
+    // than a new message they can see arrive.
+    const nearBottom = el.scrollHeight - el.scrollTop - el.clientHeight < 120
+    if (nearBottom) el.scrollTo({ top: el.scrollHeight, behavior: 'smooth' })
+  }, [selected?.lineUserId, msgCount])
+
   async function openConversation(c) {
     setReplyText(''); setSendError('')
     setSelected({ lineUserId: c.lineUserId, userName: c.userName, transcript: [], ticket: null, room: null })
@@ -395,7 +425,7 @@ export default function InboxQueue() {
               </button>
             </header>
 
-            <div className="flex-1 overflow-y-auto p-6 space-y-4">
+            <div ref={scrollRef} className="flex-1 overflow-y-auto p-6 space-y-4">
               {/* Which room they tapped "สอบถามห้องนี้" on. The single most
                   useful thing to know before replying, so it sits above
                   everything else. Full room number here — this is admin-only. */}
