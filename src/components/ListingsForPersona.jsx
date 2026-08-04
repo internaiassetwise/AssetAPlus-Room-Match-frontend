@@ -102,6 +102,8 @@ export default function ListingsForPersona({ persona, theme }) {
     ...(maxBudget !== '' ? { maxRent: Number(maxBudget) } : {}),
     ...(minBudget !== '' ? { minRent: Number(minBudget) } : {}),
     ...(bedrooms !== '' ? { bedrooms: Number(bedrooms) } : {}),
+    // `type` may be a comma-separated list (a shared link can cover several
+    // room types). The API splits it; nothing to do here but forward it.
     ...(propertyType ? { roomType: propertyType } : {}),
     ...(project ? { project } : {}),
   }

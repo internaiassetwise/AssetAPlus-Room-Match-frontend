@@ -10,6 +10,7 @@
 import { useMemo, useState } from 'react'
 import { useApi } from '../../hooks/useApi.js'
 import { api } from '../../api/client.js'
+import { projectsForZone } from '../../data/projects.js'
 import { Check, X } from '../icons.jsx'
 
 // Mirrors the admin room form's list. Customers shop by room type, not by a
@@ -29,21 +30,24 @@ export default function ShareLinkBuilder({ rooms }) {
   const [project, setProject] = useState('')
   const [min, setMin]         = useState('')
   const [max, setMax]         = useState('')
-  const [roomType, setRoomType] = useState('')
+  const [types, setTypes] = useState([])   // several types can share one link
   const [copied, setCopied]   = useState(false)
 
   const all = Array.isArray(rooms) ? rooms : []
 
-  // Project options come from the rooms themselves, so the list can only ever
-  // offer projects that actually exist — no typing, no spelling variants.
+  // Projects follow the selected zone, from the same curated list the LIFF and
+  // admin room forms use — listing every project regardless of zone let admin
+  // build a link for a combination that can't exist.
   const projectOptions = useMemo(() => {
-    const seen = new Set()
-    for (const r of all) {
-      const name = String(r.projectName || '').trim()
-      if (name) seen.add(name)
-    }
-    return [...seen].sort((a, b) => a.localeCompare(b, 'th'))
-  }, [all])
+    const curated = zone ? projectsForZone(zone) : []
+    // Include anything the rooms actually carry for this zone, so a project
+    // added to the data but not yet to the curated list is still selectable.
+    const fromRooms = all
+      .filter((r) => !zone || r.zone === zone)
+      .map((r) => String(r.projectName || '').trim())
+      .filter(Boolean)
+    return [...new Set([...curated, ...fromRooms])].sort((a, b) => a.localeCompare(b, 'th'))
+  }, [all, zone])
 
   const url = useMemo(() => {
     const q = new URLSearchParams()
@@ -51,10 +55,10 @@ export default function ShareLinkBuilder({ rooms }) {
     if (project) q.set('project', project)
     if (min)     q.set('min', min)
     if (max)     q.set('max', max)
-    if (roomType) q.set('type', roomType)
+    if (types.length) q.set('type', types.join(','))
     const s = q.toString()
     return `${window.location.origin}/${s ? `?${s}` : ''}`
-  }, [zone, project, min, max, roomType])
+  }, [zone, project, min, max, types])
 
   // Live count so nobody sends a link that opens on an empty page. Mirrors the
   // server's filters against the already-loaded list — available rooms only,
@@ -67,13 +71,13 @@ export default function ShareLinkBuilder({ rooms }) {
       if (p && !`${r.projectName || ''} ${r.title || ''}`.toLowerCase().includes(p)) return false
       if (min && Number(r.price) < Number(min)) return false
       if (max && Number(r.price) > Number(max)) return false
-      if (roomType && String(r.roomType || '') !== roomType) return false
+      if (types.length && !types.includes(String(r.roomType || ''))) return false
       return true
     }).length
-  }, [all, zone, project, min, max, roomType])
+  }, [all, zone, project, min, max, types])
 
-  const reset = () => { setZone(''); setProject(''); setMin(''); setMax(''); setRoomType('') }
-  const dirty = Boolean(zone || project || min || max || roomType)
+  const reset = () => { setZone(''); setProject(''); setMin(''); setMax(''); setTypes([]) }
+  const dirty = Boolean(zone || project || min || max || types.length)
 
   async function copy() {
     try {
@@ -101,7 +105,8 @@ export default function ShareLinkBuilder({ rooms }) {
         <div className="grid grid-cols-1 sm:grid-cols-2 gap-3">
           <label className="block">
             <span className="label">โซน / ทำเล</span>
-            <select className={field} value={zone} onChange={(e) => setZone(e.target.value)}>
+            <select className={field} value={zone}
+              onChange={(e) => { setZone(e.target.value); setProject('') }}>
               <option value="">ทุกโซน / ทำเล</option>
               {(zones ?? []).map((z) => <option key={z.id} value={z.name}>{z.name}</option>)}
             </select>
@@ -127,13 +132,32 @@ export default function ShareLinkBuilder({ rooms }) {
               onChange={(e) => setMax(e.target.value)} placeholder="เช่น 15000" min="0" />
           </label>
 
-          <label className="block sm:col-span-2">
+          <div className="sm:col-span-2">
+            {/* Checkboxes, not a multi-select: a native multi-select needs
+                cmd-click to add a second value, which does not exist on a phone. */}
             <span className="label">ประเภทห้อง</span>
-            <select className={field} value={roomType} onChange={(e) => setRoomType(e.target.value)}>
-              <option value="">ทุกประเภทห้อง</option>
-              {ROOM_TYPES.map((t) => <option key={t} value={t}>{t}</option>)}
-            </select>
-          </label>
+            <div className="mt-1 flex flex-wrap gap-2">
+              {ROOM_TYPES.map((t) => {
+                const on = types.includes(t)
+                return (
+                  <button
+                    key={t}
+                    type="button"
+                    aria-pressed={on}
+                    onClick={() => setTypes((ts) => on ? ts.filter((x) => x !== t) : [...ts, t])}
+                    className={`min-h-11 px-3 rounded-lg text-sm font-medium border transition-colors ${
+                      on ? 'bg-navy-700 text-white border-navy-700' : 'bg-white text-navy-700 border-line hover:bg-navy-50'
+                    }`}
+                  >
+                    {t}
+                  </button>
+                )
+              })}
+            </div>
+            <div className="mt-1 text-xs text-muted">
+              {types.length === 0 ? 'ไม่เลือก = ทุกประเภทห้อง' : `เลือกไว้ ${types.length} ประเภท`}
+            </div>
+          </div>
         </div>
 
         <div className={`rounded-lg px-3 py-2 text-sm ${
