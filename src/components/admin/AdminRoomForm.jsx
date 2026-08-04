@@ -60,6 +60,11 @@ export default function AdminRoomForm({ mode }) {
   const { data: landlords } = useApi(() => api.listLandlords({ limit: 200 }), [])
   const { data: zones }     = useApi(() => api.listZones(), [])
   const { data: rooms }     = useApi(() => api.listRooms({ limit: 200 }), [])
+  // Whether this room already carried a room code when it loaded — see validate().
+  // Read through the ref at call time, never captured into a render scope: a
+  // snapshot taken before the room finished loading would still say false.
+  const hadRoomCodeRef = useRef(false)
+
   const { data: existing, loading: loadingRoom } = useApi(
     () => isEdit ? api.getRoom(roomId) : Promise.resolve(null),
     [roomId],
@@ -85,6 +90,7 @@ export default function AdminRoomForm({ mode }) {
   // Hydrate form when editing.
   useEffect(() => {
     if (!isEdit || !existing) return
+    hadRoomCodeRef.current = Boolean(String(existing.roomCode || '').trim())
     setForm({
       title: existing.title || '',
       description: existing.description || '',
@@ -238,7 +244,13 @@ export default function AdminRoomForm({ mode }) {
     if (!form.landlordId)                e.landlordId  = 'กรุณาเลือกเจ้าของห้อง'
     if (!form.title.trim() && !form.projectName.trim()) e.title = 'กรุณากรอกชื่อโครงการหรือชื่อห้อง'
     if (!form.zoneId)                    e.zoneId      = 'กรุณาเลือกโซน'
-    if (!form.roomCode.trim())           e.roomCode    = 'กรุณากรอกเลขห้อง'
+    // Required for NEW rooms, but not retroactively: legacy rooms were entered
+    // before this field existed, and demanding one to save an unrelated edit
+    // (a price, a description) meant those rooms could not be edited at all
+    // until someone invented a number. An existing code still can't be blanked.
+    if (!form.roomCode.trim() && (!isEdit || hadRoomCodeRef.current)) {
+      e.roomCode = 'กรุณากรอกเลขห้อง'
+    }
     if (!form.monthlyRent || form.monthlyRent < 1000) e.monthlyRent = 'ค่าเช่าต้องอย่างน้อย 1,000 บาท'
     if (form.availableFrom && !/^\d{4}-\d{2}-\d{2}$/.test(form.availableFrom)) e.availableFrom = 'รูปแบบวันที่ไม่ถูกต้อง'
     return e
@@ -407,7 +419,15 @@ export default function AdminRoomForm({ mode }) {
         </div>
 
         {/* รหัสห้อง / เลขห้อง — required */}
-        <Field id="f-code" label="รหัสห้อง / เลขห้อง" required error={errors.roomCode}>
+        <Field
+          id="f-code"
+          label="รหัสห้อง / เลขห้อง"
+          required={!isEdit || hadRoomCodeRef.current}
+          error={errors.roomCode}
+          hint={isEdit && !hadRoomCodeRef.current
+            ? 'ห้องนี้ยังไม่เคยมีเลขห้อง — บันทึกได้โดยไม่ต้องกรอก แต่ถ้าทราบแนะนำให้ใส่'
+            : undefined}
+        >
           <input id="f-code" className={inputCls(errors.roomCode)} value={form.roomCode} onChange={update('roomCode')} placeholder="เช่น A-301 หรือ 301/1204" />
         </Field>
 
