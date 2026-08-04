@@ -2,6 +2,7 @@
 import { useState, useEffect, useMemo, useRef } from 'react'
 import { useNavigate, useParams, Link } from 'react-router-dom'
 import { ArrowRight, Home, ImagePlus, Trash, Camera, CheckCircle2, X } from '../icons.jsx'
+import { ConfirmDialog } from '../Modal.jsx'
 import { useApi } from '../../hooks/useApi.js'
 import { api, ApiError } from '../../api/client.js'
 import { ZONE_NAMES, projectsForZone } from '../../data/projects.js'
@@ -74,6 +75,9 @@ export default function AdminRoomForm({ mode }) {
   const [status, setStatus] = useState('idle')    // idle | sending | sent | invalid | error
   // True when the admin chose to type a project name instead of picking one.
   const [customProject, setCustomProject] = useState(false)
+  const [confirmDelete, setConfirmDelete] = useState(false)
+  const [deleting, setDeleting]           = useState(false)
+  const [deleteError, setDeleteError]     = useState('')
   // What to say once the save lands. Null until then. Saving used to redirect
   // silently, so there was no moment that confirmed the edit actually went
   // through — the admin just found themselves on another page.
@@ -191,6 +195,22 @@ export default function AdminRoomForm({ mode }) {
   }
 
   /** Move a saved photo one slot; first position is the cover. */
+  /**
+   * Delete this room. The DB cascades to its photos, viewing slots, bookings,
+   * matches and inquiries, so the confirmation spells out what goes with it —
+   * an admin should not learn the blast radius after the fact.
+   */
+  async function handleDelete() {
+    setDeleting(true); setDeleteError('')
+    try {
+      await api.deleteRoom(roomId)
+      navigate('/admin/rooms', { replace: true })
+    } catch (err) {
+      setDeleteError(err instanceof ApiError ? err.message : 'ลบห้องไม่สำเร็จ กรุณาลองใหม่')
+      setDeleting(false)
+    }
+  }
+
   async function moveSaved(from, to) {
     if (!roomId || to < 0 || to >= savedPhotos.length) return
     const next = [...savedPhotos]
@@ -346,6 +366,18 @@ export default function AdminRoomForm({ mode }) {
 
   return (
     <section>
+      <ConfirmDialog
+        open={confirmDelete}
+        danger
+        title="ลบห้องนี้?"
+        message={`“${form.projectName || form.title || 'ห้องนี้'}”${form.roomCode ? ` (ห้อง ${form.roomCode})` : ''}\n\nรูปภาพ ช่วงเวลานัดชม การนัดชมที่จองไว้ และการจับคู่ของห้องนี้จะถูกลบไปด้วย — กู้คืนไม่ได้`}
+        confirmLabel={deleting ? 'กำลังลบ…' : 'ลบห้องถาวร'}
+        busy={deleting}
+        error={deleteError}
+        onConfirm={handleDelete}
+        onCancel={() => setConfirmDelete(false)}
+      />
+
       {saved && (
         <SavedModal
           saved={saved}
@@ -574,8 +606,20 @@ export default function AdminRoomForm({ mode }) {
           </div>
         </div>
 
-        <div className="flex flex-wrap items-center justify-end gap-3 pt-3 border-t border-line">
-          <Link to="/admin" className="btn btn-outline">ยกเลิก</Link>
+        <div className="flex flex-wrap items-center gap-3 pt-3 border-t border-line">
+          {/* Destructive action sits apart from Save so it can't be hit by
+              momentum on the way to the primary button. */}
+          {isEdit && (
+            <button
+              type="button"
+              onClick={() => { setDeleteError(''); setConfirmDelete(true) }}
+              disabled={status === 'sending' || deleting}
+              className="btn btn-ghost text-ember-700 hover:bg-ember-50 mr-auto"
+            >
+              <Trash size={16} /> ลบห้องนี้
+            </button>
+          )}
+          <Link to="/admin/rooms" className="btn btn-outline">ยกเลิก</Link>
             <button
               type="submit"
               disabled={status === 'sending' || zonesEmpty}
