@@ -41,6 +41,7 @@ export default function ListingsForPersona({ persona, theme }) {
   const minBudget    = sp.get('min')  || ''
   const bedrooms     = sp.get('beds') || ''
   const propertyType = sp.get('type') || ''
+  const project      = sp.get('project') || ''
 
   /** Write one filter to the URL. Empty/null removes the key so links stay clean. */
   const setFilter = (key, value) => {
@@ -57,11 +58,11 @@ export default function ListingsForPersona({ persona, theme }) {
   const setBedrooms     = (v) => setFilter('beds', v)
   const setPropertyType = (v) => setFilter('type', v)
 
-  const [debouncedZone, setDebouncedZone]   = useState(activeZone)
+  const [debouncedZone, setDebouncedZone]   = useState(null)
   const [showFilters, setShowFilters]       = useState(false)
   const [copiedLink, setCopiedLink]         = useState(false)
 
-  const hasFilters = Boolean(activeZone || maxBudget || minBudget || bedrooms || propertyType)
+  const hasFilters = Boolean(activeZone || maxBudget || minBudget || bedrooms || propertyType || project)
 
   async function copyLink() {
     try {
@@ -79,10 +80,22 @@ export default function ListingsForPersona({ persona, theme }) {
   const { data: zones } = useApi(() => api.listZones(), [])
   const zonesDisplay = zones && zones.length ? zones : []
 
+  // The API filters by zone SLUG, but a shared link may carry the Thai name —
+  // that is what the admin rooms table displays and what reads sensibly in a
+  // URL someone forwards. Accept either and resolve to the slug, otherwise the
+  // link opens to an empty result and looks like we have nothing available.
+  const zoneSlug = useMemo(() => {
+    if (!activeZone) return null
+    const v = String(activeZone).trim().toLowerCase()
+    const hit = zonesDisplay.find((z) =>
+      String(z.slug || '').toLowerCase() === v || String(z.name || '').toLowerCase() === v)
+    return hit?.slug ?? activeZone
+  }, [activeZone, zonesDisplay])
+
   useEffect(() => {
-    const t = setTimeout(() => setDebouncedZone(activeZone), 250)
+    const t = setTimeout(() => setDebouncedZone(zoneSlug), 250)
     return () => clearTimeout(t)
-  }, [activeZone])
+  }, [zoneSlug])
 
   const params = {
     ...(debouncedZone ? { zone: debouncedZone } : {}),
@@ -90,8 +103,9 @@ export default function ListingsForPersona({ persona, theme }) {
     ...(minBudget !== '' ? { minRent: Number(minBudget) } : {}),
     ...(bedrooms !== '' ? { bedrooms: Number(bedrooms) } : {}),
     ...(propertyType ? { roomType: propertyType } : {}),
+    ...(project ? { project } : {}),
   }
-  const { data: rooms, loading, error } = useApi(() => api.listRooms(params), [debouncedZone, maxBudget, minBudget, bedrooms, propertyType])
+  const { data: rooms, loading, error } = useApi(() => api.listRooms(params), [debouncedZone, maxBudget, minBudget, bedrooms, propertyType, project])
 
   // "อัพเดทล่าสุด" timestamp — render today, Thai style.
   const today = new Date()
@@ -116,7 +130,7 @@ export default function ListingsForPersona({ persona, theme }) {
     // would land — the other four filters would silently stay applied.
     setSp((prev) => {
       const next = new URLSearchParams(prev)
-      for (const k of ['zone', 'max', 'min', 'beds', 'type']) next.delete(k)
+      for (const k of ['zone', 'max', 'min', 'beds', 'type', 'project']) next.delete(k)
       return next
     }, { replace: true })
   }
@@ -189,7 +203,7 @@ export default function ListingsForPersona({ persona, theme }) {
             <div className="grid gap-4 sm:grid-cols-2 lg:grid-cols-4">
               <div>
                 <label className="label">ทำเล</label>
-                <select className="input" value={activeZone || ''} onChange={(e) => setActiveZone(e.target.value || null)}>
+                <select className="input" value={zoneSlug || ''} onChange={(e) => setActiveZone(e.target.value || null)}>
                   <option value="">ทั้งหมด</option>
                   {zonesDisplay.map((z) => (
                     <option key={z.id} value={z.slug}>{z.name}</option>

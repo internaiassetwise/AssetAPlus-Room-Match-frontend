@@ -1,10 +1,11 @@
 // src/components/admin/AdminRoomsList.jsx — Table of all rooms with edit/delete actions.
-import { useState } from 'react'
-import { Link, useNavigate } from 'react-router-dom'
-import { Pencil, Trash, Eye, Plus, Bed, Bath, Ruler, Clock } from '../icons.jsx'
+import { useState, useMemo } from 'react'
+import { Link, useNavigate, useSearchParams } from 'react-router-dom'
+import { Pencil, Trash, Eye, Plus, Bed, Bath, Ruler, Clock, X } from '../icons.jsx'
 import { ConfirmDialog } from '../Modal.jsx'
 import { useApi } from '../../hooks/useApi.js'
 import { api, ApiError } from '../../api/client.js'
+import ShareLinkBuilder from './ShareLinkBuilder.jsx'
 
 const STATUS_TONE = {
   available: 'bg-emerald-50 text-emerald-700 border-emerald-200',
@@ -26,6 +27,29 @@ export default function AdminRoomsList() {
   const [confirming, setConfirming] = useState(null)   // room object being deleted
   const [deleting,   setDeleting]   = useState(false)
   const [delError,   setDelError]   = useState('')
+
+  // The dashboard links here with ?status= / ?project= / ?zone=. Those links
+  // used to land on the unfiltered list, so a number on the dashboard promised
+  // a drill-down it never delivered. Filtering happens client-side because the
+  // list is already fully loaded (limit 200).
+  const [sp, setSp] = useSearchParams()
+  const fStatus  = sp.get('status')  || ''
+  const fProject = sp.get('project') || ''
+  const fZone    = sp.get('zone')    || ''
+  const hasFilters = Boolean(fStatus || fProject || fZone)
+
+  const visible = useMemo(() => {
+    const all = Array.isArray(rooms) ? rooms : []
+    return all.filter((r) =>
+      (!fStatus  || r.status === fStatus) &&
+      (!fZone    || r.zone === fZone) &&
+      // Project names vary in spelling, so match loosely rather than dropping
+      // rooms the dashboard just counted under this project.
+      (!fProject || String(r.projectName || r.title || '').toLowerCase().includes(fProject.toLowerCase())))
+  }, [rooms, fStatus, fProject, fZone])
+
+  const clearFilters = () => setSp(new URLSearchParams(), { replace: true })
+
 
   async function handleDelete() {
     if (!confirming) return
@@ -59,6 +83,21 @@ export default function AdminRoomsList() {
         </Link>
       </div>
 
+      <ShareLinkBuilder rooms={rooms} />
+
+      {hasFilters && (
+        <div className="mb-4 flex flex-wrap items-center gap-2">
+          <span className="text-sm text-muted">กำลังกรอง:</span>
+          {fStatus  && <span className="chip">สถานะ {STATUS_LABEL[fStatus] || fStatus}</span>}
+          {fProject && <span className="chip">โครงการ {fProject}</span>}
+          {fZone    && <span className="chip">ทำเล {fZone}</span>}
+          <span className="text-sm text-muted">· {visible.length} ห้อง</span>
+          <button type="button" onClick={clearFilters} className="btn btn-ghost btn-sm">
+            <X size={14} /> ล้าง
+          </button>
+        </div>
+      )}
+
       {error && (
         <div className="card p-6 text-ember-700 text-sm">
           โหลดข้อมูลไม่สำเร็จ กรุณาลองใหม่อีกครั้ง
@@ -81,14 +120,14 @@ export default function AdminRoomsList() {
               {loading && (
                 Array.from({ length: 5 }).map((_, i) => <SkeletonRow key={i} />)
               )}
-              {!loading && rooms && rooms.length === 0 && (
+              {!loading && visible.length === 0 && (
                 <tr>
                   <td colSpan={5} className="px-5 py-12 text-center text-muted">
                     ยังไม่มีห้องในระบบ กดปุ่ม "เพิ่มห้องใหม่" เพื่อเริ่มต้น
                   </td>
                 </tr>
               )}
-              {!loading && rooms && rooms.map((r) => (
+              {!loading && visible.map((r) => (
                 <tr key={r.id} className="hover:bg-navy-50/40 transition-colors">
                   <td className="px-5 py-4">
                     <div className="font-semibold text-navy-700 line-clamp-1">
