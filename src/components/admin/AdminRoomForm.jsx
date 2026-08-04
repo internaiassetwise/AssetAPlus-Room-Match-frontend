@@ -248,7 +248,19 @@ export default function AdminRoomForm({ mode }) {
     ev.preventDefault()
     const e = validate()
     setErrors(e)
-    if (Object.keys(e).length) return
+    if (Object.keys(e).length) {
+      // A bare `return` here meant pressing บันทึก did visibly nothing: the
+      // message rendered beside a field far above the fold, so from the bottom
+      // of a long form the button looked dead. Take the admin to the problem.
+      const first = Object.keys(e)[0]
+      const el = document.getElementById(ERROR_FIELD_ID[first] || '')
+      if (el) {
+        el.scrollIntoView({ behavior: 'smooth', block: 'center' })
+        el.focus?.({ preventScroll: true })
+      }
+      setStatus('invalid')
+      return
+    }
 
     setStatus('sending')
     // Public title = project name only. The room number (roomCode) is captured
@@ -517,6 +529,12 @@ export default function AdminRoomForm({ mode }) {
             </button>
         </div>
 
+        {status === 'invalid' && (
+          <div role="alert" className="mt-3 text-sm text-ember-700 bg-ember-50 border border-ember-200 rounded-lg px-4 py-3">
+            ยังบันทึกไม่ได้ — มีช่องที่ต้องกรอกให้ครบก่อน (เลื่อนขึ้นไปดูช่องที่มีข้อความสีแดง)
+          </div>
+        )}
+
         {status === 'error' && (
           <div className="text-ember-700 text-sm text-center bg-ember-50 border border-ember-200 rounded-lg px-3 py-2">
             บันทึกไม่สำเร็จ กรุณาตรวจสอบข้อมูลและลองใหม่อีกครั้ง
@@ -541,6 +559,18 @@ function Header({ icon: Icon, title, sub }) {
       </div>
     </div>
   )
+}
+
+/** validate() key → the DOM id of the input it belongs to, so a failed submit
+ *  can jump to the actual field. The two names differ (form state vs. element
+ *  id), so this mapping is what keeps them in step. */
+const ERROR_FIELD_ID = {
+  landlordId:    'f-landlord',
+  zoneId:        'f-zone',
+  title:         'f-project',
+  roomCode:      'f-code',
+  monthlyRent:   'f-rent',
+  availableFrom: 'f-from',
 }
 
 function Field({ id, label, required, error, hint, children }) {
