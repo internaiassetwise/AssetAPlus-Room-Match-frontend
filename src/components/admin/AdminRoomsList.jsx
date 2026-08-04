@@ -1,7 +1,7 @@
 // src/components/admin/AdminRoomsList.jsx — Table of all rooms with edit/delete actions.
 import { useState, useMemo } from 'react'
 import { Link, useNavigate, useSearchParams } from 'react-router-dom'
-import { Pencil, Trash, Eye, Plus, Bed, Bath, Ruler, Clock, X } from '../icons.jsx'
+import { Pencil, Trash, Eye, Plus, Bed, Bath, Ruler, X } from '../icons.jsx'
 import { ConfirmDialog } from '../Modal.jsx'
 import { useApi } from '../../hooks/useApi.js'
 import { api, ApiError } from '../../api/client.js'
@@ -170,13 +170,6 @@ export default function AdminRoomsList() {
                       >
                         <Pencil size={16} />
                       </button>
-                      <Link
-                        to={`/admin/rooms/${r.id}/slots`}
-                        className="w-9 h-9 grid place-items-center rounded-lg text-navy-700 hover:bg-navy-50"
-                        aria-label="เวลานัดชม"
-                      >
-                        <Clock size={16} />
-                      </Link>
                       <button
                         type="button"
                         onClick={() => { setDelError(''); setConfirming(r) }}

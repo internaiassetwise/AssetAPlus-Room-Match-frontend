@@ -7,13 +7,9 @@ import { useApi } from '../../hooks/useApi.js'
 import { api, ApiError } from '../../api/client.js'
 import { ZONE_NAMES, projectsForZone } from '../../data/projects.js'
 
-const PROPERTY_TYPES = [
-  { value: 'condo',      label: 'คอนโด' },
-  { value: 'townhouse',  label: 'ทาวน์เฮ้าส์' },
-  { value: 'house',      label: 'บ้านเดี่ยว' },
-  { value: 'apartment',  label: 'อพาร์ทเมนท์' },
-  { value: 'studio',     label: 'สตูดิโอ' },
-]
+// Same wording as the LIFF form so a landlord and an admin describe the
+// relationship identically — the value IS the label.
+const CONTACT_RELATIONS = ['บิดา/มารดา', 'คู่สมรส', 'บุตร', 'พี่/น้องร่วมสายเลือด', 'อื่นๆ']
 
 const ROOM_TYPES = [
   'STUDIO',
@@ -40,7 +36,7 @@ const EMPTY_FORM = {
   title: '', description: '',
   projectName: '', roomCode: '',
   landlordId: '', zoneId: '',
-  propertyType: 'condo',
+  propertyType: 'condo',   // fixed — see the form comment
   roomType: '',
   building: '', floor: '',
   viewType: '',
@@ -75,6 +71,12 @@ export default function AdminRoomForm({ mode }) {
   const [status, setStatus] = useState('idle')    // idle | sending | sent | invalid | error
   // True when the admin chose to type a project name instead of picking one.
   const [customProject, setCustomProject] = useState(false)
+  // Contact person belongs to the LANDLORD, not the room — this block reads and
+  // writes landlords.contact_*, so the same answer shows wherever that owner
+  // appears instead of being re-entered per room.
+  const [contact, setContact] = useState({ name: '', phone: '', relation: '' })
+  const contactLoadedFor = useRef(null)
+
   const [confirmDelete, setConfirmDelete] = useState(false)
   const [deleting, setDeleting]           = useState(false)
   const [deleteError, setDeleteError]     = useState('')
@@ -194,6 +196,22 @@ export default function AdminRoomForm({ mode }) {
       return prev.filter((p) => p.key !== key)
     })
   }
+
+  // Pull the chosen owner's contact person in. Keyed on the id so switching
+  // owners reloads rather than carrying the previous one's details across.
+  useEffect(() => {
+    const id = form.landlordId
+    if (!id) { setContact({ name: '', phone: '', relation: '' }); contactLoadedFor.current = null; return }
+    if (contactLoadedFor.current === String(id)) return
+    const found = (landlords || []).find((l) => String(l.id) === String(id))
+    if (!found) return
+    contactLoadedFor.current = String(id)
+    setContact({
+      name:     found.contactName     || '',
+      phone:    found.contactPhone    || '',
+      relation: found.contactRelation || '',
+    })
+  }, [form.landlordId, landlords])
 
   /** Move a saved photo one slot; first position is the cover. */
   /**
@@ -335,6 +353,20 @@ export default function AdminRoomForm({ mode }) {
         : await api.createRoom(body)
       const targetId = saved?.id ?? roomId
 
+      // Persist the contact person on the landlord. Best-effort and AFTER the
+      // room write — a failure here must not lose the room the admin just typed.
+      if (form.landlordId) {
+        try {
+          await api.updateLandlord(form.landlordId, {
+            contactName:     contact.name.trim()  || null,
+            contactPhone:    contact.phone.trim() || null,
+            contactRelation: contact.relation     || null,
+          })
+        } catch (err) {
+          console.warn('contact person not saved', err)
+        }
+      }
+
       // 2. Upload any staged photos. Failures are surfaced but don't roll
       //    back the room write — the room exists either way, and the user
       //    can re-add photos via the edit page.
@@ -427,6 +459,38 @@ export default function AdminRoomForm({ mode }) {
           )}
         </Field>
 
+        {/* Collapsed by default — most owners are their own contact, and three
+            always-open fields push the room itself below the fold. */}
+        <details className="rounded-lg border border-line bg-cream-50/60 px-4 py-3">
+          <summary className="cursor-pointer text-sm font-medium text-navy-700 select-none">
+            ผู้ติดต่อแทนเจ้าของห้อง
+            {contact.name && <span className="ml-2 font-normal text-muted">· {contact.name}</span>}
+          </summary>
+          <p className="mt-2 text-xs text-muted">
+            กรอกเมื่อคนที่รับสายไม่ใช่เจ้าของห้อง เช่น ลูกลงทะเบียนให้พ่อแม่ — เว้นว่างได้ถ้าเจ้าของติดต่อเอง
+            <br />ข้อมูลนี้เก็บกับ<b>เจ้าของห้อง</b> จะแสดงเหมือนกันทุกห้องของเขา
+          </p>
+          <div className="mt-3 grid sm:grid-cols-3 gap-4">
+            <Field id="f-cname" label="ชื่อผู้ติดต่อ">
+              <input id="f-cname" className="input" value={contact.name}
+                onChange={(e) => setContact((c) => ({ ...c, name: e.target.value }))}
+                placeholder="ชื่อคนที่ให้ติดต่อกลับ" />
+            </Field>
+            <Field id="f-cphone" label="เบอร์ผู้ติดต่อ">
+              <input id="f-cphone" className="input" value={contact.phone}
+                onChange={(e) => setContact((c) => ({ ...c, phone: e.target.value }))}
+                placeholder="เบอร์ที่โทรติดจริง" />
+            </Field>
+            <Field id="f-crel" label="ความสัมพันธ์">
+              <select id="f-crel" className="input" value={contact.relation}
+                onChange={(e) => setContact((c) => ({ ...c, relation: e.target.value }))}>
+                <option value="">— เจ้าของห้องติดต่อเอง —</option>
+                {CONTACT_RELATIONS.map((r) => <option key={r} value={r}>{r}</option>)}
+              </select>
+            </Field>
+          </div>
+        </details>
+
         {/* 1. โซน + โครงการ (cascading: เลือกโซนก่อน → เห็นโครงการในโซนนั้น) */}
         <div className="grid sm:grid-cols-2 gap-5">
           <Field id="f-zone" label="โซน / ทำเล" required error={errors.zoneId}>
@@ -504,20 +568,15 @@ export default function AdminRoomForm({ mode }) {
           <input id="f-code" className={inputCls(errors.roomCode)} value={form.roomCode} onChange={update('roomCode')} placeholder="เช่น A-301 หรือ 301/1204" />
         </Field>
 
-        {/* ประเภทที่พักอาศัย */}
-        <div className="grid sm:grid-cols-2 gap-5">
-          <Field id="f-prop" label="ประเภทที่พักอาศัย">
-            <select id="f-prop" className="input" value={form.propertyType} onChange={update('propertyType')}>
-              {PROPERTY_TYPES.map((p) => <option key={p.value} value={p.value}>{p.label}</option>)}
-            </select>
-          </Field>
-          <Field id="f-roomtype" label="ประเภทห้อง">
-            <select id="f-roomtype" className="input" value={form.roomType} onChange={update('roomType')}>
-              <option value="">— เลือกประเภทห้อง —</option>
-              {ROOM_TYPES.map((t) => <option key={t} value={t}>{t}</option>)}
-            </select>
-          </Field>
-        </div>
+        {/* ประเภทที่พักอาศัย is fixed to "คอนโด" — every property we take is a
+            condo, so a dropdown with one real answer was just a way to pick the
+            wrong one. Still sent, still stored; just not asked. */}
+        <Field id="f-roomtype" label="ประเภทห้อง">
+          <select id="f-roomtype" className="input" value={form.roomType} onChange={update('roomType')}>
+            <option value="">— เลือกประเภทห้อง —</option>
+            {ROOM_TYPES.map((t) => <option key={t} value={t}>{t}</option>)}
+          </select>
+        </Field>
 
         {/* ตึก + ชั้น + วิว */}
         <div className="grid sm:grid-cols-3 gap-5">

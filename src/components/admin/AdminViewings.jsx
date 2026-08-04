@@ -23,26 +23,17 @@ function toICT(local) {
   return `${withSecs}+07:00`
 }
 
-const EMPTY_FORM = { tenantId: '', roomId: '', slotId: '', customDate: '', customTime: '', note: '' }
+const EMPTY_FORM = { tenantId: '', roomId: '', customDate: '', customTime: '', note: '' }
 
-// Sales hours Mon–Sat 09:00–18:00 → bookable start times, on the hour.
-const HOUR_CHIPS = ['09:00', '10:00', '11:00', '12:00', '13:00', '14:00', '15:00', '16:00', '17:00']
+// Viewing hours: every day 08:00–18:00, on the hour. The last start is 17:00
+// so a viewing that begins then still finishes inside the window.
+const HOUR_CHIPS = ['08:00', '09:00', '10:00', '11:00', '12:00', '13:00', '14:00', '15:00', '16:00', '17:00']
 
 // Today (Bangkok) as YYYY-MM-DD, for the custom date input's min.
 function todayICT() {
   return new Date().toLocaleDateString('en-CA', { timeZone: 'Asia/Bangkok' })
 }
 // True if the given YYYY-MM-DD is a Sunday (sales closed).
-function isSunday(ymd) {
-  if (!ymd) return false
-  // Parse as local midday to avoid tz roll; weekday is date-only so it's stable.
-  return new Date(`${ymd}T12:00:00`).getDay() === 0
-}
-function fmtSlot(iso) {
-  const d = new Date(iso)
-  return isNaN(d.getTime()) ? iso : d.toLocaleString('th-TH', { weekday: 'short', day: 'numeric', month: 'short', hour: '2-digit', minute: '2-digit' })
-}
-
 const TABS = [
   { value: 'requested', label: 'รอยืนยัน' },
   { value: 'confirmed', label: 'ยืนยันแล้ว' },
@@ -87,27 +78,22 @@ export default function AdminViewings() {
   const [form, setForm]       = useState(EMPTY_FORM)
   const [creating, setCreating] = useState(false)
   const [createError, setCreateError] = useState('')
-  const [useCustom, setUseCustom] = useState(false)
 
-  // Open slots for the selected room — the easy click-to-pick path.
-  const { data: roomSlots, loading: slotsLoading } = useApi(
-    () => (form.roomId ? api.listRoomSlots(form.roomId) : Promise.resolve([])),
-    [form.roomId],
-  )
-  const slots = Array.isArray(roomSlots) ? roomSlots : []
-  const customReady = form.customDate && form.customTime && !isSunday(form.customDate)
-  const canCreate = !!(form.tenantId && form.roomId && (form.slotId || (useCustom && customReady)))
+  const customReady = form.customDate && form.customTime
+  const canCreate = !!(form.tenantId && form.roomId && customReady)
 
-  function pickSlot(id) { setForm((f) => ({ ...f, slotId: id, customDate: '', customTime: '' })); setUseCustom(false) }
-  function resetCreate() { setForm(EMPTY_FORM); setUseCustom(false); setCreateError('') }
+  function resetCreate() { setForm(EMPTY_FORM); setCreateError('') }
 
   async function createAppointment() {
     if (!canCreate) return
     setCreating(true); setCreateError('')
     try {
-      const body = { tenantId: Number(form.tenantId), roomId: Number(form.roomId), note: form.note.trim() || undefined }
-      if (form.slotId) body.slotId = Number(form.slotId)
-      else body.scheduledFor = toICT(`${form.customDate}T${form.customTime}`)
+      const body = {
+        tenantId:     Number(form.tenantId),
+        roomId:       Number(form.roomId),
+        note:         form.note.trim() || undefined,
+        scheduledFor: toICT(`${form.customDate}T${form.customTime}`),
+      }
       await api.createAdminViewing(body)
       resetCreate()
       setShowCreate(false)
@@ -214,82 +200,40 @@ export default function AdminViewings() {
               </div>
             </div>
 
-            {/* Time picker — click an open slot, or type a custom time (9:00-18:00) */}
-            <div className="mt-4">
-              <label className="label">เลือกเวลานัด</label>
-              {!form.roomId ? (
-                <div className="text-sm text-muted">เลือกห้องก่อนเพื่อดูช่วงเวลาที่เปิดจอง</div>
-              ) : slotsLoading ? (
-                <div className="text-sm text-muted">กำลังโหลดช่วงเวลา…</div>
-              ) : (
-                <>
-                  {slots.length > 0 ? (
-                    <div className="flex flex-wrap gap-2">
-                      {slots.map((s) => {
-                        const active = String(form.slotId) === String(s.id)
-                        return (
-                          <button
-                            key={s.id}
-                            type="button"
-                            onClick={() => pickSlot(s.id)}
-                            className={`px-3 py-2 rounded-lg text-sm font-medium border transition-colors ${
-                              active ? 'bg-navy-700 text-white border-navy-700' : 'bg-white text-navy-700 border-line hover:bg-navy-50'
-                            }`}
-                          >
-                            {fmtSlot(s.startsAt)}
-                          </button>
-                        )
-                      })}
-                    </div>
-                  ) : (
-                    <div className="text-sm text-muted">ห้องนี้ยังไม่มีช่วงเวลาที่เปิดจอง — ระบุเวลาเองได้ด้านล่าง</div>
-                  )}
-
-                  <button
-                    type="button"
-                    onClick={() => { setUseCustom((v) => !v); setForm((f) => ({ ...f, slotId: '' })) }}
-                    className="mt-3 text-xs font-medium text-navy-600 hover:text-navy-800 underline"
-                  >
-                    {useCustom ? 'ใช้ช่วงเวลาที่เปิดจองแทน' : 'หรือระบุเวลาเอง (จันทร์-เสาร์ 9:00-18:00)'}
-                  </button>
-
-                  {useCustom && (
-                    <div className="mt-3 grid sm:grid-cols-2 gap-3">
-                      <div>
-                        <label className="label">วันที่</label>
-                        <input
-                          type="date"
-                          className="input"
-                          min={todayICT()}
-                          value={form.customDate}
-                          onChange={(e) => setForm({ ...form, customDate: e.target.value, slotId: '' })}
-                        />
-                        {isSunday(form.customDate) && <div className="mt-1 text-xs text-ember-700">ปิดทำการวันอาทิตย์</div>}
-                      </div>
-                      <div>
-                        <label className="label">เวลา</label>
-                        <div className="flex flex-wrap gap-2">
-                          {HOUR_CHIPS.map((h) => {
-                            const active = form.customTime === h
-                            return (
-                              <button
-                                key={h}
-                                type="button"
-                                onClick={() => setForm({ ...form, customTime: h, slotId: '' })}
-                                className={`px-2.5 py-1.5 rounded-lg text-sm font-medium border transition-colors ${
-                                  active ? 'bg-navy-700 text-white border-navy-700' : 'bg-white text-navy-700 border-line hover:bg-navy-50'
-                                }`}
-                              >
-                                {h}
-                              </button>
-                            )
-                          })}
-                        </div>
-                      </div>
-                    </div>
-                  )}
-                </>
-              )}
+            {/* Admin sets the time directly. The self-service slot flow is
+                gone, so there is nothing to pick from — the room only had to be
+                chosen first because the slot list depended on it. */}
+            <div className="mt-4 grid sm:grid-cols-2 gap-3">
+              <div>
+                <label className="label">วันที่</label>
+                <input
+                  type="date"
+                  className="input"
+                  min={todayICT()}
+                  value={form.customDate}
+                  onChange={(e) => setForm({ ...form, customDate: e.target.value })}
+                />
+              </div>
+              <div>
+                <label className="label">เวลา <span className="font-normal text-muted">(ทุกวัน 08:00–18:00)</span></label>
+                <div className="flex flex-wrap gap-2">
+                  {HOUR_CHIPS.map((h) => {
+                    const active = form.customTime === h
+                    return (
+                      <button
+                        key={h}
+                        type="button"
+                        onClick={() => setForm({ ...form, customTime: h })}
+                        className={`min-h-11 px-3 rounded-lg text-sm font-medium border transition-colors ${
+                          active ? 'bg-navy-700 text-white border-navy-700' : 'bg-white text-navy-700 border-line hover:bg-navy-50'
+                        }`}
+                      >
+                        {h}
+                      </button>
+                    )
+                  })}
+                </div>
+              </div>
             </div>
 
             <div className="mt-4">

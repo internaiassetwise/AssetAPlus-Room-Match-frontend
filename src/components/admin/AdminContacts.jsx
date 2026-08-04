@@ -254,13 +254,14 @@ const EMPTY_LANDLORD = {
   contactName: '', contactPhone: '', contactRelation: '',
 }
 
+// Same wording as the LIFF form, so a landlord and an admin describe the same
+// relationship the same way — the value IS the label (stored as typed).
 const RELATIONS = [
-  ['',         '— เจ้าของห้องติดต่อเอง —'],
-  ['child',    'ลูก'],
-  ['spouse',   'คู่สมรส'],
-  ['relative', 'ญาติ'],
-  ['agent',    'นายหน้า'],
-  ['other',    'อื่นๆ'],
+  ['บิดา/มารดา',          'บิดา/มารดา'],
+  ['คู่สมรส',              'คู่สมรส'],
+  ['บุตร',                'บุตร'],
+  ['พี่/น้องร่วมสายเลือด', 'พี่/น้องร่วมสายเลือด'],
+  ['อื่นๆ',               'อื่นๆ'],
 ]
 
 function LandlordDirectory({ filter, onOpen }) {
@@ -499,6 +500,9 @@ function LandlordDirectory({ filter, onOpen }) {
                 <Field label="ความสัมพันธ์กับเจ้าของห้อง">
                   <select className="input" value={form.contactRelation}
                     onChange={(e) => setForm({ ...form, contactRelation: e.target.value })}>
+                    {/* Explicit blank first: dropping it from RELATIONS left no
+                        way to clear the field once a value was picked. */}
+                    <option value="">— เจ้าของห้องติดต่อเอง —</option>
                     {RELATIONS.map(([v, label]) => <option key={v} value={v}>{label}</option>)}
                   </select>
                 </Field>

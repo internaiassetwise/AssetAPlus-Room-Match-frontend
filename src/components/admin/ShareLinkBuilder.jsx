@@ -12,11 +12,15 @@ import { useApi } from '../../hooks/useApi.js'
 import { api } from '../../api/client.js'
 import { Check, X } from '../icons.jsx'
 
-const BEDROOM_CHOICES = [
-  { value: '',  label: 'ไม่จำกัด' },
-  { value: '1', label: '1 ห้องนอนขึ้นไป' },
-  { value: '2', label: '2 ห้องนอนขึ้นไป' },
-  { value: '3', label: '3 ห้องนอนขึ้นไป' },
+// Mirrors the admin room form's list. Customers shop by room type, not by a
+// bedroom count — "1 BEDROOM PLUS" and "1 BEDROOM" are both one bedroom but a
+// different product, and the count could not tell them apart.
+const ROOM_TYPES = [
+  'STUDIO',
+  '1 BEDROOM',
+  '1 BEDROOM EXCLUSIVE',
+  '1 BEDROOM EXTRA',
+  '1 BEDROOM PLUS',
 ]
 
 export default function ShareLinkBuilder({ rooms }) {
@@ -25,7 +29,7 @@ export default function ShareLinkBuilder({ rooms }) {
   const [project, setProject] = useState('')
   const [min, setMin]         = useState('')
   const [max, setMax]         = useState('')
-  const [beds, setBeds]       = useState('')
+  const [roomType, setRoomType] = useState('')
   const [copied, setCopied]   = useState(false)
 
   const all = Array.isArray(rooms) ? rooms : []
@@ -47,10 +51,10 @@ export default function ShareLinkBuilder({ rooms }) {
     if (project) q.set('project', project)
     if (min)     q.set('min', min)
     if (max)     q.set('max', max)
-    if (beds)    q.set('beds', beds)
+    if (roomType) q.set('type', roomType)
     const s = q.toString()
     return `${window.location.origin}/${s ? `?${s}` : ''}`
-  }, [zone, project, min, max, beds])
+  }, [zone, project, min, max, roomType])
 
   // Live count so nobody sends a link that opens on an empty page. Mirrors the
   // server's filters against the already-loaded list — available rooms only,
@@ -63,13 +67,13 @@ export default function ShareLinkBuilder({ rooms }) {
       if (p && !`${r.projectName || ''} ${r.title || ''}`.toLowerCase().includes(p)) return false
       if (min && Number(r.price) < Number(min)) return false
       if (max && Number(r.price) > Number(max)) return false
-      if (beds && Number(r.beds) < Number(beds)) return false
+      if (roomType && String(r.roomType || '') !== roomType) return false
       return true
     }).length
-  }, [all, zone, project, min, max, beds])
+  }, [all, zone, project, min, max, roomType])
 
-  const reset = () => { setZone(''); setProject(''); setMin(''); setMax(''); setBeds('') }
-  const dirty = Boolean(zone || project || min || max || beds)
+  const reset = () => { setZone(''); setProject(''); setMin(''); setMax(''); setRoomType('') }
+  const dirty = Boolean(zone || project || min || max || roomType)
 
   async function copy() {
     try {
@@ -96,9 +100,9 @@ export default function ShareLinkBuilder({ rooms }) {
       <div className="px-4 sm:px-5 pb-5 pt-1 border-t border-line space-y-3">
         <div className="grid grid-cols-1 sm:grid-cols-2 gap-3">
           <label className="block">
-            <span className="label">ทำเล</span>
+            <span className="label">โซน / ทำเล</span>
             <select className={field} value={zone} onChange={(e) => setZone(e.target.value)}>
-              <option value="">ทุกทำเล</option>
+              <option value="">ทุกโซน / ทำเล</option>
               {(zones ?? []).map((z) => <option key={z.id} value={z.name}>{z.name}</option>)}
             </select>
           </label>
@@ -124,9 +128,10 @@ export default function ShareLinkBuilder({ rooms }) {
           </label>
 
           <label className="block sm:col-span-2">
-            <span className="label">ห้องนอน</span>
-            <select className={field} value={beds} onChange={(e) => setBeds(e.target.value)}>
-              {BEDROOM_CHOICES.map((b) => <option key={b.value} value={b.value}>{b.label}</option>)}
+            <span className="label">ประเภทห้อง</span>
+            <select className={field} value={roomType} onChange={(e) => setRoomType(e.target.value)}>
+              <option value="">ทุกประเภทห้อง</option>
+              {ROOM_TYPES.map((t) => <option key={t} value={t}>{t}</option>)}
             </select>
           </label>
         </div>

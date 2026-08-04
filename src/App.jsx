@@ -15,7 +15,6 @@ import AdminFaqForm     from './components/admin/AdminFaqForm.jsx'
 import AdminInquiriesList from './components/admin/AdminInquiriesList.jsx'
 import AdminPendingListings from './components/admin/AdminPendingListings.jsx'
 import AdminViewings     from './components/admin/AdminViewings.jsx'
-import AdminRoomSlots     from './components/admin/AdminRoomSlots.jsx'
 import AdminInbox from './components/admin/AdminInbox.jsx'
 import AdminMatching from './components/admin/AdminMatching.jsx'
 import AdminContacts from './components/admin/AdminContacts.jsx'
@@ -82,7 +81,6 @@ export default function App() {
               <Route path="/admin/rooms"         element={<AdminRoomsList />} />
               <Route path="/admin/rooms/new"     element={<AdminRoomForm mode="create" />} />
               <Route path="/admin/rooms/:id/edit" element={<AdminRoomForm mode="edit" />} />
-              <Route path="/admin/rooms/:id/slots" element={<AdminRoomSlots />} />
               <Route path="/admin/faqs"          element={<AdminFaqsList />} />
               <Route path="/admin/faqs/new"      element={<AdminFaqForm mode="create" />} />
               <Route path="/admin/faqs/:id/edit" element={<AdminFaqForm mode="edit" />} />

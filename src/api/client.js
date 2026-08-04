@@ -204,12 +204,6 @@ export const api = {
   reorderRoomPhotos: (id, ids)     => request(`/rooms/${id}/photos/order`, { method: 'PUT', body: JSON.stringify({ ids }) }),
 
   // Admin viewing-slots manager — open/cancel bookable viewing time-slots.
-  //   listRoomSlots(id)       → GET    /rooms/:id/slots   (public; open future slots)
-  //   openRoomSlot(id, iso)   → POST   /rooms/:id/slots   (requireAdmin)
-  //   cancelRoomSlot(slotId)  → DELETE /rooms/slots/:id   (requireAdmin)
-  listRoomSlots:  (id)            => request("/rooms/" + id + "/slots"),
-  openRoomSlot:   (id, startsAt)  => request("/rooms/" + id + "/slots", { method:"POST", body: JSON.stringify({ startsAt }) }),
-  cancelRoomSlot: (slotId)        => request("/rooms/slots/" + slotId, { method:"DELETE" }),
 
   // Phase 5 — admin approval of bot-submitted listings
   listPendingListings: ()   => request('/rooms/pending'),
