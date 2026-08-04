@@ -16,6 +16,10 @@ function shouldHide(pathname) {
   if (pathname.startsWith('/contact-admin')) return true
   if (pathname.startsWith('/admin'))         return true
   if (pathname.startsWith('/login'))         return true
+  // Room detail already carries two: the navbar's OA link and, more usefully,
+  // "สอบถามห้องนี้ทาง Line" which arrives attached to the room. A third floating
+  // one competes with the specific button and wins on visual weight.
+  if (/^\/rooms\/[^/]+\/?$/.test(pathname))   return true
   return false
 }
 
