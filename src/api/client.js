@@ -157,6 +157,10 @@ export const api = {
   // Landlords
   listLandlords:  (params = {}) => request(`/landlords${qs(params)}`),
   getLandlord:    (id)          => request(`/landlords/${id}`),
+  // Everything attached to one person — rooms for a landlord; viewings, matches
+  // and the room they last asked about for a tenant.
+  getLandlordDetail: (id)       => request(`/landlords/${id}/detail`),
+  getTenantDetail:   (id)       => request(`/tenants/${id}/detail`),
   createLandlord: (body)        => request('/landlords', { method: 'POST', body: JSON.stringify(body) }),
   updateLandlord: (id, body)    => request(`/landlords/${id}`, { method: 'PATCH', body: JSON.stringify(body) }),
   deleteLandlord: (id)          => request(`/landlords/${id}`, { method: 'DELETE' }),

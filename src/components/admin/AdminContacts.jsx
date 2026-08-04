@@ -12,6 +12,7 @@ import { useState, useMemo } from 'react'
 import { useApi } from '../../hooks/useApi.js'
 import { api, ApiError } from '../../api/client.js'
 import { Search, Users, Home, X, Check, Phone, LineChat, Pencil, Plus, Trash } from '../icons.jsx'
+import ContactDetailPanel from './ContactDetailPanel.jsx'
 
 // Copy a LINE id to the clipboard on click (same affordance as the old tenant table).
 function LineBadge({ lineId }) {
@@ -30,6 +31,9 @@ function LineBadge({ lineId }) {
 export default function AdminContacts() {
   const [role, setRole] = useState('tenant') // 'tenant' | 'landlord'
   const [filter, setFilter] = useState('')
+  // Which person's detail panel is open — { role, id, name } or null. Lives here
+  // so one panel serves both directories.
+  const [detail, setDetail] = useState(null)
 
   const roleTab = (key, label, Icon) => {
     const active = role === key
@@ -79,15 +83,19 @@ export default function AdminContacts() {
       </div>
 
       {role === 'tenant'
-        ? <TenantDirectory filter={filter} />
-        : <LandlordDirectory filter={filter} />}
+        ? <TenantDirectory filter={filter} onOpen={setDetail} />
+        : <LandlordDirectory filter={filter} onOpen={setDetail} />}
+
+      {detail && (
+        <ContactDetailPanel {...detail} onClose={() => setDetail(null)} />
+      )}
     </section>
   )
 }
 
 // ─────────────────────────────── Tenants ────────────────────────────────────
 
-function TenantDirectory({ filter }) {
+function TenantDirectory({ filter, onOpen }) {
   const { data: tenants, loading, refetch } = useApi(() => api.listTenants(), [])
   const [editing, setEditing] = useState(null)
   const [saving, setSaving]   = useState(false)
@@ -168,9 +176,13 @@ function TenantDirectory({ filter }) {
               {visible.map((t) => (
                 <tr key={t.id} className="hover:bg-cream-50/40">
                   <td className="px-5 py-4">
-                    <div className="text-sm font-medium text-navy-700">
+                    <button
+                      type="button"
+                      onClick={() => onOpen({ role: 'tenant', id: t.id, name: t.full_name })}
+                      className="text-sm font-medium text-navy-700 hover:underline text-left"
+                    >
                       {t.full_name || <span className="text-muted">ไม่ระบุชื่อ</span>}
-                    </div>
+                    </button>
                   </td>
                   <td className="px-5 py-4">
                     {t.phone ? (
@@ -251,7 +263,7 @@ const RELATIONS = [
   ['other',    'อื่นๆ'],
 ]
 
-function LandlordDirectory({ filter }) {
+function LandlordDirectory({ filter, onOpen }) {
   const { data: landlords, loading, refetch } = useApi(() => api.listLandlords(), [])
   const [form, setForm]     = useState(null)   // { mode: 'create'|'edit', id?, ...fields }
   const [saving, setSaving] = useState(false)
@@ -383,9 +395,13 @@ function LandlordDirectory({ filter }) {
               {visible.map((l) => (
                 <tr key={l.id} className="hover:bg-cream-50/40">
                   <td className="px-5 py-4">
-                    <div className="text-sm font-medium text-navy-700">
+                    <button
+                      type="button"
+                      onClick={() => onOpen({ role: 'landlord', id: l.id, name: l.fullName })}
+                      className="text-sm font-medium text-navy-700 hover:underline text-left"
+                    >
                       {l.fullName || <span className="text-muted">ไม่ระบุชื่อ</span>}
-                    </div>
+                    </button>
                     {l.companyName && <div className="text-xs text-muted">{l.companyName}</div>}
                   </td>
                   <td className="px-5 py-4">
