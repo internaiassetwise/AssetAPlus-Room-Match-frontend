@@ -125,6 +125,10 @@ const qs = (params) => {
 
 export const api = {
   listRooms:    (params = {}) => request(`/rooms${qs(params)}`),
+  // Admin room manager — every status. /rooms only returns available ones
+  // because it serves the public site, so a reserved room vanished from the
+  // admin's own "ห้องทั้งหมด" and could no longer be found or edited.
+  listAllRooms: ()            => request('/rooms/all'),
   getRoom:      (id)         => request(`/rooms/${id}`),
   // The "ask about this room" LINE link — carries a signed tag so the message
   // the customer sends arrives attached to this room. Public.

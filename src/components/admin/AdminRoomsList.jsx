@@ -23,7 +23,7 @@ const STATUS_LABEL = {
 
 export default function AdminRoomsList() {
   const navigate = useNavigate()
-  const { data: rooms, loading, error, refetch } = useApi(() => api.listRooms({ limit: 200 }), [])
+  const { data: rooms, loading, error, refetch } = useApi(() => api.listAllRooms(), [])
   const [confirming, setConfirming] = useState(null)   // room object being deleted
   const [deleting,   setDeleting]   = useState(false)
   const [delError,   setDelError]   = useState('')

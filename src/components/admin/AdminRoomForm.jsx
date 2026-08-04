@@ -71,7 +71,9 @@ export default function AdminRoomForm({ mode }) {
   )
 
   const [form, setForm]     = useState(EMPTY_FORM)
-  const [status, setStatus] = useState('idle')    // idle | sending | sent | error
+  const [status, setStatus] = useState('idle')    // idle | sending | sent | invalid | error
+  // True when the admin chose to type a project name instead of picking one.
+  const [customProject, setCustomProject] = useState(false)
   // What to say once the save lands. Null until then. Saving used to redirect
   // silently, so there was no moment that confirmed the edit actually went
   // through — the admin just found themselves on another page.
@@ -286,9 +288,11 @@ export default function AdminRoomForm({ mode }) {
       zoneId:      Number(form.zoneId),
       propertyType: form.propertyType,
       roomType:    form.roomType || undefined,
-      projectName: form.projectName.trim() || undefined,
-      roomCode:    form.roomCode.trim() || undefined,
-      building:    form.building.trim() || undefined,
+      // null, not undefined: the server skips undefined keys, so clearing a
+      // field would silently keep the old value. null actually clears it.
+      projectName: form.projectName.trim() || (isEdit ? null : undefined),
+      roomCode:    form.roomCode.trim() || (isEdit ? null : undefined),
+      building:    form.building.trim() || (isEdit ? null : undefined),
       floor:       form.floor ? Number(form.floor) : undefined,
       viewType:    form.viewType || undefined,
       bedrooms:    Number(form.bedrooms),
@@ -402,17 +406,52 @@ export default function AdminRoomForm({ mode }) {
           <Field id="f-project" label="ชื่อโครงการ" required error={errors.title}>
             {(() => {
               const zoneName = (zones || []).find((z) => String(z.id) === form.zoneId)?.name || ''
-              const projects = projectsForZone(zoneName)
-              if (projects.length > 0) {
+              // The curated list is a shortcut, not a whitelist. Real rooms carry
+              // project names it doesn't have ("Modiz Vault" in เกษตร), so a plain
+              // dropdown left admin unable to set — or even keep — the right one,
+              // and picking nothing silently dropped the change. Always include
+              // the room's current value, and always offer a way to type.
+              const known = projectsForZone(zoneName)
+              const current = form.projectName.trim()
+              const options = [...new Set([...known, ...(current ? [current] : [])])]
+              if (options.length > 0 && !customProject) {
                 return (
-                  <select id="f-project" className={inputCls(errors.title)} value={form.projectName} onChange={update('projectName')}>
+                  <select
+                    id="f-project"
+                    className={inputCls(errors.title)}
+                    value={form.projectName}
+                    onChange={(e) => {
+                      if (e.target.value === CUSTOM_PROJECT) {
+                        setCustomProject(true)
+                        setForm((st) => ({ ...st, projectName: '' }))
+                        return
+                      }
+                      update('projectName')(e)
+                    }}
+                  >
                     <option value="">— เลือกโครงการ —</option>
-                    {projects.map((p) => <option key={p} value={p}>{p}</option>)}
+                    {options.map((p) => <option key={p} value={p}>{p}</option>)}
+                    <option value={CUSTOM_PROJECT}>อื่นๆ — พิมพ์ชื่อเอง…</option>
                   </select>
                 )
               }
               return (
-                <input id="f-project" className={inputCls(errors.title)} value={form.projectName} onChange={update('projectName')} placeholder={form.zoneId ? 'พิมพ์ชื่อโครงการ' : 'เลือกโซนก่อน'} disabled={!form.zoneId} />
+                <div className="flex gap-2">
+                  <input
+                    id="f-project"
+                    className={inputCls(errors.title)}
+                    value={form.projectName}
+                    onChange={update('projectName')}
+                    placeholder={form.zoneId ? 'พิมพ์ชื่อโครงการ' : 'เลือกโซนก่อน'}
+                    disabled={!form.zoneId}
+                  />
+                  {known.length > 0 && (
+                    <button type="button" onClick={() => setCustomProject(false)}
+                      className="btn btn-ghost btn-sm shrink-0">
+                      เลือกจากรายการ
+                    </button>
+                  )}
+                </div>
               )
             })()}
           </Field>
@@ -584,6 +623,9 @@ function Header({ icon: Icon, title, sub }) {
 /** validate() key → the DOM id of the input it belongs to, so a failed submit
  *  can jump to the actual field. The two names differ (form state vs. element
  *  id), so this mapping is what keeps them in step. */
+/** Sentinel option value meaning "let me type a name that isn't listed". */
+const CUSTOM_PROJECT = '__custom__'
+
 const ERROR_FIELD_ID = {
   landlordId:    'f-landlord',
   zoneId:        'f-zone',
