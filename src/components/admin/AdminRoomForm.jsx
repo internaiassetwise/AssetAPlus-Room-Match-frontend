@@ -49,7 +49,7 @@ const EMPTY_FORM = {
   status: 'available',
   availableFrom: '',
   amenitiesText: '',
-  isFeatured: false,
+  isFeatured: false, isNewArrival: false,
 }
 
 export default function AdminRoomForm({ mode }) {
@@ -117,6 +117,7 @@ export default function AdminRoomForm({ mode }) {
       availableFrom: existing.availableFrom || '',
       amenitiesText: Array.isArray(existing.amenities) ? existing.amenities.join(', ') : '',
       isFeatured: !!existing.isFeatured,
+      isNewArrival: !!existing.isNewArrival,
     })
   }, [existing, landlords, zones, isEdit])
 
@@ -325,6 +326,7 @@ export default function AdminRoomForm({ mode }) {
         ? form.amenitiesText.split(',').map((s) => s.trim()).filter(Boolean)
         : [],
       isFeatured: !!form.isFeatured,
+      isNewArrival: !!form.isNewArrival,
     }
     try {
       // 1. Create / update the room first — we need its id to attach photos.
@@ -502,10 +504,6 @@ export default function AdminRoomForm({ mode }) {
           <input id="f-code" className={inputCls(errors.roomCode)} value={form.roomCode} onChange={update('roomCode')} placeholder="เช่น A-301 หรือ 301/1204" />
         </Field>
 
-        <Field id="f-desc" label="คำอธิบาย">
-          <textarea id="f-desc" rows={4} className="input resize-none" value={form.description} onChange={update('description')} placeholder="จุดเด่น ทำเล สภาพห้อง ฯลฯ" />
-        </Field>
-
         {/* ประเภทที่พักอาศัย */}
         <div className="grid sm:grid-cols-2 gap-5">
           <Field id="f-prop" label="ประเภทที่พักอาศัย">
@@ -554,6 +552,14 @@ export default function AdminRoomForm({ mode }) {
           <input id="f-rent" type="number" min="1000" className={inputCls(errors.monthlyRent)} value={form.monthlyRent} onChange={update('monthlyRent')} placeholder="18000" />
         </Field>
 
+        <Field id="f-desc" label="คำอธิบาย">
+          <textarea id="f-desc" rows={4} className="input resize-none" value={form.description} onChange={update('description')} placeholder="จุดเด่น ทำเล สภาพห้อง ฯลฯ" />
+        </Field>
+
+        <Field id="f-amenities" label="สิ่งอำนวยความสะดวก" hint="คั่นด้วยเครื่องหมายจุลภาค เช่น wifi, pool, gym">
+          <input id="f-amenities" className="input" value={form.amenitiesText} onChange={update('amenitiesText')} placeholder="wifi, pool, near-bts" />
+        </Field>
+
         <div>
           <label className="label">สถานะ</label>
           <ChipGroup options={STATUSES} value={form.status} onChange={(v) => setForm((s) => ({ ...s, status: v }))} />
@@ -563,23 +569,34 @@ export default function AdminRoomForm({ mode }) {
           <Field id="f-from" label="วันที่ว่าง" error={errors.availableFrom}>
             <input id="f-from" type="date" className={inputCls(errors.availableFrom)} value={form.availableFrom} onChange={update('availableFrom')} />
           </Field>
-          <Field id="f-feat" label="ตั้งเป็นห้องแนะนำ">
-            <label className="inline-flex items-center gap-3 mt-2 cursor-pointer">
-              <input
-                id="f-feat"
-                type="checkbox"
-                checked={!!form.isFeatured}
-                onChange={(e) => setForm((s) => ({ ...s, isFeatured: e.target.checked }))}
-                className="w-5 h-5 rounded border-navy-300 text-navy-600 focus:ring-navy-600/30"
-              />
-              <span className="text-navy-700 text-[15px]">แสดงเป็น "ยอดนิยม" บนหน้าแรก</span>
-            </label>
-          </Field>
+          {/* Two independent claims, not one setting: a popular room isn't
+              automatically new, and a new one isn't yet popular. */}
+          <div>
+            <label className="label">แสดงบนหน้าแรก</label>
+            <div className="mt-2 space-y-2">
+              <label className="inline-flex items-center gap-3 cursor-pointer">
+                <input
+                  id="f-feat"
+                  type="checkbox"
+                  checked={!!form.isFeatured}
+                  onChange={(e) => setForm((s) => ({ ...s, isFeatured: e.target.checked }))}
+                  className="w-5 h-5 rounded border-navy-300 text-navy-600 focus:ring-navy-600/30"
+                />
+                <span className="text-navy-700 text-[15px]">แสดงเป็น “ยอดนิยม”</span>
+              </label>
+              <label className="inline-flex items-center gap-3 cursor-pointer">
+                <input
+                  id="f-new"
+                  type="checkbox"
+                  checked={!!form.isNewArrival}
+                  onChange={(e) => setForm((s) => ({ ...s, isNewArrival: e.target.checked }))}
+                  className="w-5 h-5 rounded border-navy-300 text-navy-600 focus:ring-navy-600/30"
+                />
+                <span className="text-navy-700 text-[15px]">แสดงเป็น “ห้องใหม่ล่าสุด”</span>
+              </label>
+            </div>
+          </div>
         </div>
-
-        <Field id="f-amenities" label="สิ่งอำนวยความสะดวก" hint="คั่นด้วยเครื่องหมายจุลภาค เช่น wifi, pool, gym">
-          <input id="f-amenities" className="input" value={form.amenitiesText} onChange={update('amenitiesText')} placeholder="wifi, pool, near-bts" />
-        </Field>
 
         {/* ── Photo manager ──────────────────────────────────────────────
             Works on desktop (file picker) and phone (gallery OR camera via
