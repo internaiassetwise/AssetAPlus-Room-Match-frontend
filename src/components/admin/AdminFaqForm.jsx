@@ -83,11 +83,13 @@ export default function AdminFaqForm({ mode }) {
       sortOrder:    existing.sortOrder ?? 100,
       isActive:     existing.isActive ?? true,
       isDraft:      existing.isDraft ?? false,
-      // Defensive: server always returns an array; for legacy rows it'll be []
-      // and the form will show a single Text block to start writing.
+      // Rows seeded before the block editor existed have a plain `answer` and
+      // no blocks. Those MUST hydrate from that answer: falling back to
+      // SAMPLES.text here showed the admin "ตอนนี้มีห้องว่างพร้อมเข้าอยู่ค่ะ"
+      // in place of the real text, and saving wrote that sample over it.
       answerBlocks: Array.isArray(existing.answerBlocks) && existing.answerBlocks.length > 0
         ? existing.answerBlocks.map((b) => ({ ...b, _id: clientId() }))
-        : [{ ...SAMPLES.text, _id: clientId() }],
+        : [{ type: 'text', text: existing.answer || '', _id: clientId() }],
     })
   }, [existing, isEdit])
 
