@@ -33,7 +33,7 @@ const STATUSES = [
 ]
 
 const EMPTY_FORM = {
-  title: '', description: '',
+  title: '', description: '', remark: '',
   projectName: '', roomCode: '',
   landlordId: '', zoneId: '',
   propertyType: 'condo',   // fixed — see the form comment
@@ -102,6 +102,7 @@ export default function AdminRoomForm({ mode }) {
     setForm({
       title: existing.title || '',
       description: existing.description || '',
+      remark: existing.remark || '',
       projectName: existing.projectName || '',
       roomCode: existing.roomCode || '',
       landlordId: existing.landlordId ? String(existing.landlordId) : '',
@@ -323,6 +324,8 @@ export default function AdminRoomForm({ mode }) {
     const body = {
       title,
       description: form.description.trim() || undefined,
+      // Empty string clears the note; undefined would leave the old one in place.
+      remark:      form.remark.trim() || null,
       landlordId:  form.landlordId ? Number(form.landlordId) : undefined,
       zoneId:      Number(form.zoneId),
       propertyType: form.propertyType,
@@ -617,6 +620,25 @@ export default function AdminRoomForm({ mode }) {
 
         <Field id="f-amenities" label="สิ่งอำนวยความสะดวก" hint="คั่นด้วยเครื่องหมายจุลภาค เช่น wifi, pool, gym">
           <input id="f-amenities" className="input" value={form.amenitiesText} onChange={update('amenitiesText')} placeholder="wifi, pool, near-bts" />
+        </Field>
+
+        {/* Staff-only note (the "Remark" column in the stock sheet). Visually
+            marked as internal because the field sits among ones that ARE public
+            — คำอธิบาย right above it goes straight to the listing page — and the
+            cost of confusing the two is publishing something about an owner. */}
+        <Field
+          id="f-remark"
+          label="หมายเหตุภายใน (แอดมินเท่านั้น)"
+          hint="ลูกค้าและบอทไม่เห็นข้อความนี้ — ใช้บันทึกเรื่องเจ้าของห้อง การเข้าห้อง หรือเหตุผลที่ปรับราคา"
+        >
+          <textarea
+            id="f-remark"
+            rows={3}
+            className="input resize-none bg-navy-50/40"
+            value={form.remark}
+            onChange={update('remark')}
+            placeholder="เช่น เจ้าของสะดวกรับสายหลัง 18:00 / ต่อรองราคาได้ถึง 11,500"
+          />
         </Field>
 
         <div>
