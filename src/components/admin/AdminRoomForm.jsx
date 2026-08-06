@@ -489,6 +489,14 @@ export default function AdminRoomForm({ mode }) {
                 onChange={(e) => setContact((c) => ({ ...c, relation: e.target.value }))}>
                 <option value="">— เจ้าของห้องติดต่อเอง —</option>
                 {CONTACT_RELATIONS.map((r) => <option key={r} value={r}>{r}</option>)}
+                {/* A landlord who picks "อื่นๆ" in the LINE form types their own
+                    answer, so the stored value need not be one of the five above.
+                    Without this option the select falls back to showing the
+                    placeholder, and admin reads "เจ้าของห้องติดต่อเอง" for a room
+                    where someone else was named. */}
+                {contact.relation && !CONTACT_RELATIONS.includes(contact.relation) && (
+                  <option value={contact.relation}>{contact.relation}</option>
+                )}
               </select>
             </Field>
           </div>
