@@ -277,6 +277,10 @@ export const api = {
   listConversations:   (params = {}) => request(`/admin/inbox/conversations${qs(params)}`),
   getConversation:     (lineUserId)  => request(`/admin/inbox/conversations/${encodeURIComponent(lineUserId)}`),
   claimConversation:   (lineUserId)  => request(`/admin/inbox/conversations/${encodeURIComponent(lineUserId)}/claim`, { method: 'POST' }),
+
+  // Watermark backfill — starts a detached job; poll getWatermarkJob for state.
+  getWatermarkJob:     ()           => request('/admin/images/watermark'),
+  startWatermarkJob:   (body = {})  => request('/admin/images/watermark', { method: 'POST', body }),
   listAdminQueue:    (params = {}) => request(`/admin/inbox${qs(params)}`),
   getAdminQueue:     (id)          => request(`/admin/inbox/${id}`),
   replyAdminQueue:   (id, body)    => request(`/admin/inbox/${id}/reply`,   { method: 'POST', body: JSON.stringify(body) }),

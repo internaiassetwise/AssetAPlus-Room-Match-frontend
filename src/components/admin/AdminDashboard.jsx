@@ -8,6 +8,7 @@ import { Link } from 'react-router-dom'
 import { useApi } from '../../hooks/useApi.js'
 import { api } from '../../api/client.js'
 import { Home, Inbox, Users } from '../icons.jsx'
+import WatermarkPanel from './WatermarkPanel.jsx'
 
 const baht = (n) => `฿${Number(n || 0).toLocaleString()}`
 
@@ -146,6 +147,8 @@ export default function AdminDashboard() {
                 </ul>
               </section>
             )}
+
+            <WatermarkPanel />
           </div>
         </>
       )}
