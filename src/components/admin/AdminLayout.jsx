@@ -12,7 +12,8 @@
 // drags the whole layout with it — that is why the admin pages were exactly
 // twice the viewport wide on a phone, sidebar included.
 
-import { Outlet, NavLink, Link, useNavigate } from 'react-router-dom'
+import { useMemo } from 'react'
+import { Outlet, NavLink, Link, useNavigate, useLocation } from 'react-router-dom'
 import { Plus, LogOut, ChevronRight, Bot, Inbox, Chart, Users, Home } from '../icons.jsx'
 import Logo from '../Logo.jsx'
 import { useAuth } from '../../contexts/AuthContext.jsx'
@@ -67,6 +68,23 @@ export default function AdminLayout() {
 
   const badgeFor = (key) => (key === 'pending' && pendingCount > 0 ? pendingCount : 0)
 
+  // Which nav item is highlighted. NavLink's own matching can't do this: it
+  // prefix-matches, so /admin/rooms/new lit up BOTH "ห้องทั้งหมด" and
+  // "เพิ่มห้องใหม่" (same for the FAQ pair). Marking the parents `end` would fix
+  // that but then /admin/rooms/123/edit would highlight nothing at all.
+  //
+  // So: every item whose path matches is a candidate, and the most specific one
+  // — the longest `to` — wins. /admin/rooms/new picks the exact item, while
+  // /admin/rooms/123/edit falls back to the section. Works for any future pair
+  // without per-item bookkeeping.
+  const { pathname } = useLocation()
+  const activeTo = useMemo(() => {
+    const matches = SECTIONS.flatMap((s) => s.items).filter(({ to, end }) => (
+      end ? pathname === to : pathname === to || pathname.startsWith(`${to}/`)
+    ))
+    return matches.reduce((best, i) => (!best || i.to.length > best.length ? i.to : best), '')
+  }, [pathname])
+
   const Badge = ({ n }) => (
     <span className="ml-1 inline-flex items-center justify-center min-w-[20px] h-5 px-1 rounded-full bg-ember-500 text-white text-[11px] font-bold">
       {n}
@@ -111,7 +129,7 @@ export default function AdminLayout() {
           className="lg:hidden flex gap-2 overflow-x-auto px-4 pb-3 pt-1 [scrollbar-width:none] [&::-webkit-scrollbar]:hidden"
         >
           {SECTIONS.flatMap((s) => s.items).map(({ to, end, short, Icon, emoji, badge }) => (
-            <NavLink key={to} to={to} end={end} className={chip}>
+            <NavLink key={to} to={to} end={end} className={() => chip({ isActive: to === activeTo })}>
               {Icon ? <Icon size={15} /> : emoji ? <span aria-hidden>{emoji}</span> : null}
               {short}
               {badgeFor(badge) > 0 && <Badge n={badgeFor(badge)} />}
@@ -130,7 +148,7 @@ export default function AdminLayout() {
                   {title}
                 </div>
                 {items.map(({ to, end, label, Icon, emoji, badge }) => (
-                  <NavLink key={to} to={to} end={end} className={navItem}>
+                  <NavLink key={to} to={to} end={end} className={() => navItem({ isActive: to === activeTo })}>
                     <span className="inline-flex items-center gap-2">
                       {Icon ? <Icon size={16} /> : emoji ? <span aria-hidden>{emoji}</span> : null}
                       {label}

@@ -280,7 +280,7 @@ export const api = {
 
   // Watermark backfill — starts a detached job; poll getWatermarkJob for state.
   getWatermarkJob:     ()           => request('/admin/images/watermark'),
-  startWatermarkJob:   (body = {})  => request('/admin/images/watermark', { method: 'POST', body }),
+  startWatermarkJob:   (body = {})  => request('/admin/images/watermark', { method: 'POST', body: JSON.stringify(body) }),
   listAdminQueue:    (params = {}) => request(`/admin/inbox${qs(params)}`),
   getAdminQueue:     (id)          => request(`/admin/inbox/${id}`),
   replyAdminQueue:   (id, body)    => request(`/admin/inbox/${id}/reply`,   { method: 'POST', body: JSON.stringify(body) }),
