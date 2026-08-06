@@ -16,6 +16,7 @@ export default function WatermarkPanel() {
   const [error, setError]   = useState('')
   const [busy, setBusy]     = useState(false)
   const [confirming, setConfirming] = useState(false)
+  const [includeLegacy, setIncludeLegacy] = useState(true)
   const timer = useRef(null)
 
   const load = useCallback(async () => {
@@ -31,10 +32,10 @@ export default function WatermarkPanel() {
     return () => clearInterval(timer.current)
   }, [job?.running, load])
 
-  async function start({ dryRun, force }) {
+  async function start({ dryRun, force, reclaim }) {
     setBusy(true); setError('')
     try {
-      setJob(await api.startWatermarkJob({ dryRun, force }))
+      setJob(await api.startWatermarkJob({ dryRun, force, reclaim }))
       setConfirming(false)
     } catch (err) {
       setError(err?.message || 'เริ่มงานไม่สำเร็จ')
@@ -94,15 +95,40 @@ export default function WatermarkPanel() {
         <div className="mt-3 rounded-lg border border-ember-300 bg-ember-50/60 p-3">
           <p className="text-sm text-navy-700">
             {confirming === 'force'
-              ? 'ระบบจะทำลายน้ำใหม่จากไฟล์ต้นฉบับที่เก็บไว้ ลายน้ำจะไม่ซ้อนกัน รูปที่ไม่มีต้นฉบับจะถูกข้ามและแสดงรายชื่อไว้ให้'
+              ? 'ระบบจะทำลายน้ำใหม่จากไฟล์ต้นฉบับที่เก็บไว้ ลายน้ำจะไม่ซ้อนกัน'
               : 'ระบบจะเขียนทับไฟล์รูปเดิม โดยเก็บต้นฉบับที่ยังไม่มีลายน้ำไว้ให้ในโฟลเดอร์ originals/ เพื่อย้อนกลับได้'}
             {' '}ต้องการดำเนินการต่อหรือไม่?
           </p>
+
+          {/* The lossy part is opt-in and says what it costs. These photos have
+              the old mark burned into the only copy that exists, so trimming it
+              off is the only way to re-mark them — there is no lossless option. */}
+          {confirming === 'force' && (
+            <label className="mt-2 flex items-start gap-2 text-sm text-navy-700">
+              <input
+                type="checkbox"
+                className="mt-1"
+                checked={includeLegacy}
+                onChange={(e) => setIncludeLegacy(e.target.checked)}
+              />
+              <span>
+                รวมรูปที่ติดลายน้ำแบบเก่าไว้ในไฟล์ด้วย
+                <span className="block text-xs text-muted">
+                  รูปกลุ่มนี้ไม่มีไฟล์ต้นฉบับเหลืออยู่ ระบบจะตัดขอบล่าง (~11% ของความสูง)
+                  เพื่อลบลายน้ำเดิมออกก่อนใส่ลายน้ำใหม่ — หากไม่เลือก ระบบจะข้ามและแสดงรายชื่อไว้ให้
+                </span>
+              </span>
+            </label>
+          )}
+
           <div className="mt-2 flex gap-2">
             <button
               className="btn btn-primary btn-sm"
               disabled={busy}
-              onClick={() => start({ force: confirming === 'force' })}
+              onClick={() => start({
+                force:   confirming === 'force',
+                reclaim: confirming === 'force' && includeLegacy,
+              })}
             >
               ยืนยัน
             </button>
@@ -128,6 +154,12 @@ export default function WatermarkPanel() {
             <Cell label="ไม่สำเร็จ"     value={last.failed} tone={last.failed ? 'bad' : 'plain'} />
           </dl>
 
+          {last.reclaimed > 0 && (
+            <p className="text-xs text-muted mt-2">
+              ในจำนวนนี้ {last.reclaimed} รูปถูกตัดขอบล่างเพื่อลบลายน้ำแบบเก่าออกก่อนใส่ลายน้ำใหม่
+            </p>
+          )}
+
           {last.error && <p className="error mt-2">{last.error}</p>}
 
           {last.alreadyMarked > 0 && (
@@ -138,7 +170,8 @@ export default function WatermarkPanel() {
               <p className="text-xs text-muted mt-1">
                 รูปเหล่านี้ถูกใส่ลายน้ำตอนอัปโหลด ก่อนที่ระบบจะเริ่มเก็บต้นฉบับ
                 จึงไม่มีไฟล์ต้นฉบับให้ทำใหม่ ระบบข้ามไว้เพื่อไม่ให้ลายน้ำซ้อนกัน
-                หากต้องการลายน้ำแบบใหม่ ให้อัปโหลดรูปเหล่านี้ใหม่
+                หากต้องการลายน้ำแบบใหม่ ให้กด “ทำลายน้ำใหม่” แล้วติ๊กตัวเลือกรวมรูปกลุ่มนี้
+                (ระบบจะตัดขอบล่างออก) หรืออัปโหลดรูปเหล่านี้ใหม่
               </p>
               <ul className="mt-2 space-y-0.5 font-mono text-[11px] text-muted max-h-32 overflow-y-auto">
                 {last.alreadyMarkedFiles.map((f) => <li key={f}>{f}</li>)}
