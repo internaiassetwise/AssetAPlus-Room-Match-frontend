@@ -75,21 +75,35 @@ export default function WatermarkPanel() {
         <button
           className="btn btn-primary btn-sm"
           disabled={busy || running}
-          onClick={() => setConfirming(true)}
+          onClick={() => setConfirming('run')}
         >
           ใส่ลายน้ำรูปเก่าทั้งหมด
+        </button>
+        {/* A plain run skips photos it has already done, so changing the mark's
+            style would never reach them. This is the "do it again" action. */}
+        <button
+          className="btn btn-outline btn-sm"
+          disabled={busy || running}
+          onClick={() => setConfirming('force')}
+        >
+          ทำลายน้ำใหม่ (หลังเปลี่ยนสไตล์)
         </button>
       </div>
 
       {confirming && (
         <div className="mt-3 rounded-lg border border-ember-300 bg-ember-50/60 p-3">
           <p className="text-sm text-navy-700">
-            ระบบจะเขียนทับไฟล์รูปเดิม โดยเก็บต้นฉบับที่ยังไม่มีลายน้ำไว้ให้ในโฟลเดอร์
-            <span className="font-mono"> originals/ </span>
-            เพื่อย้อนกลับได้ ต้องการดำเนินการต่อหรือไม่?
+            {confirming === 'force'
+              ? 'ระบบจะทำลายน้ำใหม่จากไฟล์ต้นฉบับที่เก็บไว้ ลายน้ำจะไม่ซ้อนกัน รูปที่ไม่มีต้นฉบับจะถูกข้ามและแสดงรายชื่อไว้ให้'
+              : 'ระบบจะเขียนทับไฟล์รูปเดิม โดยเก็บต้นฉบับที่ยังไม่มีลายน้ำไว้ให้ในโฟลเดอร์ originals/ เพื่อย้อนกลับได้'}
+            {' '}ต้องการดำเนินการต่อหรือไม่?
           </p>
           <div className="mt-2 flex gap-2">
-            <button className="btn btn-primary btn-sm" disabled={busy} onClick={() => start({})}>
+            <button
+              className="btn btn-primary btn-sm"
+              disabled={busy}
+              onClick={() => start({ force: confirming === 'force' })}
+            >
               ยืนยัน
             </button>
             <button className="btn btn-ghost btn-sm" disabled={busy} onClick={() => setConfirming(false)}>
