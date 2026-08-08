@@ -13,9 +13,11 @@ import { useLandlordAuth } from '../contexts/LandlordAuthContext.jsx'
 import { LINE_OA_DISPLAY } from '../config/line.js'
 import NavUserMenu from './NavUserMenu.jsx'
 import Logo from './Logo.jsx'
-import { NAV_MARKETING } from '../data/content.js'
+import { useContent } from '../i18n/useContent.js'
+import LanguageToggle from './LanguageToggle.jsx'
 
 export default function Navbar() {
+  const { NAV_MARKETING, UI } = useContent()
   const [scrolled, setScrolled] = useState(false)
   const [open, setOpen] = useState(false)
   const navigate = useNavigate()
@@ -51,7 +53,7 @@ export default function Navbar() {
     >
       <nav className="container-page flex items-center justify-between h-20 gap-4">
         {/* Logo */}
-        <Link to="/" className="flex items-center shrink-0" aria-label="RoomMatch — หน้าแรก">
+        <Link to="/" className="flex items-center shrink-0" aria-label={`RoomMatch — ${UI.navHome}`}>
           <Logo className="h-12 w-40" />
         </Link>
 
@@ -64,7 +66,7 @@ export default function Navbar() {
           ))}
           {anySignedIn && (
             <Link className="nav-link inline-flex items-center gap-1.5" to="/search">
-              <Search size={14} /> ค้นหา
+              <Search size={14} /> {UI.navSearch}
             </Link>
           )}
           {/* Landlord-only links — appear only when a landlord session exists.
@@ -75,14 +77,14 @@ export default function Navbar() {
                 <Chart size={14} /> Dashboard
               </Link>
               <Link className="nav-link inline-flex items-center gap-1.5" to="/my-listings">
-                <Home size={14} /> ห้องของฉัน
+                <Home size={14} /> {UI.navMyRooms}
               </Link>
             </>
           )}
           {/* นัดชมห้อง — tenant-only (landlords go through admin as middleman) */}
           {anySignedIn && !landlordUser && (
             <Link className="nav-link inline-flex items-center gap-1.5" to="/viewings">
-              <Calendar size={14} /> นัดชมห้อง
+              <Calendar size={14} /> {UI.navViewings}
             </Link>
           )}
           {admin && (
@@ -93,7 +95,7 @@ export default function Navbar() {
         </div>
 
         {/* CTA */}
-        <div className="hidden md:flex items-center gap-2">
+        <div className="hidden md:flex items-center gap-2 shrink-0">
           {anySignedIn ? (
             <NavUserMenu
               tenantUser={tenantUser}
@@ -105,11 +107,12 @@ export default function Navbar() {
           ) : (
             !authLoading && (
               <Link to="/login" className="btn btn-outline btn-sm">
-                เข้าสู่ระบบ
+                {UI.signIn}
               </Link>
             )
           )}
-          <a href="tel:021680000" className="btn btn-outline btn-sm">
+          <LanguageToggle />
+          <a href="tel:021680000" className="btn btn-outline btn-sm hidden 2xl:inline-flex">
             <Phone size={16} /> 02-168-0000
           </a>
           <Link to="/contact-admin" className="btn btn-line btn-sm">
@@ -121,7 +124,7 @@ export default function Navbar() {
         <button
           onClick={() => setOpen(!open)}
           className="md:hidden w-12 h-12 grid place-items-center rounded-lg border border-navy-200 text-navy-700 hover:bg-navy-50"
-          aria-label={open ? 'ปิดเมนู' : 'เปิดเมนู'}
+          aria-label={open ? UI.menuClose : UI.menuOpen}
           aria-expanded={open}
         >
           {open ? <Close size={22} /> : <Menu size={22} />}
@@ -132,6 +135,12 @@ export default function Navbar() {
       {open && (
         <div className="md:hidden border-t border-line bg-white">
           <div className="container-page py-4 flex flex-col">
+            {/* The desktop bar's toggle lives in a md:flex group, so without this
+                the language switch is unreachable on a phone — where most of
+                this site's traffic is. */}
+            <div className="pb-3 mb-1 border-b border-line">
+              <LanguageToggle />
+            </div>
             {!anySignedIn && NAV_MARKETING.map((item) => (
               <a
                 key={item.text}
@@ -144,7 +153,7 @@ export default function Navbar() {
             ))}
             {anySignedIn && (
               <Link className="nav-link py-3 text-base inline-flex items-center gap-2" to="/search" onClick={() => setOpen(false)}>
-                <Search size={14} /> ค้นหา
+                <Search size={14} /> {UI.navSearch}
               </Link>
             )}
 
@@ -155,14 +164,14 @@ export default function Navbar() {
                   <Chart size={16} /> Dashboard
                 </Link>
                 <Link className="nav-link py-3 text-base inline-flex items-center gap-2" to="/my-listings" onClick={() => setOpen(false)}>
-                  <Home size={16} /> ห้องของฉัน
+                  <Home size={16} /> {UI.navMyRooms}
                 </Link>
               </>
             )}
             {/* นัดชมห้อง — tenant-only */}
             {anySignedIn && !landlordUser && (
               <Link className="nav-link py-3 text-base inline-flex items-center gap-2" to="/viewings" onClick={() => setOpen(false)}>
-                <Calendar size={16} /> นัดชมห้อง
+                <Calendar size={16} /> {UI.navViewings}
               </Link>
             )}
 
@@ -183,14 +192,14 @@ export default function Navbar() {
                       </div>
                       <div className="min-w-0">
                         <div className="text-sm font-semibold text-navy-700 truncate">{tenantUser.name}</div>
-                        <div className="text-xs text-muted">ผู้เช่า</div>
+                        <div className="text-xs text-muted">{UI.personaTenant}</div>
                       </div>
                     </div>
                     <button
                       onClick={() => { tenantLogout(); setOpen(false) }}
                       className="w-full btn btn-outline justify-center"
                     >
-                      <LogOut size={16} /> ออกจากระบบ (ผู้เช่า)
+                      <LogOut size={16} /> {UI.signOutTenant}
                     </button>
                   </div>
                 )}
@@ -202,14 +211,14 @@ export default function Navbar() {
                       </div>
                       <div className="min-w-0">
                         <div className="text-sm font-semibold text-navy-700 truncate">{landlordUser.name}</div>
-                        <div className="text-xs text-muted">ผู้ปล่อยเช่า</div>
+                        <div className="text-xs text-muted">{UI.personaLandlord}</div>
                       </div>
                     </div>
                     <button
                       onClick={() => { landlordLogout(); setOpen(false) }}
                       className="w-full btn btn-outline justify-center"
                     >
-                      <LogOut size={16} /> ออกจากระบบ (ผู้ปล่อยเช่า)
+                      <LogOut size={16} /> {UI.signOutLandlord}
                     </button>
                   </div>
                 )}
@@ -217,7 +226,7 @@ export default function Navbar() {
                   onClick={goSwitchPersona}
                   className="w-full btn btn-ghost justify-center"
                 >
-                  เพิ่ม / สลับบทบาท
+                  {UI.switchRole}
                 </button>
               </div>
             )}
@@ -225,14 +234,14 @@ export default function Navbar() {
             <div className="flex gap-2 pt-4 mt-3 border-t border-line">
               {!anySignedIn && !authLoading && (
                 <Link to="/login" className="btn btn-outline flex-1" onClick={() => setOpen(false)}>
-                  เข้าสู่ระบบ
+                  {UI.signIn}
                 </Link>
               )}
               <a href="tel:021680000" className="btn btn-outline flex-1">
-                <Phone size={16} /> โทร
+                <Phone size={16} /> {UI.callShort}
               </a>
               <Link to="/contact-admin" className="btn btn-line flex-1" onClick={() => setOpen(false)}>
-                <LineChat size={16} /> แชทไลน์
+                <LineChat size={16} /> {UI.lineChatShort}
               </Link>
             </div>
           </div>

@@ -3,13 +3,13 @@
 // Page Feedback annotation #1/#2/#3:
 //   • Dropped inner `<section><div class="container-page">` wrapper so the
 //     card fills the parent PersonaFlow's container-page (no double-narrow).
-//   • Removed last bullet ("ปล่อยห้องได้เร็วขึ้น / เฉลี่ยภายใน 7 วัน") — kept
+//   • Removed last bullet ({UI.landlordFaster}) — kept
 //     the 3 strongest benefits only.
-//   • Removed "ดูวิดีโอประกาศ" secondary button — primary Line CTA is enough.
+//   • Removed {UI.landlordWatchVideo} secondary button — primary Line CTA is enough.
 
 import { BadgeCheck, LineChat, Plus, Bolt } from './icons.jsx'
-import { LANDLORD_BENEFITS, LANDLORD_CTA } from '../data/content.js'
 import { lineUrlWithMessage } from '../config/line.js'
+import { useContent } from '../i18n/useContent.js'
 
 const BENEFIT_ICON = {
   free:   Plus,
@@ -19,6 +19,7 @@ const BENEFIT_ICON = {
 }
 
 export default function LandlordListingsCTA({ theme }) {
+  const { LANDLORD_BENEFITS, LANDLORD_CTA, UI } = useContent()
   const accentText = theme?.accentText || 'text-ember-600'
 
   return (
@@ -54,7 +55,7 @@ export default function LandlordListingsCTA({ theme }) {
 
         <div className="mt-8 flex flex-wrap items-center gap-3">
           <a
-            href={LANDLORD_CTA.primaryHref || lineUrlWithMessage('สวัสดีค่ะ อยากลงประกาศห้องให้เช่าค่ะ')}
+            href={LANDLORD_CTA.primaryHref || lineUrlWithMessage(UI.landlordLineGreeting)}
             target="_blank"
             rel="noreferrer noopener"
             className="btn bg-ember-500 text-white px-6 py-3 text-base font-semibold rounded-xl shadow-ember hover:bg-ember-600 active:bg-ember-700"
@@ -70,7 +71,7 @@ export default function LandlordListingsCTA({ theme }) {
       <div className="relative bg-navy-50 hidden lg:block overflow-hidden">
         <img
           src="/images/hero-pool.jpg"
-          alt="ตัวอย่างห้องจริง"
+          alt={UI.landlordRealRooms}
           className="absolute inset-0 w-full h-full object-cover"
           style={{ objectPosition: 'center 35%' }}
           loading="lazy"

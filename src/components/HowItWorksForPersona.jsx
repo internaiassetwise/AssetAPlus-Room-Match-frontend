@@ -6,7 +6,7 @@
 // the brief's exact brand palette shows up regardless of any theme drift.
 
 import { Phone, Heart, MessageSquare, Check, List, Inbox, Search } from './icons.jsx'
-import { HOW_TENANT_STEPS, HOW_LANDLORD_STEPS } from '../data/content.js'
+import { useContent } from '../i18n/useContent.js'
 
 const ICON_MAP = {
   form:   Search,
@@ -18,6 +18,7 @@ const ICON_MAP = {
 }
 
 function Step({ step, persona, theme }) {
+  const { UI } = useContent()
   const Icon = ICON_MAP[step.icon] || List
   // Persona-colored number + icon container. tenant = navy, landlord = ember.
   // Safe access — parent may pass undefined theme when reverting to the old
@@ -28,7 +29,7 @@ function Step({ step, persona, theme }) {
     <div className="card card-hover p-7 relative bg-white">
       <div className="flex items-center justify-between mb-6">
         <span className={`font-semibold text-sm tracking-wider ${accentText}`}>
-          ขั้นตอนที่ {step.num}
+          {UI.stepLabel} {step.num}
         </span>
         <div className={`w-12 h-12 rounded-lg grid place-items-center text-white ${accentBg}`}>
           <Icon size={22} strokeWidth={1.75} />
@@ -41,6 +42,7 @@ function Step({ step, persona, theme }) {
 }
 
 export default function HowItWorksForPersona({ persona, theme }) {
+  const { HOW_TENANT_STEPS, HOW_LANDLORD_STEPS, UI } = useContent()
   const steps = persona === 'tenant' ? HOW_TENANT_STEPS : HOW_LANDLORD_STEPS
   return (
     <div

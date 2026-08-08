@@ -6,15 +6,17 @@
 // The active side fills with the persona's brand color (navy for tenant,
 // ember for landlord) — gives a visual cue as to which journey is live.
 
+import { useContent } from '../i18n/useContent.js'
 export default function PersonaToggle({ value, onChange }) {
+  const { UI } = useContent()
   const OPTIONS = [
-    { value: 'tenant',   label: 'ฉันอยากเช่า' },
-    { value: 'landlord', label: 'ฉันอยากปล่อยเช่า' },
+    { value: 'tenant',   label: UI.personaIWantRent },
+    { value: 'landlord', label: UI.personaIWantLet },
   ]
   return (
     <div
       role="tablist"
-      aria-label="เลือกประเภทผู้ใช้งาน"
+      aria-label={UI.personaChooseAria}
       className="inline-flex rounded-full border border-navy-100 bg-white p-1 shadow-soft"
     >
       {OPTIONS.map(({ value: v, label }) => {

@@ -1,4 +1,4 @@
-// src/components/StickyLineCTA.jsx — Persistent "ติดต่อแอดมินทาง Line"
+// src/components/StickyLineCTA.jsx — Persistent {UI.lineContactAdmin}
 // CTA that follows the viewport. Mounted once at the app root.
 //
 // Visible on every page except admin and login. On /contact-admin itself the
@@ -7,8 +7,7 @@
 import { useLocation } from 'react-router-dom'
 import { LineChat } from './icons.jsx'
 import { LINE_OA_DISPLAY, lineUrlWithMessage } from '../config/line.js'
-
-const LINE_URL = lineUrlWithMessage('สวัสดีค่ะ')
+import { useContent } from '../i18n/useContent.js'
 
 function shouldHide(pathname) {
   if (!pathname) return false
@@ -24,6 +23,10 @@ function shouldHide(pathname) {
 }
 
 export default function StickyLineCTA() {
+  const { UI } = useContent()
+  // Built here, not at module scope: the greeting is translated, and a
+  // module-level constant would freeze whichever language loaded first.
+  const LINE_URL = lineUrlWithMessage(UI.lineGreeting)
   const { pathname } = useLocation()
   if (shouldHide(pathname)) return null
 
@@ -32,12 +35,12 @@ export default function StickyLineCTA() {
       href={LINE_URL}
       target="_blank"
       rel="noreferrer noopener"
-      aria-label="ติดต่อแอดมินทาง Line"
+      aria-label={UI.lineContactAdmin}
       className="fixed bottom-5 right-5 z-40 inline-flex items-center gap-2 rounded-full px-5 py-3 shadow-lift bg-[#06C755] text-white font-semibold hover:bg-[#05b34c] transition-colors"
     >
       <LineChat size={18} />
-      <span className="hidden sm:inline">แชท Line {LINE_OA_DISPLAY}</span>
-      <span className="sm:hidden">แชท Line</span>
+      <span className="hidden sm:inline">{UI.lineChat} {LINE_OA_DISPLAY}</span>
+      <span className="sm:hidden">{UI.lineChat}</span>
     </a>
   )
 }

@@ -13,9 +13,10 @@ import HowItWorksForPersona from './HowItWorksForPersona.jsx'
 import ListingsForPersona from './ListingsForPersona.jsx'
 import TenantRegistrationForm from './TenantRegistrationForm.jsx'
 import LandlordListingsCTA from './LandlordListingsCTA.jsx'
-import { HOW_SECTION, LISTINGS_SECTION, PERSONA_THEME } from '../data/content.js'
+import { useContent } from '../i18n/useContent.js'
 
 export default function PersonaFlow() {
+  const { HOW_SECTION, LISTINGS_SECTION, PERSONA_THEME, UI } = useContent()
   const [persona, setPersona] = useState('tenant')
   const heading = HOW_SECTION[persona]
 
@@ -60,25 +61,25 @@ export default function PersonaFlow() {
           {persona === 'tenant' ? (
             <>
               <div>
-                <span className="eyebrow-navy">แจ้งความต้องการ</span>
+                <span className="eyebrow-navy">{UI.flowTellUs}</span>
                 <h3 className="mt-4 font-bold text-navy-700 text-3xl sm:text-4xl tracking-tight leading-tight">
-                  บอกความต้องการ <br /><span className="text-ember-600">เจ้าหน้าที่ติดต่อกลับ</span>
+                  {UI.flowHeadline} <br /><span className="text-ember-600">{UI.flowWeCallBack}</span>
                 </h3>
                 <p className="mt-5 text-muted text-base sm:text-lg max-w-md leading-relaxed">
-                  กรอกความต้องการของคุณ เจ้าหน้าที่จะคัดสรรห้องที่เหมาะสม
+                  {UI.flowIntro}
                 </p>
                 <ul className="mt-7 space-y-3 text-navy-700 text-[15px]">
                   <li className="flex items-start gap-2.5">
                     <span className="mt-1.5 w-1.5 h-1.5 rounded-full bg-navy-600 flex-shrink-0" />
-                    กรอกความต้องการ โซน งบ ประเภทห้องที่อยากได้
+                    {UI.flowBullet1}
                   </li>
                   <li className="flex items-start gap-2.5">
                     <span className="mt-1.5 w-1.5 h-1.5 rounded-full bg-navy-600 flex-shrink-0" />
-                    เจ้าหน้าที่ติดต่อกลับ ภายใน 1-2 วันทำการ
+                    {UI.flowBullet2}
                   </li>
                   <li className="flex items-start gap-2.5">
                     <span className="mt-1.5 w-1.5 h-1.5 rounded-full bg-navy-600 flex-shrink-0" />
-                    รับข้อมูลห้องที่เหมาะ ตรงกับความต้องการของคุณโดยตรง
+                    {UI.flowBullet3}
                   </li>
                 </ul>
                 </div>

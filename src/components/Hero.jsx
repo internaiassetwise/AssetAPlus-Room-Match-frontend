@@ -8,8 +8,8 @@
 import { useEffect, useState } from 'react'
 import { ArrowRight, Star } from './icons.jsx'
 import { Link } from 'react-router-dom'
-import { HERO, STATS_LANDING } from '../data/content.js'
 import { api } from '../api/client.js'
+import { useContent } from '../i18n/useContent.js'
 
 // Renders one stat tile. Page Feedback annotation: tile shows
 // "XX ห้อง" on line 1 (value + unit inline) and the descriptor label
@@ -37,6 +37,7 @@ function StatTile({ value, unit, label, isStar, loading }) {
 // transition. Page Feedback annotation #1: hero right tile becomes a
 // slideshow of room pictures that auto-scrolls to the next slide.
 function RoomPhotoTile() {
+  const { UI } = useContent()
   const [slides, setSlides] = useState([])
   const [index,  setIndex]  = useState(0)
 
@@ -69,7 +70,7 @@ function RoomPhotoTile() {
             || null
           if (src && !seen.has(src)) {
             seen.add(src)
-            items.push({ src, title: r.title || r.zone || 'RoomMatch ห้องว่าง' })
+            items.push({ src, title: r.title || r.zone || UI.heroRoomAlt })
           }
           if (items.length >= 8) break
         }
@@ -93,7 +94,7 @@ function RoomPhotoTile() {
   if (slides.length === 0) {
     return (
       <div className="relative h-full min-h-[420px] rounded-2xl overflow-hidden bg-white/10 backdrop-blur-sm border border-white/15 grid place-items-center text-white/60 text-sm">
-        ไม่พบรูปห้อง
+        {UI.heroNoPhotos}
       </div>
     )
   }
@@ -120,7 +121,7 @@ function RoomPhotoTile() {
       {/* Title + slide counter overlay */}
       <div className="absolute inset-x-0 bottom-0 p-5 bg-gradient-to-t from-navy-900/85 via-navy-900/40 to-transparent pointer-events-none">
         <div className="text-[11px] font-semibold uppercase tracking-wider text-white/70">
-          ห้องว่างพร้อมอยู่
+          {UI.heroAvailableNow}
         </div>
         <div className="font-bold text-white text-lg mt-1 line-clamp-1">{slides[index].title}</div>
       </div>
@@ -131,7 +132,7 @@ function RoomPhotoTile() {
           <button
             type="button"
             onClick={goPrev}
-            aria-label="ภาพก่อนหน้า"
+            aria-label={UI.heroPrevImage}
             className="absolute left-3 top-1/2 -translate-y-1/2 w-11 h-11 grid place-items-center rounded-full bg-white/15 backdrop-blur-sm text-white border border-white/25 opacity-0 group-hover:opacity-100 focus:opacity-100 transition-opacity hover:bg-white/25"
           >
             <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" aria-hidden="true">
@@ -141,7 +142,7 @@ function RoomPhotoTile() {
           <button
             type="button"
             onClick={goNext}
-            aria-label="ภาพถัดไป"
+            aria-label={UI.heroNextImage}
             className="absolute right-3 top-1/2 -translate-y-1/2 w-11 h-11 grid place-items-center rounded-full bg-white/15 backdrop-blur-sm text-white border border-white/25 opacity-0 group-hover:opacity-100 focus:opacity-100 transition-opacity hover:bg-white/25"
           >
             <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" aria-hidden="true">
@@ -171,6 +172,7 @@ function RoomPhotoTile() {
 }
 
 export default function Hero() {
+  const { HERO, STATS_LANDING, UI } = useContent()
   const [stats, setStats]   = useState(null)
   const [loading, setLoading] = useState(true)
 

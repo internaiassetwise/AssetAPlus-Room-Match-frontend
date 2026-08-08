@@ -1,17 +1,18 @@
 import { useState } from 'react'
 import { ChevronDown } from './icons.jsx'
-import { FAQS } from '../data/content.js'
+import { useContent } from '../i18n/useContent.js'
 
 export default function FAQ() {
+  const { FAQS, UI } = useContent()
   const [open, setOpen] = useState(0)
 
   return (
     <section id="faq" className="section bg-white">
       <div className="container-page max-w-3xl">
         <div className="text-center mb-12">
-          <span className="eyebrow">คำถามที่พบบ่อย</span>
+          <span className="eyebrow">{UI.faqEyebrow}</span>
           <h2 className="mt-4 font-bold text-navy-700 text-4xl sm:text-5xl tracking-tight">
-            มีคำถาม? <span className="text-ember-600">เรามีคำตอบ</span>
+            {UI.faqHeadline} <span className="text-ember-600">{UI.faqTitle}</span>
           </h2>
         </div>
 

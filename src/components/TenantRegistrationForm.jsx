@@ -6,7 +6,7 @@
 import { useState } from 'react'
 import { Phone, Home, BadgeCheck, Search } from './icons.jsx'
 import { api, ApiError } from '../api/client.js'
-import { TENANT_ZONES, TENANT_PROPERTY_TYPES, TENANT_MOVE_IN_OPTIONS, TENANT_FORM } from '../data/content.js'
+import { useContent } from '../i18n/useContent.js'
 
 function Field({ label, children, hint, required }) {
   return (
@@ -21,6 +21,7 @@ function Field({ label, children, hint, required }) {
 }
 
 export default function TenantRegistrationForm({ theme }) {
+  const { TENANT_ZONES, TENANT_PROPERTY_TYPES, TENANT_MOVE_IN_OPTIONS, TENANT_FORM, UI } = useContent()
   const [zone, setZone]               = useState('')
   const [propertyType, setPropType]   = useState('')
   const [moveIn, setMoveIn]           = useState('')
@@ -46,7 +47,7 @@ export default function TenantRegistrationForm({ theme }) {
       })
       setStatus('sent')
     } catch (err) {
-      setError(err instanceof ApiError ? err.message : 'ส่งข้อมูลไม่สำเร็จ')
+      setError(err instanceof ApiError ? err.message : UI.formSendFailed)
       setStatus('error')
     }
   }
@@ -57,7 +58,7 @@ export default function TenantRegistrationForm({ theme }) {
         <BadgeCheck size={24} className="text-emerald-600 mt-0.5 shrink-0" />
         <div className="text-emerald-900">
           <div className="font-bold text-lg">{TENANT_FORM.form.success}</div>
-          <div className="mt-1 text-sm">เจ้าหน้าที่จะโทรหาคุณ พร้อมข้อมูลห้องที่ใกล้เคียงความต้องการที่สุด</div>
+          <div className="mt-1 text-sm">{UI.formCallbackNote}</div>
         </div>
       </div>
     )
@@ -97,7 +98,7 @@ export default function TenantRegistrationForm({ theme }) {
               className={`input ${accent}`}
               value={budgetRaw}
               onChange={(e) => setBudgetRaw(e.target.value)}
-              placeholder="เช่น 15000"
+              placeholder={UI.formBudgetPlaceholder}
             />
           </Field>
 
@@ -107,7 +108,7 @@ export default function TenantRegistrationForm({ theme }) {
               value={propertyType}
               onChange={(e) => setPropType(e.target.value)}
             >
-              <option value="">เลือกประเภทห้อง</option>
+              <option value="">{UI.formSelectRoomType}</option>
               {TENANT_PROPERTY_TYPES.map((t) => (
                 <option key={t.value} value={t.value}>{t.label}</option>
               ))}
@@ -136,7 +137,7 @@ export default function TenantRegistrationForm({ theme }) {
               className={`input ${accent}`}
               value={fullName}
               onChange={(e) => setFullName(e.target.value)}
-              placeholder="เช่น คุณสมชาย"
+              placeholder={UI.formNamePlaceholder}
               required
             />
           </Field>
@@ -146,7 +147,7 @@ export default function TenantRegistrationForm({ theme }) {
               className={`input ${accent}`}
               value={phone}
               onChange={(e) => setPhone(e.target.value)}
-              placeholder="เช่น 081-234-5678"
+              placeholder={UI.formPhonePlaceholder}
               required
               minLength={8}
             />
@@ -166,7 +167,7 @@ export default function TenantRegistrationForm({ theme }) {
           disabled={status === 'sending'}
           className={`btn ${accentBtn} text-white w-full disabled:opacity-60 disabled:cursor-not-allowed`}
         >
-          {status === 'sending' ? 'กำลังส่ง…' : TENANT_FORM.form.submitText}
+          {status === 'sending' ? UI.formSending : TENANT_FORM.form.submitText}
         </button>
       </form>
     </div>

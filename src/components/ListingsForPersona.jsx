@@ -12,7 +12,7 @@ import { useApi } from '../hooks/useApi.js'
 import { useSearchParams } from 'react-router-dom'
 import { api } from '../api/client.js'
 import { RoomCard } from './RoomCard.jsx'
-import { LISTINGS_SECTION } from '../data/content.js'
+import { useContent } from '../i18n/useContent.js'
 
 function SkeletonCard() {
   return (
@@ -28,6 +28,7 @@ function SkeletonCard() {
 }
 
 export default function ListingsForPersona({ persona, theme }) {
+  const { LISTINGS_SECTION, UI } = useContent()
   const copy = LISTINGS_SECTION[persona]
 
   // Filters live in the URL, not in component state alone. A filtered view is
@@ -72,7 +73,7 @@ export default function ListingsForPersona({ persona, theme }) {
     } catch {
       // clipboard is blocked outside a secure context / without permission —
       // select the URL so the user can copy it by hand rather than nothing.
-      window.prompt('คัดลอกลิงก์นี้', window.location.href)
+      window.prompt(UI.copyLinkPrompt, window.location.href)
     }
   }
   const navigate = useNavigate()
@@ -111,7 +112,7 @@ export default function ListingsForPersona({ persona, theme }) {
 
   // "อัพเดทล่าสุด" timestamp — render today, Thai style.
   const today = new Date()
-  const thaiMonths = ['มกราคม','กุมภาพันธ์','มีนาคม','เมษายน','พฤษภาคม','มิถุนายน','กรกฎาคม','สิงหาคม','กันยายน','ตุลาคม','พฤศจิกายน','ธันวาคม']
+  const thaiMonths = UI.monthNames
   const lastUpdatedText = `${today.getDate()} ${thaiMonths[today.getMonth()]} ${today.getFullYear() + 543}`
 
   // Clicking a room card goes straight to its detail page (no intermediate
@@ -162,8 +163,8 @@ export default function ListingsForPersona({ persona, theme }) {
             <input
               type="search"
               className="input pl-10"
-              placeholder="ค้นหา เช่น ลาดพร้าว, สตูดิโอ..."
-              aria-label="ค้นหาห้อง"
+              placeholder={UI.searchPlaceholder}
+              aria-label={UI.searchAria}
             />
           </div>
           <button
@@ -172,7 +173,7 @@ export default function ListingsForPersona({ persona, theme }) {
             className="btn btn-outline btn-sm inline-flex items-center gap-1.5"
             aria-expanded={showFilters}
           >
-            <Filter size={16} /> ตัวกรอง
+            <Filter size={16} /> {UI.filtersToggle}
             <ChevronDown size={14} className={`transition-transform ${showFilters ? 'rotate-180' : ''}`} />
           </button>
           {hasFilters && (
@@ -184,16 +185,16 @@ export default function ListingsForPersona({ persona, theme }) {
                 type="button"
                 onClick={copyLink}
                 className="btn btn-outline btn-sm inline-flex items-center gap-1.5"
-                aria-label="คัดลอกลิงก์ผลการค้นหานี้"
+                aria-label={UI.copyLinkAria}
               >
-                {copiedLink ? <>คัดลอกแล้ว <Check size={14} /></> : <>คัดลอกลิงก์</>}
+                {copiedLink ? <>{UI.copiedLink} <Check size={14} /></> : <>{UI.copyLink}</>}
               </button>
               <button
                 type="button"
                 onClick={clearAll}
                 className="text-xs text-muted hover:text-navy-700 inline-flex items-center gap-1"
               >
-                <X size={14} /> ล้างตัวกรอง
+                <X size={14} /> {UI.filtersClear}
               </button>
             </>
           )}
@@ -204,18 +205,18 @@ export default function ListingsForPersona({ persona, theme }) {
           <div className="card p-5 mb-6 border-navy-200">
             <div className="grid gap-4 sm:grid-cols-2 lg:grid-cols-4">
               <div>
-                <label className="label">ทำเล</label>
+                <label className="label">{UI.filterZone}</label>
                 <select className="input" value={zoneSlug || ''} onChange={(e) => setActiveZone(e.target.value || null)}>
-                  <option value="">ทั้งหมด</option>
+                  <option value="">{UI.filterAll}</option>
                   {zonesDisplay.map((z) => (
                     <option key={z.id} value={z.slug}>{z.name}</option>
                   ))}
                 </select>
               </div>
               <div>
-                <label className="label">ประเภทห้อง</label>
+                <label className="label">{UI.filterRoomType}</label>
                 <select className="input" value={propertyType} onChange={(e) => setPropertyType(e.target.value)}>
-                  <option value="">ทุกประเภท</option>
+                  <option value="">{UI.filterAllTypes}</option>
                   <option value="STUDIO">STUDIO</option>
                   <option value="1 BEDROOM">1 BEDROOM</option>
                   <option value="1 BEDROOM EXCLUSIVE">1 BEDROOM EXCLUSIVE</option>
@@ -224,7 +225,7 @@ export default function ListingsForPersona({ persona, theme }) {
                 </select>
               </div>
               <div>
-                <label className="label">งบขั้นต่ำ (บาท)</label>
+                <label className="label">{UI.filterMinBudget}</label>
                 <input
                   inputMode="numeric"
                   className="input"
@@ -234,7 +235,7 @@ export default function ListingsForPersona({ persona, theme }) {
                 />
               </div>
               <div>
-                <label className="label">งบสูงสุด (บาท)</label>
+                <label className="label">{UI.filterMaxBudget}</label>
                 <input
                   inputMode="numeric"
                   className="input"
@@ -257,7 +258,7 @@ export default function ListingsForPersona({ persona, theme }) {
         )}
 
         {error ? (
-          <div className="text-center py-16 text-muted">โหลดข้อมูลไม่สำเร็จ กรุณาลองใหม่อีกครั้ง</div>
+          <div className="text-center py-16 text-muted">{UI.listLoadFailed}</div>
         ) : (
           <div className="grid sm:grid-cols-2 lg:grid-cols-3 gap-6">
             {(loading ? Array.from({ length: 6 }) : (rooms && rooms.length ? rooms : [])).map((r, i) =>
@@ -273,8 +274,8 @@ export default function ListingsForPersona({ persona, theme }) {
             <div className="w-14 h-14 rounded-full bg-navy-50 grid place-items-center mx-auto text-navy-400">
               <Home size={26} />
             </div>
-            <div className="mt-4 font-bold text-navy-700 text-lg">ยังไม่มีห้องในเงื่อนไขนี้</div>
-            <div className="text-muted text-base mt-1.5">ลองปรับตัวกรอง หรือฝากความต้องการของคุณกับเรา</div>
+            <div className="mt-4 font-bold text-navy-700 text-lg">{UI.listEmptyTitle}</div>
+            <div className="text-muted text-base mt-1.5">{UI.listEmptyBody}</div>
           </div>
         )}
       </div>
