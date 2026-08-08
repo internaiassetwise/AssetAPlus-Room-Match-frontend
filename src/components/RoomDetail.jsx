@@ -7,8 +7,12 @@ import { useApi } from '../hooks/useApi.js'
 import { api } from '../api/client.js'
 import { LINE_OA_DISPLAY, LINE_OA_URL } from '../config/line.js'
 import Lightbox from './Lightbox.jsx'
+import { useContent } from '../i18n/useContent.js'
+import { useLang } from '../i18n/LanguageContext.jsx'
 
 export default function RoomDetail() {
+  const { UI } = useContent()
+  const { lang } = useLang()
   const navigate = useNavigate()
   const { id: idParam } = useParams()
   const id = Number(idParam)
@@ -45,23 +49,23 @@ export default function RoomDetail() {
         {/* Breadcrumb */}
         <div className="container-page pt-7">
           <nav className="flex items-center gap-1.5 text-sm text-muted">
-            <button onClick={() => navigate('/')} className="hover:text-navy-700">หน้าแรก</button>
+            <button onClick={() => navigate('/')} className="hover:text-navy-700">{UI.rdHome}</button>
             <ChevronRight size={14} />
-            <button onClick={() => navigate('/#listings')} className="hover:text-navy-700">ห้องว่าง</button>
+            <button onClick={() => navigate('/#listings')} className="hover:text-navy-700">{UI.rdRooms}</button>
             <ChevronRight size={14} />
             <span className="font-medium text-navy-700 truncate">{room?.title || '…'}</span>
           </nav>
         </div>
 
         {loading && !room && (
-          <div className="container-page min-h-[60vh] grid place-items-center text-center text-muted">กำลังโหลดข้อมูลห้อง…</div>
+          <div className="container-page min-h-[60vh] grid place-items-center text-center text-muted">{UI.rdLoading}</div>
         )}
 
         {error && !room && (
           <div className="container-page min-h-[60vh] grid place-items-center text-center"><div>
-            <div className="font-bold text-navy-700 text-xl">โหลดข้อมูลไม่สำเร็จ</div>
-            <div className="text-muted text-base mt-2">กรุณาลองใหม่อีกครั้ง</div>
-            <button onClick={() => navigate('/')} className="btn btn-outline mt-6">กลับหน้าแรก</button>
+            <div className="font-bold text-navy-700 text-xl">{UI.rdLoadFailed}</div>
+            <div className="text-muted text-base mt-2">{UI.rdTryAgain}</div>
+            <button onClick={() => navigate('/')} className="btn btn-outline mt-6">{UI.rdBackHome}</button>
           </div></div>
         )}
 
@@ -132,7 +136,7 @@ export default function RoomDetail() {
 
               <div className="mt-7">
                 <div className="inline-flex items-center gap-1.5 text-sm font-medium text-muted">
-                  <MapPin size={14} /> {room.zone}
+                  <MapPin size={14} /> {lang === 'en' ? (room.zoneEn || room.zone) : room.zone}
                 </div>
                 <h1 className="mt-2 font-bold text-navy-700 text-3xl sm:text-4xl tracking-tight">
                   {room.title}
@@ -146,33 +150,33 @@ export default function RoomDetail() {
                     </span>
                   )}
                   <span className="inline-flex items-center gap-1 text-xs font-medium px-3 py-1.5 rounded-full bg-navy-50 text-navy-700 border border-navy-200">
-                    <Home size={12} /> {room.propertyType || 'คอนโด'}
+                    <Home size={12} /> {room.propertyType || UI.rdCondo}
                   </span>
                 </div>
               </div>
 
               <div className="mt-7 grid grid-cols-2 sm:grid-cols-4 gap-3">
-                <Spec icon={Bed}   label="ห้องนอน" value={`${room.beds} ห้อง`} />
-                <Spec icon={Bath}  label="ห้องน้ำ"  value={`${room.baths} ห้อง`} />
-                <Spec icon={Ruler} label="ขนาด"     value={`${room.sqm} ตร.ม.`} />
-                <Spec icon={Home}  label="ประเภทห้อง" value={room.roomType || room.propertyType || '—'} />
-                {room.building && <Spec icon={Home} label="ตึก" value={room.building} />}
-                {room.floor != null && <Spec icon={Home} label="ชั้น" value={`${room.floor}`} />}
-                {room.viewType && <Spec icon={Home} label="วิว" value={
-                  room.viewType === 'pool' ? 'วิวสระ' : room.viewType === 'garden' ? 'วิวสวน' : 'วิวนอกโครงการ'
+                <Spec icon={Bed}   label={UI.rdBedrooms} value={`${room.beds} ${UI.rdUnitRooms}`.trim()} />
+                <Spec icon={Bath}  label={UI.rdBathrooms} value={`${room.baths} ${UI.rdUnitRooms}`.trim()} />
+                <Spec icon={Ruler} label={UI.rdSize} value={`${room.sqm} ${UI.rdUnitSqm}`} />
+                <Spec icon={Home}  label={UI.rdRoomType} value={room.roomType || room.propertyType || '—'} />
+                {room.building && <Spec icon={Home} label={UI.rdBuilding} value={room.building} />}
+                {room.floor != null && <Spec icon={Home} label={UI.rdFloor} value={`${room.floor}`} />}
+                {room.viewType && <Spec icon={Home} label={UI.rdView} value={
+                  room.viewType === 'pool' ? UI.rdViewPool : room.viewType === 'garden' ? UI.rdViewGarden : UI.rdViewOutside
                 } />}
               </div>
 
               {room.description && (
                 <section className="mt-8">
-                  <h2 className="font-bold text-navy-700 text-xl">รายละเอียด</h2>
+                  <h2 className="font-bold text-navy-700 text-xl">{UI.rdDetails}</h2>
                   <p className="mt-3 text-navy-700 text-[15px] leading-relaxed whitespace-pre-wrap">{room.description}</p>
                 </section>
               )}
 
               {room.amenities && room.amenities.length > 0 && (
                 <section className="mt-8">
-                  <h2 className="font-bold text-navy-700 text-xl">สิ่งอำนวยความสะดวก</h2>
+                  <h2 className="font-bold text-navy-700 text-xl">{UI.rdAmenities}</h2>
                   <div className="mt-3 flex flex-wrap gap-2">
                     {room.amenities.map((a) => (
                       <span key={a} className="inline-flex items-center gap-1.5 text-sm font-medium text-navy-700 bg-navy-50 border border-navy-100 rounded-full px-3 py-1.5">
@@ -189,10 +193,9 @@ export default function RoomDetail() {
                     <Shield size={22} />
                   </div>
                   <div>
-                    <div className="font-bold text-navy-700 text-base">AssetWise ดูแลให้</div>
+                    <div className="font-bold text-navy-700 text-base">{UI.rdManagedTitle}</div>
                     <p className="mt-1.5 text-muted text-[15px] leading-relaxed">
-                      นัดชมห้องฟรี ตรวจเอกสารผู้เช่า ทำสัญญามาตรฐาน
-                      และรายงานสถานะห้องทุกเดือนให้เจ้าของห้อง
+                      {UI.rdManagedBody}
                     </p>
                   </div>
                 </div>
@@ -205,19 +208,19 @@ export default function RoomDetail() {
                 <div>
                   <div className="font-bold text-navy-700 text-3xl sm:text-4xl tabular-nums">
                     ฿{Number(room.price).toLocaleString()}
-                    <span className="text-base font-medium text-muted"> / เดือน</span>
+                    <span className="text-base font-medium text-muted"> {UI.rdPerMonth}</span>
                   </div>
-                  <div className="mt-1 text-sm text-muted">ค่าเช่ารายเดือน ไม่รวมค่าน้ำค่าไฟ</div>
+                  <div className="mt-1 text-sm text-muted">{UI.rdRentNote}</div>
                   {room.availableFrom && (
                     <div className="mt-2 inline-flex items-center gap-1.5 text-sm font-medium text-emerald-700 bg-emerald-50 border border-emerald-200 rounded-lg px-3 py-1.5">
-                      พร้อมให้เช่าวันที่ {new Date(room.availableFrom).toLocaleDateString('th-TH', { dateStyle: 'long' })}
+                      {UI.rdAvailableFrom} {new Date(room.availableFrom).toLocaleDateString(lang === 'en' ? 'en-GB' : 'th-TH', { dateStyle: 'long' })}
                     </div>
                   )}
                 </div>
 
                 <div className="border-t border-line pt-4 space-y-3">
                   <a href="tel:021680000" className="btn btn-outline w-full">
-                    <Phone size={16} /> โทร 02-168-0000
+                    <Phone size={16} /> {UI.rdCall} 02-168-0000
                   </a>
                   {/* Opens LINE with the question already typed, carrying a
                       signed tag for THIS room — so admin picks the chat up
@@ -230,22 +233,22 @@ export default function RoomDetail() {
                     rel="noreferrer noopener"
                     className="btn w-full bg-[#06C755] text-white hover:bg-[#05b34c]"
                   >
-                    <LineChat size={16} /> {askLink ? 'สอบถามห้องนี้ทาง Line' : `แชท Line ${LINE_OA_DISPLAY}`}
+                    <LineChat size={16} /> {askLink ? UI.lineAskAboutRoom : `${UI.lineChat} ${LINE_OA_DISPLAY}`}
                   </a>
                   <button onClick={() => navigate('/contact-admin?intent=list-a-room')} className="btn btn-ghost w-full">
-                    อยากลงประกาศห้อง? <ArrowRight size={16} />
+                    {UI.rdWantToList} <ArrowRight size={16} />
                   </button>
                 </div>
 
                 <div className="pt-4 border-t border-line space-y-2 text-sm text-muted">
                   <div className="flex items-center gap-2">
-                    <Shield size={14} className="text-navy-600" /> ไม่มีค่าลงทะเบียน
+                    <Shield size={14} className="text-navy-600" /> {UI.rdTrustNoFee}
                   </div>
                   <div className="flex items-center gap-2">
-                    <Shield size={14} className="text-navy-600" /> สำเร็จค่อยจ่าย
+                    <Shield size={14} className="text-navy-600" /> {UI.rdTrustPayOnSuccess}
                   </div>
                   <div className="flex items-center gap-2">
-                    <Shield size={14} className="text-navy-600" /> สัญญามาตรฐาน
+                    <Shield size={14} className="text-navy-600" /> {UI.rdTrustStandardContract}
                   </div>
                 </div>
               </div>

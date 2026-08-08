@@ -13,6 +13,7 @@ import { useSearchParams } from 'react-router-dom'
 import { api } from '../api/client.js'
 import { RoomCard } from './RoomCard.jsx'
 import { useContent } from '../i18n/useContent.js'
+import { useLang } from '../i18n/LanguageContext.jsx'
 
 function SkeletonCard() {
   return (
@@ -29,6 +30,7 @@ function SkeletonCard() {
 
 export default function ListingsForPersona({ persona, theme }) {
   const { LISTINGS_SECTION, UI } = useContent()
+  const { lang } = useLang()
   const copy = LISTINGS_SECTION[persona]
 
   // Filters live in the URL, not in component state alone. A filtered view is
@@ -209,7 +211,7 @@ export default function ListingsForPersona({ persona, theme }) {
                 <select className="input" value={zoneSlug || ''} onChange={(e) => setActiveZone(e.target.value || null)}>
                   <option value="">{UI.filterAll}</option>
                   {zonesDisplay.map((z) => (
-                    <option key={z.id} value={z.slug}>{z.name}</option>
+                    <option key={z.id} value={z.slug}>{lang === 'en' ? (z.name_en || z.name) : z.name}</option>
                   ))}
                 </select>
               </div>

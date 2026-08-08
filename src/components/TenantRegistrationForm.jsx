@@ -7,6 +7,7 @@ import { useState } from 'react'
 import { Phone, Home, BadgeCheck, Search } from './icons.jsx'
 import { api, ApiError } from '../api/client.js'
 import { useContent } from '../i18n/useContent.js'
+import { useLang } from '../i18n/LanguageContext.jsx'
 
 function Field({ label, children, hint, required }) {
   return (
@@ -21,7 +22,10 @@ function Field({ label, children, hint, required }) {
 }
 
 export default function TenantRegistrationForm({ theme }) {
-  const { TENANT_ZONES, TENANT_PROPERTY_TYPES, TENANT_MOVE_IN_OPTIONS, TENANT_FORM, UI } = useContent()
+  const { TENANT_ZONES, TENANT_PROPERTY_TYPES, TENANT_MOVE_IN_OPTIONS, TENANT_FORM, UI, ZONE_LABELS_EN } = useContent()
+  const { lang } = useLang()
+  // Label only — `z` stays the Thai value that gets submitted and matched.
+  const zoneLabel = (z) => (lang === 'en' ? (ZONE_LABELS_EN[z] || z) : z)
   const [zone, setZone]               = useState('')
   const [propertyType, setPropType]   = useState('')
   const [moveIn, setMoveIn]           = useState('')
@@ -83,7 +87,7 @@ export default function TenantRegistrationForm({ theme }) {
                 onClick={() => setZone(zone === z ? '' : z)}
                 className={`chip ${zone === z ? 'chip-active' : ''}`}
               >
-                {z}
+                {zoneLabel(z)}
               </button>
             ))}
           </div>

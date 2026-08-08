@@ -111,13 +111,13 @@ export default function Navbar() {
               </Link>
             )
           )}
-          <LanguageToggle />
           <a href="tel:021680000" className="btn btn-outline btn-sm hidden 2xl:inline-flex">
             <Phone size={16} /> 02-168-0000
           </a>
           <Link to="/contact-admin" className="btn btn-line btn-sm">
             <LineChat size={16} /> {LINE_OA_DISPLAY}
           </Link>
+          <LanguageToggle />
         </div>
 
         {/* Mobile menu button */}
